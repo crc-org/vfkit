@@ -39,6 +39,11 @@ func init() {
 	rootCmd.Flags().UintVarP(&opts.memoryMiB, "memory", "m", 512, "virtual machine RAM size in mibibytes")
 
 	rootCmd.Flags().StringArrayVarP(&opts.devices, "device", "d", []string{}, "devices")
+
+	// this is almost the cobra default template with an added ':' before the version for crc's convenience
+	versionTmpl := `{{with .Name}}{{printf "%s " .}}{{end}}{{printf "version: %s" .Version}}
+`
+	rootCmd.SetVersionTemplate(versionTmpl)
 }
 
 func Execute() {
