@@ -1,0 +1,27 @@
+name: Build
+on:
+  push:
+    branches:
+    - "master"
+  pull_request: {}
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+        - macOS-11
+        go:
+        - 1.16
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go }}
+      - name: Build
+        run: make
+      - name: vet
+        run: go vet ./...
