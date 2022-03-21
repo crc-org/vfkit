@@ -2,8 +2,11 @@ package config
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/Code-Hex/vz"
+	"github.com/h2non/filetype"
+	"github.com/h2non/filetype/matchers"
 )
 
 type Bootloader struct {
@@ -27,7 +30,40 @@ func NewBootloader(vmlinuzPath, kernelCmdLine, initrdPath string) *Bootloader {
 	}
 }
 
+func isKernelUncompressed(filename string) (bool, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return false, err
+	}
+	defer file.Close()
+
+	buf := make([]byte, 2048)
+	_, err = file.Read(buf)
+	if err != nil {
+		return false, err
+	}
+	kind, err := filetype.Match(buf)
+	if err != nil {
+		return false, err
+	}
+	// uncompressed ARM64 kernels are matched as a MS executable, which is
+	// also an archive, so we need to special case it
+	if kind == matchers.TypeExe {
+		return true, nil
+	}
+
+	return false, nil
+}
+
 func (bootloader *Bootloader) toVzBootloader() (vz.BootLoader, error) {
+	uncompressed, err := isKernelUncompressed(bootloader.vmlinuzPath)
+	if err != nil {
+		return nil, err
+	}
+	if !uncompressed {
+		return nil, fmt.Errorf("kernel must be uncompressed, %s is a compressed file", bootloader.vmlinuzPath)
+	}
+
 	return vz.NewLinuxBootLoader(
 		bootloader.vmlinuzPath,
 		vz.WithCommandLine(bootloader.kernelCmdLine),
