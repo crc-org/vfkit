@@ -167,7 +167,7 @@ func (dev *virtioNet) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineConfi
 	}
 	natAttachment := vz.NewNATNetworkDeviceAttachment()
 	networkConfig := vz.NewVirtioNetworkDeviceConfiguration(natAttachment)
-	networkConfig.SetMacAddress(mac)
+	networkConfig.SetMACAddress(mac)
 	vmConfig.SetNetworkDevicesVirtualMachineConfiguration([]*vz.VirtioNetworkDeviceConfiguration{
 		networkConfig,
 	})
