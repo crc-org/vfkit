@@ -15,7 +15,6 @@ type VirtioDevice interface {
 	AddToVirtualMachineConfig(*vz.VirtualMachineConfiguration) error
 }
 
-
 // TODO: Add ConnectToPort support?
 // https://github.com/Code-Hex/vz/blob/d70a0533bf8ed0fa9ab22fa4d4ca554b7c3f3ce5/socket.go#L115-L123
 type VirtioVsock struct {
@@ -29,7 +28,6 @@ type virtioBlk struct {
 
 type virtioRng struct {
 }
-
 
 // TODO: Add BridgedNetwork support
 // https://github.com/Code-Hex/vz/blob/d70a0533bf8ed0fa9ab22fa4d4ca554b7c3f3ce5/network.go#L81-L82
