@@ -12,3 +12,5 @@ require (
 	golang.org/x/sys v0.0.0-20220519141025-dcacdad47464
 	inet.af/tcpproxy v0.0.0-20210824174053-2e577fef49e2
 )
+
+replace github.com/Code-Hex/vz => github.com/cfergeau/vz v0.0.5-0.20220629154958-9aad23fce70e

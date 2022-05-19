@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"net"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -73,6 +74,8 @@ func deviceFromCmdLine(deviceOpts string) (VirtioDevice, error) {
 	switch opts[0] {
 	case "virtio-blk":
 		dev = &virtioBlk{}
+	case "virtio-fs":
+		dev = &virtioFs{}
 	case "virtio-net":
 		dev = &virtioNet{}
 	case "virtio-rng":
@@ -247,5 +250,52 @@ func (dev *VirtioVsock) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineCon
 		vz.NewVirtioSocketDeviceConfiguration(),
 	})
 
+	return nil
+}
+
+type virtioFs struct {
+	sharedDir string
+	mountTag  string
+}
+
+func (dev *virtioFs) FromOptions(options []option) error {
+	for _, option := range options {
+		switch option.key {
+		case "sharedDir":
+			dev.sharedDir = option.value
+		case "mountTag":
+			dev.mountTag = option.value
+		default:
+			return fmt.Errorf("Unknown option for virtio-fs devices: %s", option.key)
+		}
+	}
+	return nil
+}
+
+func (dev *virtioFs) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineConfiguration) error {
+	log.Infof("Adding virtio-fs device")
+	if dev.sharedDir == "" {
+		return fmt.Errorf("missing mandatory 'sharedDir' option for virtio-fs device")
+	}
+	var mountTag string
+	if dev.mountTag != "" {
+		mountTag = dev.mountTag
+	} else {
+		mountTag = filepath.Base(dev.sharedDir)
+	}
+
+	sharedDir, err := vz.NewSharedDirectory(dev.sharedDir, false)
+	if err != nil {
+		return err
+	}
+	sharedDirConfig := vz.NewSingleDirectoryShare(sharedDir)
+	fileSystemDeviceConfig, err := vz.NewVirtioFileSystemDeviceConfiguration(mountTag)
+	if err != nil {
+		return err
+	}
+	fileSystemDeviceConfig.SetDirectoryShare(sharedDirConfig)
+	vmConfig.SetDirectorySharingDevicesVirtualMachineConfiguration([]vz.DirectorySharingDeviceConfiguration{
+		fileSystemDeviceConfig,
+	})
 	return nil
 }
