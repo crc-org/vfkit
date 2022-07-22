@@ -12,6 +12,7 @@ jobs:
       matrix:
         os:
         - macOS-11
+        - macOS-12
         go:
         - 1.17
     steps:
