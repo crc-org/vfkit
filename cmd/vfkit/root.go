@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const vfkitVersion = "0.0.1"
+const vfkitVersion = "0.0.2-dev"
 
 var opts = &cmdlineOptions{}
 
