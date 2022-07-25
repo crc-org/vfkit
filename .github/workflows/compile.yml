@@ -26,3 +26,8 @@ jobs:
         run: make
       - name: vet
         run: go vet ./...
+      - name: Upload vfkit artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: vfkit Universal Binary (${{ matrix.os }})
+          path: "./out/vfkit"
