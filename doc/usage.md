@@ -103,6 +103,8 @@ See `man 4 vsock` for more details. The vsock port will be exposed as a unix soc
 #### Arguments
 - `port`: vsock port to use for the VM/host communication.
 - `socketURL`: path to the unix socket to use on the host for the vsock communication.
+- `connect`: indicates that the host will connect to the guest over vsock.
+- `listen` : indicates that the host will be listening for vsock connections (default).
 
 #### Example
 `--device virtio-vsock,port=5,socketURL=/Users/virtuser/vfkit.sock`

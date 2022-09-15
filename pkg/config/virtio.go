@@ -16,11 +16,10 @@ type VirtioDevice interface {
 	AddToVirtualMachineConfig(*vz.VirtualMachineConfiguration) error
 }
 
-// TODO: Add ConnectToPort support?
-// https://github.com/Code-Hex/vz/blob/d70a0533bf8ed0fa9ab22fa4d4ca554b7c3f3ce5/socket.go#L115-L123
 type VirtioVsock struct {
 	Port      uint
 	SocketURL string
+	Listen    bool
 }
 
 type virtioBlk struct {
@@ -248,6 +247,8 @@ func (dev *virtioBlk) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineConfi
 }
 
 func (dev *VirtioVsock) FromOptions(options []option) error {
+	// default to listen for backwards compatibliity
+	dev.Listen = true
 	for _, option := range options {
 		switch option.key {
 		case "socketURL":
@@ -258,6 +259,10 @@ func (dev *VirtioVsock) FromOptions(options []option) error {
 				return err
 			}
 			dev.Port = uint(port)
+		case "listen":
+			dev.Listen = true
+		case "connect":
+			dev.Listen = false
 		default:
 			return fmt.Errorf("Unknown option for virtio-vsock devices: %s", option.key)
 		}

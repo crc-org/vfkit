@@ -43,6 +43,9 @@ type VirtioVsock struct {
 	Port uint
 	// SocketURL is the path to a unix socket on the host to use for the virtio-vsock communication with the guest.
 	SocketURL string
+	// If true, vsock connections will have to be done from guest to host. If false, vsock connections will only be possible
+	// from host to guest
+	Listen bool
 }
 
 // virtioBlk configures a disk device.
@@ -160,10 +163,13 @@ func (bootloader *Bootloader) ToCmdLine() ([]string, error) {
 // VirtioVsockNew creates a new virtio-vsock device for 2-way communication
 // between the host and the virtual machine. The communication will happen on
 // vsock port, and on the host it will use the unix socket at socketURL.
-func VirtioVsockNew(port uint, socketURL string) (VirtioDevice, error) {
+// When listen is true, the host will be listening for connections over vsock.
+// When listen  is false, the guest will be listening for connections over vsock.
+func VirtioVsockNew(port uint, socketURL string, listen bool) (VirtioDevice, error) {
 	return &VirtioVsock{
 		Port:      port,
 		SocketURL: socketURL,
+		Listen:    listen,
 	}, nil
 }
 
@@ -171,7 +177,13 @@ func (dev *VirtioVsock) ToCmdLine() ([]string, error) {
 	if dev.Port == 0 || dev.SocketURL == "" {
 		return nil, fmt.Errorf("virtio-vsock needs both a port and a socket URL")
 	}
-	return []string{"--device", fmt.Sprintf("virtio-vsock,port=%d,socketURL=%s", dev.Port, dev.SocketURL)}, nil
+	var listenStr string
+	if dev.Listen {
+		listenStr = "listen"
+	} else {
+		listenStr = "connect"
+	}
+	return []string{"--device", fmt.Sprintf("virtio-vsock,port=%d,socketURL=%s,%s", dev.Port, dev.SocketURL, listenStr)}, nil
 }
 
 // VirtioBlkNew creates a new disk to use in the virtual machine. It will use
