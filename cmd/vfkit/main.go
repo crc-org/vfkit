@@ -113,9 +113,13 @@ func runVirtualMachine(vmConfig *config.VirtualMachine) error {
 	if len(vsockDevs) == 1 {
 		port := vsockDevs[0].Port
 		socketURL := vsockDevs[0].SocketURL
-		log.Infof("Exposing vsock port %d on %s", port, socketURL)
-		if err := vf.ExposeVsock(vm, port, socketURL); err != nil {
-			log.Warnf("error listening on vsock: %v", err)
+		var listenStr string
+		if vsockDevs[0].Listen {
+			listenStr = " (listening)"
+		}
+		log.Infof("Exposing vsock port %d on %s%s", port, socketURL, listenStr)
+		if err := vf.ExposeVsock(vm, port, socketURL, vsockDevs[0].Listen); err != nil {
+			log.Warnf("error exposing vsock port %d: %v", port, err)
 		}
 	}
 	log.Infof("waiting for VM to stop")
