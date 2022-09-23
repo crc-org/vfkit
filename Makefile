@@ -1,5 +1,7 @@
 .PHONY: all build clean codesign
 
+CGO_CFLAGS=-mmacosx-version-min=11.0
+
 all: build codesign
 
 build: out/vfkit
@@ -12,7 +14,7 @@ codesign: out/vfkit
 
 out/vfkit-amd64 out/vfkit-arm64: out/vfkit-%: force-build
 	@mkdir -p $(@D)
-	CGO_ENABLED=1 GOOS=darwin GOARCH=$* go build -o $@ ./cmd/vfkit
+	CGO_ENABLED=1 CGO_CFLAGS=$(CGO_CFLAGS) GOOS=darwin GOARCH=$* go build -o $@ ./cmd/vfkit
 
 out/vfkit: out/vfkit-amd64 out/vfkit-arm64
 	cd $(@D) && lipo -create $(^F) -output $(@F)
