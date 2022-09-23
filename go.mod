@@ -1,4 +1,4 @@
-module github.com/code-ready/vfkit
+module github.com/crc-org/vfkit
 
 go 1.16
 
