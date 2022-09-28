@@ -23,8 +23,8 @@ import (
 	"time"
 
 	"github.com/Code-Hex/vz"
-	"github.com/code-ready/vfkit/pkg/config"
-	"github.com/code-ready/vfkit/pkg/vf"
+	"github.com/crc-org/vfkit/pkg/config"
+	"github.com/crc-org/vfkit/pkg/vf"
 	"github.com/docker/go-units"
 	log "github.com/sirupsen/logrus"
 )
