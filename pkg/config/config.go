@@ -153,6 +153,10 @@ func (vm *VirtualMachine) ToVzVirtualMachineConfig() (*vz.VirtualMachineConfigur
 	return vzVMConfig, nil
 }
 
+func (vm *VirtualMachine) TimeSync() *TimeSync {
+	return vm.timesync
+}
+
 func (vm *VirtualMachine) VirtioVsockDevices() []*VirtioVsock {
 	vsockDevs := []*VirtioVsock{}
 	for _, dev := range vm.devices {
