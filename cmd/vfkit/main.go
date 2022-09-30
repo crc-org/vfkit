@@ -114,6 +114,10 @@ func runVirtualMachine(vmConfig *config.VirtualMachine) error {
 	for _, vsock := range vmConfig.VirtioVsockDevices() {
 		port := vsock.Port
 		socketURL := vsock.SocketURL
+		if socketURL == "" {
+			// the timesync code adds a vsock device without an associated URL.
+			continue
+		}
 		var listenStr string
 		if vsock.Listen {
 			listenStr = " (listening)"
@@ -123,13 +127,20 @@ func runVirtualMachine(vmConfig *config.VirtualMachine) error {
 			log.Warnf("error exposing vsock port %d: %v", port, err)
 		}
 	}
+
+	if err := setupGuestTimeSync(vm, vmConfig.TimeSync()); err != nil {
+		log.Warnf("Error configuring guest time synchronization")
+		log.Debugf("%v", err)
+	}
+
 	log.Infof("waiting for VM to stop")
 	for {
 		err := waitForVMState(vm, vz.VirtualMachineStateStopped)
 		if err == nil {
 			log.Infof("VM is stopped")
-			return nil
+			break
 		}
 	}
 
+	return nil
 }
