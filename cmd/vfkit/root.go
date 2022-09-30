@@ -38,6 +38,8 @@ func init() {
 	// FIXME: use go-units for parsing
 	rootCmd.Flags().UintVarP(&opts.memoryMiB, "memory", "m", 512, "virtual machine RAM size in mibibytes")
 
+	rootCmd.Flags().StringVarP(&opts.timeSync, "timesync", "t", "", "sync guest time when host wakes up from sleep")
+
 	rootCmd.Flags().StringArrayVarP(&opts.devices, "device", "d", []string{}, "devices")
 
 	// this is almost the cobra default template with an added ':' before the version for crc's convenience

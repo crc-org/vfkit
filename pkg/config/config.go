@@ -3,6 +3,8 @@ package config
 import (
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/Code-Hex/vz/v2"
 	"github.com/h2non/filetype"
@@ -20,6 +22,15 @@ type VirtualMachine struct {
 	memoryBytes uint64
 	bootloader  *Bootloader
 	devices     []VirtioDevice
+	timesync    *TimeSync
+}
+
+type TimeSync struct {
+	vsockPort uint
+}
+
+func (ts *TimeSync) VsockPort() uint {
+	return ts.vsockPort
 }
 
 func NewBootloader(vmlinuzPath, kernelCmdLine, initrdPath string) *Bootloader {
@@ -79,6 +90,19 @@ func NewVirtualMachine(vcpus uint, memoryBytes uint64, bootloader *Bootloader) *
 	}
 }
 
+func (vm *VirtualMachine) AddTimeSyncFromCmdLine(cmdlineOpts string) error {
+	if cmdlineOpts == "" {
+		return nil
+	}
+	timesync, err := timesyncFromCmdLine(cmdlineOpts)
+	if err != nil {
+		return err
+	}
+	vm.timesync = timesync
+
+	return nil
+}
+
 func (vm *VirtualMachine) AddDevicesFromCmdLine(cmdlineOpts []string) error {
 	for _, deviceOpts := range cmdlineOpts {
 		dev, err := deviceFromCmdLine(deviceOpts)
@@ -107,6 +131,17 @@ func (vm *VirtualMachine) ToVzVirtualMachineConfig() (*vz.VirtualMachineConfigur
 		}
 	}
 
+	if vm.timesync != nil && vm.timesync.VsockPort() != 0 {
+		// automatically add the vsock device we'll need for communication over VsockPort()
+		vsockDev := VirtioVsock{
+			Port:   vm.timesync.VsockPort(),
+			Listen: false,
+		}
+		if err := vsockDev.AddToVirtualMachineConfig(vzVMConfig); err != nil {
+			return nil, err
+		}
+	}
+
 	valid, err := vzVMConfig.Validate()
 	if err != nil {
 		return nil, err
@@ -127,4 +162,30 @@ func (vm *VirtualMachine) VirtioVsockDevices() []*VirtioVsock {
 	}
 
 	return vsockDevs
+}
+
+func timesyncFromCmdLine(optsStr string) (*TimeSync, error) {
+	var timesync TimeSync
+
+	optsStrv := strings.Split(optsStr, ",")
+	options := strvToOptions(optsStrv)
+
+	for _, option := range options {
+		switch option.key {
+		case "vsockPort":
+			vsockPort, err := strconv.ParseUint(option.value, 10, 64)
+			if err != nil {
+				return nil, err
+			}
+			timesync.vsockPort = uint(vsockPort)
+		default:
+			return nil, fmt.Errorf("Unknown option for timesync parameter: %s", option.key)
+		}
+	}
+
+	if timesync.vsockPort == 0 {
+		return nil, fmt.Errorf("Missing 'vsockPort' option for timesync parameter")
+	}
+
+	return &timesync, nil
 }
