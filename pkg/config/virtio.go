@@ -64,6 +64,18 @@ func strToOption(str string) option {
 	return opt
 }
 
+func strvToOptions(opts []string) []option {
+	parsedOpts := []option{}
+	for _, opt := range opts {
+		if len(opt) == 0 {
+			continue
+		}
+		parsedOpts = append(parsedOpts, strToOption(opt))
+	}
+
+	return parsedOpts
+}
+
 func deviceFromCmdLine(deviceOpts string) (VirtioDevice, error) {
 	opts := strings.Split(deviceOpts, ",")
 	if len(opts) == 0 {
@@ -86,14 +98,8 @@ func deviceFromCmdLine(deviceOpts string) (VirtioDevice, error) {
 	default:
 		return nil, fmt.Errorf("unknown device type: %s", opts[0])
 	}
-	parsedOpts := []option{}
-	for _, opt := range opts[1:] {
-		if len(opt) == 0 {
-			continue
-		}
-		parsedOpts = append(parsedOpts, strToOption(opt))
-	}
 
+	parsedOpts := strvToOptions(opts[1:])
 	if err := dev.FromOptions(parsedOpts); err != nil {
 		return nil, err
 	}
