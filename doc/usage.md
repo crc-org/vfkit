@@ -36,6 +36,20 @@ Path to the initrd file to use when starting the virtual machine.
 
 Kernel command line to use when starting the virtual machine.
 
+
+### Time Synchronization Configuration
+
+#### Description
+
+When the host system is suspended, the guest clock stops running, and it's unable to get back to the correct time upon resume.
+The `--timesync` option can be used to let `vfkit` set the guest clock to the correct time when it detects the host.
+At the moment, this can only be done using `qemu-guest-agent`, which has to be installed in the guest.
+It must be configured to communicate over virtio-vsock.
+
+##### Arguments
+- `vsockPort`: vsock port used for communication with the guest agent.
+
+
 ## Device Configuration
 
 Various devices can be added to the virtual machines. They are all paravirtualized devices using VirtIO. They are grouped under the `--device` commande line flag.

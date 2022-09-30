@@ -37,6 +37,8 @@ type cmdlineOptions struct {
 	kernelCmdline string
 	initrdPath    string
 
+	timeSync string
+
 	devices []string
 }
 
@@ -62,6 +64,10 @@ func newVMConfiguration(opts *cmdlineOptions) (*config.VirtualMachine, error) {
 	log.Infof("\tvCPUs: %d", opts.vcpus)
 	log.Infof("\tmemory: %d MiB", opts.memoryMiB)
 	log.Info()
+
+	if err := vmConfig.AddTimeSyncFromCmdLine(opts.timeSync); err != nil {
+		return nil, err
+	}
 
 	if err := vmConfig.AddDevicesFromCmdLine(opts.devices); err != nil {
 		return nil, err
