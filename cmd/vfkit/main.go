@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Code-Hex/vz"
+	"github.com/Code-Hex/vz/v2"
 	"github.com/crc-org/vfkit/pkg/config"
 	"github.com/crc-org/vfkit/pkg/vf"
 	"github.com/docker/go-units"
@@ -94,7 +94,10 @@ func runVirtualMachine(vmConfig *config.VirtualMachine) error {
 		return err
 	}
 
-	vm := vz.NewVirtualMachine(vzVMConfig)
+	vm, err := vz.NewVirtualMachine(vzVMConfig)
+	if err != nil {
+		return err
+	}
 
 	errCh := make(chan error, 1)
 	vm.Start(func(err error) {

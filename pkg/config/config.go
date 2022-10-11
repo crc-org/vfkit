@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Code-Hex/vz"
+	"github.com/Code-Hex/vz/v2"
 	"github.com/h2non/filetype"
 	"github.com/h2non/filetype/matchers"
 )
@@ -68,7 +68,7 @@ func (bootloader *Bootloader) toVzBootloader() (vz.BootLoader, error) {
 		bootloader.vmlinuzPath,
 		vz.WithCommandLine(bootloader.kernelCmdLine),
 		vz.WithInitrd(bootloader.initrdPath),
-	), nil
+	)
 }
 
 func NewVirtualMachine(vcpus uint, memoryBytes uint64, bootloader *Bootloader) *VirtualMachine {
@@ -96,7 +96,10 @@ func (vm *VirtualMachine) ToVzVirtualMachineConfig() (*vz.VirtualMachineConfigur
 		return nil, err
 	}
 
-	vzVMConfig := vz.NewVirtualMachineConfiguration(vzBootloader, vm.vcpus, vm.memoryBytes)
+	vzVMConfig, err := vz.NewVirtualMachineConfiguration(vzBootloader, vm.vcpus, vm.memoryBytes)
+	if err != nil {
+		return nil, err
+	}
 
 	for _, dev := range vm.devices {
 		if err := dev.AddToVirtualMachineConfig(vzVMConfig); err != nil {

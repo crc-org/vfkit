@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/Code-Hex/vz"
+	"github.com/Code-Hex/vz/v2"
 	"golang.org/x/sys/unix"
 	"inet.af/tcpproxy"
 )
@@ -77,7 +77,10 @@ func Listen(v *vz.VirtioSocketDevice, port uint32) (net.Listener, error) {
 		listener.incomingConnsCh <- dup{conn, err}
 	}
 
-	virtioSocketListener := vz.NewVirtioSocketListener(shouldAcceptConn)
+	virtioSocketListener, err := vz.NewVirtioSocketListener(shouldAcceptConn)
+	if err != nil {
+		return nil, err
+	}
 	v.SetSocketListenerForPort(virtioSocketListener, port)
 	return listener, nil
 }

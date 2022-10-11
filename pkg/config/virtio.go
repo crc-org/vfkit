@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Code-Hex/vz"
+	"github.com/Code-Hex/vz/v2"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -125,7 +125,10 @@ func (dev *virtioSerial) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineCo
 	if err != nil {
 		return err
 	}
-	consoleConfig := vz.NewVirtioConsoleDeviceSerialPortConfiguration(serialPortAttachment)
+	consoleConfig, err := vz.NewVirtioConsoleDeviceSerialPortConfiguration(serialPortAttachment)
+	if err != nil {
+		return err
+	}
 	vmConfig.SetSerialPortsVirtualMachineConfiguration([]*vz.VirtioConsoleDeviceSerialPortConfiguration{
 		consoleConfig,
 	})
@@ -155,7 +158,10 @@ func (dev *virtioNet) FromOptions(options []option) error {
 }
 
 func (dev *virtioNet) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineConfiguration) error {
-	var mac *vz.MACAddress
+	var (
+		mac *vz.MACAddress
+		err error
+	)
 
 	if !dev.nat {
 		return fmt.Errorf("NAT is the only supported networking mode")
@@ -164,12 +170,21 @@ func (dev *virtioNet) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineConfi
 	log.Infof("Adding virtio-net device (nat: %t macAddress: [%s])", dev.nat, dev.macAddress)
 
 	if len(dev.macAddress) == 0 {
-		mac = vz.NewRandomLocallyAdministeredMACAddress()
+		mac, err = vz.NewRandomLocallyAdministeredMACAddress()
 	} else {
-		mac = vz.NewMACAddress(dev.macAddress)
+		mac, err = vz.NewMACAddress(dev.macAddress)
 	}
-	natAttachment := vz.NewNATNetworkDeviceAttachment()
-	networkConfig := vz.NewVirtioNetworkDeviceConfiguration(natAttachment)
+	if err != nil {
+		return err
+	}
+	natAttachment, err := vz.NewNATNetworkDeviceAttachment()
+	if err != nil {
+		return err
+	}
+	networkConfig, err := vz.NewVirtioNetworkDeviceConfiguration(natAttachment)
+	if err != nil {
+		return err
+	}
 	networkConfig.SetMACAddress(mac)
 	vmConfig.SetNetworkDevicesVirtualMachineConfiguration([]*vz.VirtioNetworkDeviceConfiguration{
 		networkConfig,
@@ -187,7 +202,10 @@ func (dev *virtioRng) FromOptions(options []option) error {
 
 func (dev *virtioRng) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineConfiguration) error {
 	log.Infof("Adding virtio-rng device")
-	entropyConfig := vz.NewVirtioEntropyDeviceConfiguration()
+	entropyConfig, err := vz.NewVirtioEntropyDeviceConfiguration()
+	if err != nil {
+		return err
+	}
 	vmConfig.SetEntropyDevicesVirtualMachineConfiguration([]*vz.VirtioEntropyDeviceConfiguration{
 		entropyConfig,
 	})
@@ -219,7 +237,10 @@ func (dev *virtioBlk) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineConfi
 	if err != nil {
 		return err
 	}
-	storageDeviceConfig := vz.NewVirtioBlockDeviceConfiguration(diskImageAttachment)
+	storageDeviceConfig, err := vz.NewVirtioBlockDeviceConfiguration(diskImageAttachment)
+	if err != nil {
+		return err
+	}
 	vmConfig.SetStorageDevicesVirtualMachineConfiguration([]vz.StorageDeviceConfiguration{
 		storageDeviceConfig,
 	})
@@ -246,9 +267,11 @@ func (dev *VirtioVsock) FromOptions(options []option) error {
 
 func (dev *VirtioVsock) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineConfiguration) error {
 	log.Infof("Adding virtio-vsock device")
-	vmConfig.SetSocketDevicesVirtualMachineConfiguration([]vz.SocketDeviceConfiguration{
-		vz.NewVirtioSocketDeviceConfiguration(),
-	})
+	vzdev, err := vz.NewVirtioSocketDeviceConfiguration()
+	if err != nil {
+		return err
+	}
+	vmConfig.SetSocketDevicesVirtualMachineConfiguration([]vz.SocketDeviceConfiguration{vzdev})
 
 	return nil
 }
