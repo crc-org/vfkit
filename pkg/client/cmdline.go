@@ -30,10 +30,14 @@ type VirtualMachine struct {
 	devices     []VirtioDevice
 }
 
-// The VirtioDevice interface is an interface which is implemented by all devices.
-type VirtioDevice interface {
+// The VMComponent interface represents a VM element (device, bootloader, ...)
+// which can be converted to commandline parameters
+type VMComponent interface {
 	ToCmdLine() ([]string, error)
 }
+
+// The VirtioDevice interface is an interface which is implemented by all devices.
+type VirtioDevice VMComponent
 
 // VirtioVsock configures of a virtio-vsock device allowing 2-way communication
 // between the host and the virtual machine type
@@ -72,6 +76,12 @@ type virtioSerial struct {
 type virtioFs struct {
 	sharedDir string
 	mountTag  string
+}
+
+// timeSync enables synchronization of the host time to the linux guest after the host was suspended.
+// This requires qemu-guest-agent to be running in the guest, and to be listening on a vsock socket
+type timeSync struct {
+	vsockPort uint
 }
 
 // NewVirtualMachine creates a new VirtualMachine instance. The virtual machine
@@ -277,4 +287,18 @@ func (dev *virtioFs) ToCmdLine() ([]string, error) {
 	} else {
 		return []string{"--device", fmt.Sprintf("virtio-fs,sharedDir=%s", dev.sharedDir)}, nil
 	}
+}
+
+func TimeSyncNew(vsockPort uint) (VMComponent, error) {
+	return &timeSync{
+		vsockPort: vsockPort,
+	}, nil
+}
+
+func (ts *timeSync) ToCmdLine() ([]string, error) {
+	args := []string{}
+	if ts.vsockPort != 0 {
+		args = append(args, fmt.Sprintf("vsockPort=%d", ts.vsockPort))
+	}
+	return []string{"--timesync", strings.Join(args, ",")}, nil
 }
