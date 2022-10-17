@@ -84,11 +84,6 @@ func waitForVMState(vm *vz.VirtualMachine, state vz.VirtualMachineState) error {
 }
 
 func runVirtualMachine(vmConfig *config.VirtualMachine) error {
-	vsockDevs := vmConfig.VirtioVsockDevices()
-	if len(vsockDevs) > 1 {
-		return fmt.Errorf("Can only configure one virtio-vsock device")
-	}
-
 	vzVMConfig, err := vmConfig.ToVzVirtualMachineConfig()
 	if err != nil {
 		return err
@@ -110,15 +105,15 @@ func runVirtualMachine(vmConfig *config.VirtualMachine) error {
 	}
 	log.Infof("virtual machine is running")
 
-	if len(vsockDevs) == 1 {
-		port := vsockDevs[0].Port
-		socketURL := vsockDevs[0].SocketURL
+	for _, vsock := range vmConfig.VirtioVsockDevices() {
+		port := vsock.Port
+		socketURL := vsock.SocketURL
 		var listenStr string
-		if vsockDevs[0].Listen {
+		if vsock.Listen {
 			listenStr = " (listening)"
 		}
 		log.Infof("Exposing vsock port %d on %s%s", port, socketURL, listenStr)
-		if err := vf.ExposeVsock(vm, port, socketURL, vsockDevs[0].Listen); err != nil {
+		if err := vf.ExposeVsock(vm, port, socketURL, vsock.Listen); err != nil {
 			log.Warnf("error exposing vsock port %d: %v", port, err)
 		}
 	}
