@@ -271,6 +271,10 @@ func (dev *VirtioVsock) FromOptions(options []option) error {
 }
 
 func (dev *VirtioVsock) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineConfiguration) error {
+	if len(vmConfig.SocketDevices()) != 0 {
+		log.Debugf("virtio-vsock device already present, not adding a second one")
+		return nil
+	}
 	log.Infof("Adding virtio-vsock device")
 	vzdev, err := vz.NewVirtioSocketDeviceConfiguration()
 	if err != nil {
