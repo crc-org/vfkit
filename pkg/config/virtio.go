@@ -311,7 +311,10 @@ func (dev *virtioFs) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineConfig
 	if err != nil {
 		return err
 	}
-	sharedDirConfig := vz.NewSingleDirectoryShare(sharedDir)
+	sharedDirConfig, err := vz.NewSingleDirectoryShare(sharedDir)
+	if err != nil {
+		return err
+	}
 	fileSystemDeviceConfig, err := vz.NewVirtioFileSystemDeviceConfiguration(mountTag)
 	if err != nil {
 		return err
