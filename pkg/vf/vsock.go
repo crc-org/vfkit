@@ -21,9 +21,15 @@ func ExposeVsock(vm *vz.VirtualMachine, port uint, vsockPath string, listen bool
 	}
 }
 
-func connectVsockSync(socketDevice *vz.VirtioSocketDevice, port uint) (net.Conn, error) {
+func ConnectVsockSync(vm *vz.VirtualMachine, port uint) (net.Conn, error) {
 	var retErr error
 	var retConn net.Conn
+
+	socketDevices := vm.SocketDevices()
+	if len(socketDevices) != 1 {
+		return nil, fmt.Errorf("VM has too many/not enough virtio-vsock devices (%d)", len(socketDevices))
+	}
+	vsockDevice := socketDevices[0]
 
 	done := make(chan struct{})
 	vsockConnected := func(conn *vz.VirtioSocketConnection, err error) {
@@ -32,7 +38,7 @@ func connectVsockSync(socketDevice *vz.VirtioSocketDevice, port uint) (net.Conn,
 		close(done)
 	}
 
-	socketDevice.ConnectToPort(uint32(port), vsockConnected)
+	vsockDevice.ConnectToPort(uint32(port), vsockConnected)
 	<-done
 
 	return retConn, retErr
@@ -68,11 +74,7 @@ func connectVsock(vm *vz.VirtualMachine, port uint, vsockPath string) error {
 			}
 			switch parsed.Scheme {
 			case "vsock":
-				socketDevices := vm.SocketDevices()
-				if len(socketDevices) != 1 {
-					return nil, fmt.Errorf("VM has too many/not enough virtio-vsock devices (%d)", len(socketDevices))
-				}
-				return connectVsockSync(socketDevices[0], port)
+				return ConnectVsockSync(vm, port)
 			default:
 				return nil, errors.New(fmt.Sprintf("unexpected scheme '%s'", parsed.Scheme))
 			}
