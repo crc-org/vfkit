@@ -99,15 +99,12 @@ func runVirtualMachine(vmConfig *config.VirtualMachine) error {
 		return err
 	}
 
-	errCh := make(chan error, 1)
-	vm.Start(func(err error) {
-		if err != nil {
-			errCh <- err
-		}
-		errCh <- waitForVMState(vm, vz.VirtualMachineStateRunning)
-	})
+	err = vm.Start()
+	if err != nil {
+		return err
+	}
 
-	err = <-errCh
+	err = waitForVMState(vm, vz.VirtualMachineStateRunning)
 	if err != nil {
 		return err
 	}
