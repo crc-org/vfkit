@@ -91,6 +91,9 @@ func waitForVMState(vm *vz.VirtualMachine, state vz.VirtualMachineState) error {
 			if newState == state {
 				return nil
 			}
+			if newState == vz.VirtualMachineStateError {
+				return fmt.Errorf("hypervisor virtualization error")
+			}
 		case <-time.After(5 * time.Second):
 			return fmt.Errorf("timeout waiting for VM state %v", state)
 		}
