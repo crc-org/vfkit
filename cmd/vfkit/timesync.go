@@ -6,7 +6,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/Code-Hex/vz/v2"
+	"github.com/Code-Hex/vz/v3"
 	"github.com/crc-org/vfkit/pkg/config"
 	"github.com/crc-org/vfkit/pkg/vf"
 	sleepnotifier "github.com/prashantgupta24/mac-sleep-notifier/notifier"

@@ -25,7 +25,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Code-Hex/vz/v2"
+	"github.com/Code-Hex/vz/v3"
 	"github.com/crc-org/vfkit/pkg/config"
 	"github.com/crc-org/vfkit/pkg/vf"
 	"github.com/docker/go-units"
