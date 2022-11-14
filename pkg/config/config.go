@@ -21,6 +21,11 @@ type LinuxBootloader struct {
 	initrdPath    string
 }
 
+type EFIBootloader struct {
+	efiVariableStorePath string
+	createVariableStore  bool
+}
+
 type VirtualMachine struct {
 	vcpus       uint
 	memoryBytes uint64
@@ -42,6 +47,13 @@ func NewLinuxBootloader(vmlinuzPath, kernelCmdLine, initrdPath string) *LinuxBoo
 		vmlinuzPath:   vmlinuzPath,
 		kernelCmdLine: kernelCmdLine,
 		initrdPath:    initrdPath,
+	}
+}
+
+func NewEFIBootloader(efiVariableStorePath string, createVariableStore bool) *EFIBootloader {
+	return &EFIBootloader{
+		efiVariableStorePath: efiVariableStorePath,
+		createVariableStore:  createVariableStore,
 	}
 }
 
@@ -83,6 +95,24 @@ func (bootloader *LinuxBootloader) toVzBootloader() (vz.BootLoader, error) {
 		bootloader.vmlinuzPath,
 		vz.WithCommandLine(bootloader.kernelCmdLine),
 		vz.WithInitrd(bootloader.initrdPath),
+	)
+}
+
+func (bootloader *EFIBootloader) toVzBootloader() (vz.BootLoader, error) {
+	var efiVariableStore *vz.EFIVariableStore
+	var err error
+
+	if bootloader.createVariableStore {
+		efiVariableStore, err = vz.NewEFIVariableStore(bootloader.efiVariableStorePath, vz.WithCreatingEFIVariableStore())
+	} else {
+		efiVariableStore, err = vz.NewEFIVariableStore(bootloader.efiVariableStorePath)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return vz.NewEFIBootLoader(
+		vz.WithEFIVariableStore(efiVariableStore),
 	)
 }
 
