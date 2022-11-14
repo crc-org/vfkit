@@ -11,7 +11,11 @@ import (
 	"github.com/h2non/filetype/matchers"
 )
 
-type Bootloader struct {
+type Bootloader interface {
+	toVzBootloader() (vz.BootLoader, error)
+}
+
+type LinuxBootloader struct {
 	vmlinuzPath   string
 	kernelCmdLine string
 	initrdPath    string
@@ -20,7 +24,7 @@ type Bootloader struct {
 type VirtualMachine struct {
 	vcpus       uint
 	memoryBytes uint64
-	bootloader  *Bootloader
+	bootloader  Bootloader
 	devices     []VirtioDevice
 	timesync    *TimeSync
 }
@@ -33,8 +37,8 @@ func (ts *TimeSync) VsockPort() uint {
 	return ts.vsockPort
 }
 
-func NewBootloader(vmlinuzPath, kernelCmdLine, initrdPath string) *Bootloader {
-	return &Bootloader{
+func NewLinuxBootloader(vmlinuzPath, kernelCmdLine, initrdPath string) *LinuxBootloader {
+	return &LinuxBootloader{
 		vmlinuzPath:   vmlinuzPath,
 		kernelCmdLine: kernelCmdLine,
 		initrdPath:    initrdPath,
@@ -66,7 +70,7 @@ func isKernelUncompressed(filename string) (bool, error) {
 	return false, nil
 }
 
-func (bootloader *Bootloader) toVzBootloader() (vz.BootLoader, error) {
+func (bootloader *LinuxBootloader) toVzBootloader() (vz.BootLoader, error) {
 	uncompressed, err := isKernelUncompressed(bootloader.vmlinuzPath)
 	if err != nil {
 		return nil, err
@@ -82,7 +86,7 @@ func (bootloader *Bootloader) toVzBootloader() (vz.BootLoader, error) {
 	)
 }
 
-func NewVirtualMachine(vcpus uint, memoryBytes uint64, bootloader *Bootloader) *VirtualMachine {
+func NewVirtualMachine(vcpus uint, memoryBytes uint64, bootloader Bootloader) *VirtualMachine {
 	return &VirtualMachine{
 		vcpus:       vcpus,
 		memoryBytes: memoryBytes,
