@@ -47,7 +47,7 @@ type cmdlineOptions struct {
 
 func newVMConfiguration(opts *cmdlineOptions) (*config.VirtualMachine, error) {
 	log.Info(opts)
-	bootLoader := config.NewBootloader(
+	bootLoader := config.NewLinuxBootloader(
 		opts.vmlinuzPath,
 		opts.kernelCmdline,
 		opts.initrdPath,
