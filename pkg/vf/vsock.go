@@ -8,8 +8,7 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/Code-Hex/vz/v2"
-	"golang.org/x/sys/unix"
+	"github.com/Code-Hex/vz/v3"
 	"inet.af/tcpproxy"
 )
 
@@ -22,26 +21,13 @@ func ExposeVsock(vm *vz.VirtualMachine, port uint, vsockPath string, listen bool
 }
 
 func ConnectVsockSync(vm *vz.VirtualMachine, port uint) (net.Conn, error) {
-	var retErr error
-	var retConn net.Conn
-
 	socketDevices := vm.SocketDevices()
 	if len(socketDevices) != 1 {
 		return nil, fmt.Errorf("VM has too many/not enough virtio-vsock devices (%d)", len(socketDevices))
 	}
 	vsockDevice := socketDevices[0]
 
-	done := make(chan struct{})
-	vsockConnected := func(conn *vz.VirtioSocketConnection, err error) {
-		retConn = conn
-		retErr = err
-		close(done)
-	}
-
-	vsockDevice.ConnectToPort(uint32(port), vsockConnected)
-	<-done
-
-	return retConn, retErr
+	return vsockDevice.Connect(uint32(port))
 }
 
 // connectVsock proxies connections from a host unix socket to a vsock port
@@ -83,7 +69,7 @@ func connectVsock(vm *vz.VirtualMachine, port uint, vsockPath string) error {
 	return proxy.Start()
 }
 
-// ListenVsock proxies connections from a vsock port to a host unix socket.
+// listenVsock proxies connections from a vsock port to a host unix socket.
 // This allows the guest to initiate connections to the host over vsock
 func listenVsock(vm *vz.VirtualMachine, port uint, vsockPath string) error {
 	var proxy tcpproxy.Proxy
@@ -103,7 +89,7 @@ func listenVsock(vm *vz.VirtualMachine, port uint, vsockPath string) error {
 			if len(socketDevices) != 1 {
 				return nil, fmt.Errorf("VM has too many/not enough virtio-vsock devices (%d)", len(socketDevices))
 			}
-			return Listen(socketDevices[0], uint32(port))
+			return socketDevices[0].Listen(uint32(port))
 		default:
 			return nil, errors.New(fmt.Sprintf("unexpected scheme '%s'", parsed.Scheme))
 		}
@@ -128,51 +114,4 @@ func listenVsock(vm *vz.VirtualMachine, port uint, vsockPath string) error {
 	})
 	//defer proxy.Close()
 	return proxy.Start()
-}
-
-type dup struct {
-	conn *vz.VirtioSocketConnection
-	err  error
-}
-
-type Listener struct {
-	port            uint32
-	incomingConnsCh chan dup
-}
-
-func Listen(v *vz.VirtioSocketDevice, port uint32) (net.Listener, error) {
-	// for a given device, we should only use one instance of *VirtioSocketListener
-	listener := &Listener{
-		port:            port,
-		incomingConnsCh: make(chan dup, 1),
-	}
-	shouldAcceptConn := func(conn *vz.VirtioSocketConnection, err error) {
-		listener.incomingConnsCh <- dup{conn, err}
-	}
-
-	virtioSocketListener, err := vz.NewVirtioSocketListener(shouldAcceptConn)
-	if err != nil {
-		return nil, err
-	}
-	v.SetSocketListenerForPort(virtioSocketListener, port)
-	return listener, nil
-}
-
-func (l *Listener) Accept() (net.Conn, error) {
-	dup := <-l.incomingConnsCh
-	return dup.conn, dup.err
-}
-
-// Addr returns the listener's network address.
-func (l *Listener) Addr() net.Addr {
-	return &vz.Addr{
-		CID:  unix.VMADDR_CID_HOST,
-		Port: l.port,
-	}
-}
-
-func (l *Listener) Close() error {
-	// need to close incomingConns and cleanly exit the associated go func when this happens
-	// also need to disconnect from port
-	return nil
 }

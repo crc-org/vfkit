@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Code-Hex/vz/v2"
+	"github.com/Code-Hex/vz/v3"
 	"github.com/h2non/filetype"
 	"github.com/h2non/filetype/matchers"
 )

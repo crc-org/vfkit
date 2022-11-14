@@ -61,7 +61,7 @@ Various devices can be added to the virtual machines. They are all paravirtualiz
 
 The `--device virtio-blk` option adds a disk to the virtual machine. The disk is backed by an image file on the host machine. This file is a raw image file.
 This means an empty 1GiB disk can be created with `dd if=/dev/zero of=vfkit.img bs=1G count=1`.
-See also [vz/CreateDiskImage](https://pkg.go.dev/github.com/Code-Hex/vz/v2#CreateDiskImage).
+See also [vz/CreateDiskImage](https://pkg.go.dev/github.com/Code-Hex/vz/v3#CreateDiskImage).
 
 #### Arguments
 - `path`: the absolute path to the disk image file.
