@@ -17,9 +17,9 @@ jobs:
         - 1.17
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Set up Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ matrix.go }}
       - name: Build
@@ -27,7 +27,7 @@ jobs:
       - name: vet
         run: go vet ./...
       - name: Upload vfkit artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: vfkit Universal Binary (${{ matrix.os }})
           path: "./out/vfkit"
