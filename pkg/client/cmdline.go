@@ -12,13 +12,23 @@ import (
 	"strings"
 )
 
-// Bootloader determines which kernel/initrd/kernel args to use when starting
-// the virtual machine. It is mandatory to set a Bootloader or the virtual
+// Bootloader is the base interface for all bootloader classes. It specifies how to
+// boot the virtual machine. It is mandatory to set a Bootloader or the virtual
 // machine won't start.
-type Bootloader struct {
+type Bootloader VMComponent
+
+// linuxBootloader determines which kernel/initrd/kernel args to use when starting
+// the virtual machine.
+type linuxBootloader struct {
 	vmlinuzPath   string
 	kernelCmdLine string
 	initrdPath    string
+}
+
+// efiBootloader allows to set a few options related to EFI variable storage
+type efiBootloader struct {
+	efiVariableStorePath string
+	createVariableStore  bool
 }
 
 // VirtualMachine is the top-level type. It describes the virtual machine
@@ -26,7 +36,7 @@ type Bootloader struct {
 type VirtualMachine struct {
 	vcpus       uint
 	memoryBytes uint64
-	bootloader  *Bootloader
+	bootloader  Bootloader
 	devices     []VirtioDevice
 }
 
@@ -87,7 +97,7 @@ type timeSync struct {
 // NewVirtualMachine creates a new VirtualMachine instance. The virtual machine
 // will use vcpus virtual CPUs and it will be allocated memoryBytes bytes of
 // RAM. bootloader specifies which kernel/initrd/kernel args it will be using.
-func NewVirtualMachine(vcpus uint, memoryBytes uint64, bootloader *Bootloader) *VirtualMachine {
+func NewVirtualMachine(vcpus uint, memoryBytes uint64, bootloader Bootloader) *VirtualMachine {
 	return &VirtualMachine{
 		vcpus:       vcpus,
 		memoryBytes: memoryBytes,
@@ -138,19 +148,29 @@ func (vm *VirtualMachine) AddDevice(dev VirtioDevice) error {
 	return nil
 }
 
-// NewBootloader creates a new bootloader to start a VM with the file at
+// NewLinuxBootloader creates a new bootloader to start a VM with the file at
 // vmlinuzPath as the kernel, kernelCmdLine as the kernel command line, and the
-// file at initrdPath as the initrd. The kernel must be uncompressed otherwise
-// the VM will fail to boot.
-func NewBootloader(vmlinuzPath, kernelCmdLine, initrdPath string) *Bootloader {
-	return &Bootloader{
+// file at initrdPath as the initrd. On ARM64, the kernel must be uncompressed
+// otherwise the VM will fail to boot.
+func NewLinuxBootloader(vmlinuzPath, kernelCmdLine, initrdPath string) Bootloader {
+	return &linuxBootloader{
 		vmlinuzPath:   vmlinuzPath,
 		kernelCmdLine: kernelCmdLine,
 		initrdPath:    initrdPath,
 	}
 }
 
-func (bootloader *Bootloader) ToCmdLine() ([]string, error) {
+// NewEFIBootloader creates a new bootloader to start a VM using EFI
+// efiVariableStorePath is the path to a file for EFI storage
+// create is a boolean indicating if the file for the store should be created or not
+func NewEFIBootloader(efiVariableStorePath string, create bool) Bootloader {
+	return &efiBootloader{
+		efiVariableStorePath: efiVariableStorePath,
+		createVariableStore:  create,
+	}
+}
+
+func (bootloader *linuxBootloader) ToCmdLine() ([]string, error) {
 	args := []string{}
 	if bootloader.vmlinuzPath == "" {
 		return nil, fmt.Errorf("Missing kernel path")
@@ -168,6 +188,21 @@ func (bootloader *Bootloader) ToCmdLine() ([]string, error) {
 	args = append(args, "--kernel-cmdline", bootloader.kernelCmdLine)
 
 	return args, nil
+}
+
+func (bootloader *efiBootloader) ToCmdLine() ([]string, error) {
+	if bootloader.efiVariableStorePath == "" {
+		return nil, fmt.Errorf("Missing EFI store path")
+	}
+
+	builder := strings.Builder{}
+	builder.WriteString("efi")
+	builder.WriteString(fmt.Sprintf(",variable-store=%s", bootloader.efiVariableStorePath))
+	if bootloader.createVariableStore {
+		builder.WriteString(",create")
+	}
+
+	return []string{"--bootloader", builder.String()}, nil
 }
 
 // VirtioVsockNew creates a new virtio-vsock device for 2-way communication
