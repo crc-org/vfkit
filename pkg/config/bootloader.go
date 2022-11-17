@@ -24,7 +24,8 @@ type LinuxBootloader struct {
 
 type EFIBootloader struct {
 	efiVariableStorePath string
-	createVariableStore  bool
+	// TODO: virtualization framework allow both create and overwrite
+	createVariableStore bool
 }
 
 func NewLinuxBootloader(vmlinuzPath, kernelCmdLine, initrdPath string) *LinuxBootloader {
