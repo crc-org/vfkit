@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+// VirtualMachine is the top-level type. It describes the virtual machine
+// configuration (bootloader, devices, ...).
 type VirtualMachine struct {
 	Vcpus       uint
 	MemoryBytes uint64
@@ -14,10 +16,14 @@ type VirtualMachine struct {
 	Timesync    *TimeSync
 }
 
+// TimeSync enables synchronization of the host time to the linux guest after the host was suspended.
+// This requires qemu-guest-agent to be running in the guest, and to be listening on a vsock socket
 type TimeSync struct {
 	VsockPort uint
 }
 
+// The VMComponent interface represents a VM element (device, bootloader, ...)
+// which can be converted from/to commandline parameters
 type VMComponent interface {
 	FromOptions([]option) error
 	ToCmdLine() ([]string, error)

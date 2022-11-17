@@ -7,17 +7,23 @@ import (
 	"github.com/crc-org/vfkit/pkg/util"
 )
 
+// Bootloader is the base interface for all bootloader classes. It specifies how to
+// boot the virtual machine. It is mandatory to set a Bootloader or the virtual
+// machine won't start.
 type Bootloader interface {
 	FromOptions(options []option) error
 	ToCmdLine() ([]string, error)
 }
 
+// LinuxBootloader determines which kernel/initrd/kernel args to use when starting
+// the virtual machine.
 type LinuxBootloader struct {
 	VmlinuzPath   string
 	KernelCmdLine string
 	InitrdPath    string
 }
 
+// EFIBootloader allows to set a few options related to EFI variable storage
 type EFIBootloader struct {
 	EFIVariableStorePath string
 	// TODO: virtualization framework allow both create and overwrite
