@@ -12,7 +12,7 @@ import (
 )
 
 type Bootloader interface {
-	toVzBootloader() (vz.BootLoader, error)
+	ToVzBootloader() (vz.BootLoader, error)
 	FromOptions(options []option) error
 }
 
@@ -61,7 +61,7 @@ func isKernelUncompressed(filename string) (bool, error) {
 	return false, nil
 }
 
-func (bootloader *LinuxBootloader) toVzBootloader() (vz.BootLoader, error) {
+func (bootloader *LinuxBootloader) ToVzBootloader() (vz.BootLoader, error) {
 	uncompressed, err := isKernelUncompressed(bootloader.vmlinuzPath)
 	if err != nil {
 		return nil, err
@@ -100,7 +100,7 @@ func NewEFIBootloader(efiVariableStorePath string, createVariableStore bool) *EF
 	}
 }
 
-func (bootloader *EFIBootloader) toVzBootloader() (vz.BootLoader, error) {
+func (bootloader *EFIBootloader) ToVzBootloader() (vz.BootLoader, error) {
 	var efiVariableStore *vz.EFIVariableStore
 	var err error
 

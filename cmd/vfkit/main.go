@@ -108,7 +108,7 @@ func waitForVMState(vm *vz.VirtualMachine, state vz.VirtualMachineState) error {
 }
 
 func runVirtualMachine(vmConfig *config.VirtualMachine) error {
-	vzVMConfig, err := vmConfig.ToVzVirtualMachineConfig()
+	vzVMConfig, err := vf.ToVzVirtualMachineConfig(vmConfig)
 	if err != nil {
 		return err
 	}
