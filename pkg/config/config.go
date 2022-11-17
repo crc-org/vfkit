@@ -17,11 +17,7 @@ type VirtualMachine struct {
 }
 
 type TimeSync struct {
-	vsockPort uint
-}
-
-func (ts *TimeSync) VsockPort() uint {
-	return ts.vsockPort
+	VsockPort uint
 }
 
 func NewVirtualMachine(vcpus uint, memoryBytes uint64, bootloader Bootloader) *VirtualMachine {
@@ -73,10 +69,10 @@ func (vm *VirtualMachine) ToVzVirtualMachineConfig() (*vz.VirtualMachineConfigur
 		}
 	}
 
-	if vm.timesync != nil && vm.timesync.VsockPort() != 0 {
-		// automatically add the vsock device we'll need for communication over VsockPort()
+	if vm.timesync != nil && vm.timesync.VsockPort != 0 {
+		// automatically add the vsock device we'll need for communication over VsockPort
 		vsockDev := VirtioVsock{
-			Port:   vm.timesync.VsockPort(),
+			Port:   vm.timesync.VsockPort,
 			Listen: false,
 		}
 		if err := vsockDev.AddToVirtualMachineConfig(vzVMConfig); err != nil {
@@ -123,13 +119,13 @@ func timesyncFromCmdLine(optsStr string) (*TimeSync, error) {
 			if err != nil {
 				return nil, err
 			}
-			timesync.vsockPort = uint(vsockPort)
+			timesync.VsockPort = uint(vsockPort)
 		default:
 			return nil, fmt.Errorf("Unknown option for timesync parameter: %s", option.key)
 		}
 	}
 
-	if timesync.vsockPort == 0 {
+	if timesync.VsockPort == 0 {
 		return nil, fmt.Errorf("Missing 'vsockPort' option for timesync parameter")
 	}
 
