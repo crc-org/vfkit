@@ -4,16 +4,14 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-
-	"github.com/Code-Hex/vz/v3"
 )
 
 type VirtualMachine struct {
-	vcpus       uint
-	memoryBytes uint64
-	bootloader  Bootloader
-	devices     []VirtioDevice
-	timesync    *TimeSync
+	Vcpus       uint
+	MemoryBytes uint64
+	Bootloader  Bootloader
+	Devices     []VirtioDevice
+	Timesync    *TimeSync
 }
 
 type TimeSync struct {
@@ -22,9 +20,9 @@ type TimeSync struct {
 
 func NewVirtualMachine(vcpus uint, memoryBytes uint64, bootloader Bootloader) *VirtualMachine {
 	return &VirtualMachine{
-		vcpus:       vcpus,
-		memoryBytes: memoryBytes,
-		bootloader:  bootloader,
+		Vcpus:       vcpus,
+		MemoryBytes: memoryBytes,
+		Bootloader:  bootloader,
 	}
 }
 
@@ -36,7 +34,7 @@ func (vm *VirtualMachine) AddTimeSyncFromCmdLine(cmdlineOpts string) error {
 	if err != nil {
 		return err
 	}
-	vm.timesync = timesync
+	vm.Timesync = timesync
 
 	return nil
 }
@@ -47,57 +45,18 @@ func (vm *VirtualMachine) AddDevicesFromCmdLine(cmdlineOpts []string) error {
 		if err != nil {
 			return err
 		}
-		vm.devices = append(vm.devices, dev)
+		vm.Devices = append(vm.Devices, dev)
 	}
 	return nil
 }
 
-func (vm *VirtualMachine) ToVzVirtualMachineConfig() (*vz.VirtualMachineConfiguration, error) {
-	vzBootloader, err := vm.bootloader.toVzBootloader()
-	if err != nil {
-		return nil, err
-	}
-
-	vzVMConfig, err := vz.NewVirtualMachineConfiguration(vzBootloader, vm.vcpus, vm.memoryBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, dev := range vm.devices {
-		if err := dev.AddToVirtualMachineConfig(vzVMConfig); err != nil {
-			return nil, err
-		}
-	}
-
-	if vm.timesync != nil && vm.timesync.VsockPort != 0 {
-		// automatically add the vsock device we'll need for communication over VsockPort
-		vsockDev := VirtioVsock{
-			Port:   vm.timesync.VsockPort,
-			Listen: false,
-		}
-		if err := vsockDev.AddToVirtualMachineConfig(vzVMConfig); err != nil {
-			return nil, err
-		}
-	}
-
-	valid, err := vzVMConfig.Validate()
-	if err != nil {
-		return nil, err
-	}
-	if !valid {
-		return nil, fmt.Errorf("Invalid virtual machine configuration")
-	}
-
-	return vzVMConfig, nil
-}
-
 func (vm *VirtualMachine) TimeSync() *TimeSync {
-	return vm.timesync
+	return vm.Timesync
 }
 
 func (vm *VirtualMachine) VirtioVsockDevices() []*VirtioVsock {
 	vsockDevs := []*VirtioVsock{}
-	for _, dev := range vm.devices {
+	for _, dev := range vm.Devices {
 		if vsockDev, isVirtioVsock := dev.(*VirtioVsock); isVirtioVsock {
 			vsockDevs = append(vsockDevs, vsockDev)
 		}
