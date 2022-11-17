@@ -106,27 +106,35 @@ func (vm *VirtualMachine) VirtioVsockDevices() []*VirtioVsock {
 	return vsockDevs
 }
 
+func (ts *TimeSync) FromOptions(options []option) error {
+	for _, option := range options {
+		switch option.key {
+		case "vsockPort":
+			vsockPort, err := strconv.ParseUint(option.value, 10, 64)
+			if err != nil {
+				return err
+			}
+			ts.VsockPort = uint(vsockPort)
+		default:
+			return fmt.Errorf("Unknown option for timesync parameter: %s", option.key)
+		}
+	}
+
+	if ts.VsockPort == 0 {
+		return fmt.Errorf("Missing 'vsockPort' option for timesync parameter")
+	}
+
+	return nil
+}
+
 func timesyncFromCmdLine(optsStr string) (*TimeSync, error) {
 	var timesync TimeSync
 
 	optsStrv := strings.Split(optsStr, ",")
 	options := strvToOptions(optsStrv)
 
-	for _, option := range options {
-		switch option.key {
-		case "vsockPort":
-			vsockPort, err := strconv.ParseUint(option.value, 10, 64)
-			if err != nil {
-				return nil, err
-			}
-			timesync.VsockPort = uint(vsockPort)
-		default:
-			return nil, fmt.Errorf("Unknown option for timesync parameter: %s", option.key)
-		}
-	}
-
-	if timesync.VsockPort == 0 {
-		return nil, fmt.Errorf("Missing 'vsockPort' option for timesync parameter")
+	if err := timesync.FromOptions(options); err != nil {
+		return nil, err
 	}
 
 	return &timesync, nil
