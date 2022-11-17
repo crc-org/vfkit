@@ -7,23 +7,34 @@ import (
 	"strings"
 )
 
+// The VirtioDevice interface is an interface which is implemented by all virtio devices.
 type VirtioDevice VMComponent
 
+// VirtioVsock configures of a virtio-vsock device allowing 2-way communication
+// between the host and the virtual machine type
 type VirtioVsock struct {
-	Port      uint
+	// Port is the virtio-vsock port used for this device, see `man vsock` for more
+	// details.
+	Port uint
+	// SocketURL is the path to a unix socket on the host to use for the virtio-vsock communication with the guest.
 	SocketURL string
-	Listen    bool
+	// If true, vsock connections will have to be done from guest to host. If false, vsock connections will only be possible
+	// from host to guest
+	Listen bool
 }
 
+// VirtioBlk configures a disk device.
 type VirtioBlk struct {
 	ImagePath string
 }
 
+// VirtioFs configures directory sharing between the guest and the host.
 type VirtioFs struct {
 	SharedDir string
 	MountTag  string
 }
 
+// virtioRng configures a random number generator (RNG) device.
 type VirtioRng struct {
 }
 
@@ -32,11 +43,14 @@ type VirtioRng struct {
 
 // TODO: Add FileHandleNetwork support
 // https://github.com/Code-Hex/vz/blob/d70a0533bf8ed0fa9ab22fa4d4ca554b7c3f3ce5/network.go#L109-L112
+
+// VirtioNet configures the virtual machine networking.
 type VirtioNet struct {
 	Nat        bool
 	MacAddress net.HardwareAddr
 }
 
+// VirtioSerial configures the virtual machine serial ports.
 type VirtioSerial struct {
 	LogFile string
 }
