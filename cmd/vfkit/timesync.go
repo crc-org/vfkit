@@ -73,7 +73,7 @@ func setupGuestTimeSync(vm *vz.VirtualMachine, timesync *config.TimeSync) error 
 
 	log.Infof("Setting up host/guest time synchronization")
 
-	go watchWakeupNotifications(vm, timesync.VsockPort())
+	go watchWakeupNotifications(vm, timesync.VsockPort)
 
 	return nil
 }
