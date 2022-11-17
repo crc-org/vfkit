@@ -22,11 +22,11 @@ type VirtioVsock struct {
 	Listen    bool
 }
 
-type virtioBlk struct {
-	imagePath string
+type VirtioBlk struct {
+	ImagePath string
 }
 
-type virtioRng struct {
+type VirtioRng struct {
 }
 
 // TODO: Add BridgedNetwork support
@@ -34,13 +34,13 @@ type virtioRng struct {
 
 // TODO: Add FileHandleNetwork support
 // https://github.com/Code-Hex/vz/blob/d70a0533bf8ed0fa9ab22fa4d4ca554b7c3f3ce5/network.go#L109-L112
-type virtioNet struct {
-	nat        bool
-	macAddress net.HardwareAddr
+type VirtioNet struct {
+	Nat        bool
+	MacAddress net.HardwareAddr
 }
 
-type virtioSerial struct {
-	logFile string
+type VirtioSerial struct {
+	LogFile string
 }
 
 // TODO: Add VirtioBalloon
@@ -84,15 +84,15 @@ func deviceFromCmdLine(deviceOpts string) (VirtioDevice, error) {
 	var dev VirtioDevice
 	switch opts[0] {
 	case "virtio-blk":
-		dev = &virtioBlk{}
+		dev = &VirtioBlk{}
 	case "virtio-fs":
-		dev = &virtioFs{}
+		dev = &VirtioFs{}
 	case "virtio-net":
-		dev = &virtioNet{}
+		dev = &VirtioNet{}
 	case "virtio-rng":
-		dev = &virtioRng{}
+		dev = &VirtioRng{}
 	case "virtio-serial":
-		dev = &virtioSerial{}
+		dev = &VirtioSerial{}
 	case "virtio-vsock":
 		dev = &VirtioVsock{}
 	default:
@@ -107,11 +107,11 @@ func deviceFromCmdLine(deviceOpts string) (VirtioDevice, error) {
 	return dev, nil
 }
 
-func (dev *virtioSerial) FromOptions(options []option) error {
+func (dev *VirtioSerial) FromOptions(options []option) error {
 	for _, option := range options {
 		switch option.key {
 		case "logFilePath":
-			dev.logFile = option.value
+			dev.LogFile = option.value
 		default:
 			return fmt.Errorf("Unknown option for virtio-serial devices: %s", option.key)
 		}
@@ -119,14 +119,14 @@ func (dev *virtioSerial) FromOptions(options []option) error {
 	return nil
 }
 
-func (dev *virtioSerial) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineConfiguration) error {
-	if dev.logFile == "" {
+func (dev *VirtioSerial) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineConfiguration) error {
+	if dev.LogFile == "" {
 		return fmt.Errorf("missing mandatory 'logFile' option for virtio-serial device")
 	}
-	log.Infof("Adding virtio-serial device (logFile: %s)", dev.logFile)
+	log.Infof("Adding virtio-serial device (logFile: %s)", dev.LogFile)
 
 	//serialPortAttachment := vz.NewFileHandleSerialPortAttachment(os.Stdin, tty)
-	serialPortAttachment, err := vz.NewFileSerialPortAttachment(dev.logFile, false)
+	serialPortAttachment, err := vz.NewFileSerialPortAttachment(dev.LogFile, false)
 	if err != nil {
 		return err
 	}
@@ -141,20 +141,20 @@ func (dev *virtioSerial) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineCo
 	return nil
 }
 
-func (dev *virtioNet) FromOptions(options []option) error {
+func (dev *VirtioNet) FromOptions(options []option) error {
 	for _, option := range options {
 		switch option.key {
 		case "nat":
 			if option.value != "" {
 				return fmt.Errorf("Unexpected value for virtio-net 'nat' option: %s", option.value)
 			}
-			dev.nat = true
+			dev.Nat = true
 		case "mac":
 			macAddress, err := net.ParseMAC(option.value)
 			if err != nil {
 				return err
 			}
-			dev.macAddress = macAddress
+			dev.MacAddress = macAddress
 		default:
 			return fmt.Errorf("Unknown option for virtio-net devices: %s", option.key)
 		}
@@ -162,22 +162,22 @@ func (dev *virtioNet) FromOptions(options []option) error {
 	return nil
 }
 
-func (dev *virtioNet) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineConfiguration) error {
+func (dev *VirtioNet) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineConfiguration) error {
 	var (
 		mac *vz.MACAddress
 		err error
 	)
 
-	if !dev.nat {
+	if !dev.Nat {
 		return fmt.Errorf("NAT is the only supported networking mode")
 	}
 
-	log.Infof("Adding virtio-net device (nat: %t macAddress: [%s])", dev.nat, dev.macAddress)
+	log.Infof("Adding virtio-net device (nat: %t macAddress: [%s])", dev.Nat, dev.MacAddress)
 
-	if len(dev.macAddress) == 0 {
+	if len(dev.MacAddress) == 0 {
 		mac, err = vz.NewRandomLocallyAdministeredMACAddress()
 	} else {
-		mac, err = vz.NewMACAddress(dev.macAddress)
+		mac, err = vz.NewMACAddress(dev.MacAddress)
 	}
 	if err != nil {
 		return err
@@ -198,14 +198,14 @@ func (dev *virtioNet) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineConfi
 	return nil
 }
 
-func (dev *virtioRng) FromOptions(options []option) error {
+func (dev *VirtioRng) FromOptions(options []option) error {
 	if len(options) != 0 {
 		return fmt.Errorf("Unknown options for virtio-rng devices: %s", options)
 	}
 	return nil
 }
 
-func (dev *virtioRng) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineConfiguration) error {
+func (dev *VirtioRng) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineConfiguration) error {
 	log.Infof("Adding virtio-rng device")
 	entropyConfig, err := vz.NewVirtioEntropyDeviceConfiguration()
 	if err != nil {
@@ -218,11 +218,11 @@ func (dev *virtioRng) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineConfi
 	return nil
 }
 
-func (dev *virtioBlk) FromOptions(options []option) error {
+func (dev *VirtioBlk) FromOptions(options []option) error {
 	for _, option := range options {
 		switch option.key {
 		case "path":
-			dev.imagePath = option.value
+			dev.ImagePath = option.value
 		default:
 			return fmt.Errorf("Unknown option for virtio-blk devices: %s", option.key)
 		}
@@ -230,13 +230,13 @@ func (dev *virtioBlk) FromOptions(options []option) error {
 	return nil
 }
 
-func (dev *virtioBlk) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineConfiguration) error {
-	if dev.imagePath == "" {
+func (dev *VirtioBlk) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineConfiguration) error {
+	if dev.ImagePath == "" {
 		return fmt.Errorf("missing mandatory 'path' option for virtio-blk device")
 	}
-	log.Infof("Adding virtio-blk device (imagePath: %s)", dev.imagePath)
+	log.Infof("Adding virtio-blk device (imagePath: %s)", dev.ImagePath)
 	diskImageAttachment, err := vz.NewDiskImageStorageDeviceAttachment(
-		dev.imagePath,
+		dev.ImagePath,
 		false,
 	)
 	if err != nil {
@@ -291,18 +291,18 @@ func (dev *VirtioVsock) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineCon
 	return nil
 }
 
-type virtioFs struct {
-	sharedDir string
-	mountTag  string
+type VirtioFs struct {
+	SharedDir string
+	MountTag  string
 }
 
-func (dev *virtioFs) FromOptions(options []option) error {
+func (dev *VirtioFs) FromOptions(options []option) error {
 	for _, option := range options {
 		switch option.key {
 		case "sharedDir":
-			dev.sharedDir = option.value
+			dev.SharedDir = option.value
 		case "mountTag":
-			dev.mountTag = option.value
+			dev.MountTag = option.value
 		default:
 			return fmt.Errorf("Unknown option for virtio-fs devices: %s", option.key)
 		}
@@ -310,19 +310,19 @@ func (dev *virtioFs) FromOptions(options []option) error {
 	return nil
 }
 
-func (dev *virtioFs) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineConfiguration) error {
+func (dev *VirtioFs) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineConfiguration) error {
 	log.Infof("Adding virtio-fs device")
-	if dev.sharedDir == "" {
+	if dev.SharedDir == "" {
 		return fmt.Errorf("missing mandatory 'sharedDir' option for virtio-fs device")
 	}
 	var mountTag string
-	if dev.mountTag != "" {
-		mountTag = dev.mountTag
+	if dev.MountTag != "" {
+		mountTag = dev.MountTag
 	} else {
-		mountTag = filepath.Base(dev.sharedDir)
+		mountTag = filepath.Base(dev.SharedDir)
 	}
 
-	sharedDir, err := vz.NewSharedDirectory(dev.sharedDir, false)
+	sharedDir, err := vz.NewSharedDirectory(dev.SharedDir, false)
 	if err != nil {
 		return err
 	}
