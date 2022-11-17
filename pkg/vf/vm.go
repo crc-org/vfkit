@@ -19,14 +19,14 @@ func ToVzVirtualMachineConfig(vm *config.VirtualMachine) (*vz.VirtualMachineConf
 	}
 
 	for _, dev := range vm.Devices {
-		if err := dev.AddToVirtualMachineConfig(vzVMConfig); err != nil {
+		if err := AddToVirtualMachineConfig(dev, vzVMConfig); err != nil {
 			return nil, err
 		}
 	}
 
 	if vm.Timesync != nil && vm.Timesync.VsockPort != 0 {
 		// automatically add the vsock device we'll need for communication over VsockPort
-		vsockDev := config.VirtioVsock{
+		vsockDev := VirtioVsock{
 			Port:   vm.Timesync.VsockPort,
 			Listen: false,
 		}
