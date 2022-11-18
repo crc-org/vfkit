@@ -8,7 +8,7 @@ import (
 )
 
 func ToVzVirtualMachineConfig(vm *config.VirtualMachine) (*vz.VirtualMachineConfiguration, error) {
-	vzBootloader, err := vm.Bootloader.ToVzBootloader()
+	vzBootloader, err := ToVzBootloader(vm.Bootloader)
 	if err != nil {
 		return nil, err
 	}
