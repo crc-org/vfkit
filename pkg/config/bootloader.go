@@ -17,22 +17,22 @@ type Bootloader interface {
 }
 
 type LinuxBootloader struct {
-	vmlinuzPath   string
-	kernelCmdLine string
-	initrdPath    string
+	VmlinuzPath   string
+	KernelCmdLine string
+	InitrdPath    string
 }
 
 type EFIBootloader struct {
-	efiVariableStorePath string
+	EFIVariableStorePath string
 	// TODO: virtualization framework allow both create and overwrite
-	createVariableStore bool
+	CreateVariableStore bool
 }
 
 func NewLinuxBootloader(vmlinuzPath, kernelCmdLine, initrdPath string) *LinuxBootloader {
 	return &LinuxBootloader{
-		vmlinuzPath:   vmlinuzPath,
-		kernelCmdLine: kernelCmdLine,
-		initrdPath:    initrdPath,
+		VmlinuzPath:   vmlinuzPath,
+		KernelCmdLine: kernelCmdLine,
+		InitrdPath:    initrdPath,
 	}
 }
 
@@ -62,18 +62,18 @@ func isKernelUncompressed(filename string) (bool, error) {
 }
 
 func (bootloader *LinuxBootloader) ToVzBootloader() (vz.BootLoader, error) {
-	uncompressed, err := isKernelUncompressed(bootloader.vmlinuzPath)
+	uncompressed, err := isKernelUncompressed(bootloader.VmlinuzPath)
 	if err != nil {
 		return nil, err
 	}
 	if !uncompressed {
-		return nil, fmt.Errorf("kernel must be uncompressed, %s is a compressed file", bootloader.vmlinuzPath)
+		return nil, fmt.Errorf("kernel must be uncompressed, %s is a compressed file", bootloader.VmlinuzPath)
 	}
 
 	return vz.NewLinuxBootLoader(
-		bootloader.vmlinuzPath,
-		vz.WithCommandLine(bootloader.kernelCmdLine),
-		vz.WithInitrd(bootloader.initrdPath),
+		bootloader.VmlinuzPath,
+		vz.WithCommandLine(bootloader.KernelCmdLine),
+		vz.WithInitrd(bootloader.InitrdPath),
 	)
 }
 
@@ -81,11 +81,11 @@ func (bootloader *LinuxBootloader) FromOptions(options []option) error {
 	for _, option := range options {
 		switch option.key {
 		case "kernel":
-			bootloader.vmlinuzPath = option.value
+			bootloader.VmlinuzPath = option.value
 		case "cmdline":
-			bootloader.kernelCmdLine = util.TrimQuotes(option.value)
+			bootloader.KernelCmdLine = util.TrimQuotes(option.value)
 		case "initrd":
-			bootloader.initrdPath = option.value
+			bootloader.InitrdPath = option.value
 		default:
 			return fmt.Errorf("Unknown option for linux bootloaders: %s", option.key)
 		}
@@ -95,8 +95,8 @@ func (bootloader *LinuxBootloader) FromOptions(options []option) error {
 
 func NewEFIBootloader(efiVariableStorePath string, createVariableStore bool) *EFIBootloader {
 	return &EFIBootloader{
-		efiVariableStorePath: efiVariableStorePath,
-		createVariableStore:  createVariableStore,
+		EFIVariableStorePath: efiVariableStorePath,
+		CreateVariableStore:  createVariableStore,
 	}
 }
 
@@ -104,10 +104,10 @@ func (bootloader *EFIBootloader) ToVzBootloader() (vz.BootLoader, error) {
 	var efiVariableStore *vz.EFIVariableStore
 	var err error
 
-	if bootloader.createVariableStore {
-		efiVariableStore, err = vz.NewEFIVariableStore(bootloader.efiVariableStorePath, vz.WithCreatingEFIVariableStore())
+	if bootloader.CreateVariableStore {
+		efiVariableStore, err = vz.NewEFIVariableStore(bootloader.EFIVariableStorePath, vz.WithCreatingEFIVariableStore())
 	} else {
-		efiVariableStore, err = vz.NewEFIVariableStore(bootloader.efiVariableStorePath)
+		efiVariableStore, err = vz.NewEFIVariableStore(bootloader.EFIVariableStorePath)
 	}
 	if err != nil {
 		return nil, err
@@ -122,12 +122,12 @@ func (bootloader *EFIBootloader) FromOptions(options []option) error {
 	for _, option := range options {
 		switch option.key {
 		case "variable-store":
-			bootloader.efiVariableStorePath = option.value
+			bootloader.EFIVariableStorePath = option.value
 		case "create":
 			if option.value != "" {
 				return fmt.Errorf("Unexpected value for EFI bootloader 'create' option: %s", option.value)
 			}
-			bootloader.createVariableStore = true
+			bootloader.CreateVariableStore = true
 		default:
 			return fmt.Errorf("Unknown option for EFI bootloaders: %s", option.key)
 		}
