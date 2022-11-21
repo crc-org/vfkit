@@ -26,53 +26,41 @@ import (
 	"time"
 
 	"github.com/Code-Hex/vz/v3"
+	"github.com/crc-org/vfkit/pkg/cmdline"
 	"github.com/crc-org/vfkit/pkg/config"
 	"github.com/crc-org/vfkit/pkg/vf"
 	"github.com/docker/go-units"
 	log "github.com/sirupsen/logrus"
 )
 
-type cmdlineOptions struct {
-	vcpus     uint
-	memoryMiB uint
-
-	vmlinuzPath   string
-	kernelCmdline string
-	initrdPath    string
-
-	timeSync string
-
-	devices []string
-}
-
-func newVMConfiguration(opts *cmdlineOptions) (*config.VirtualMachine, error) {
+func newVMConfiguration(opts *cmdline.Options) (*config.VirtualMachine, error) {
 	log.Info(opts)
 	bootLoader := config.NewLinuxBootloader(
-		opts.vmlinuzPath,
-		opts.kernelCmdline,
-		opts.initrdPath,
+		opts.VmlinuzPath,
+		opts.KernelCmdline,
+		opts.InitrdPath,
 	)
 	log.Info("boot parameters:")
-	log.Infof("\tkernel: %s", opts.vmlinuzPath)
-	log.Infof("\tkernel command line:%s", opts.kernelCmdline)
-	log.Infof("\tinitrd: %s", opts.initrdPath)
+	log.Infof("\tkernel: %s", opts.VmlinuzPath)
+	log.Infof("\tkernel command line:%s", opts.KernelCmdline)
+	log.Infof("\tinitrd: %s", opts.InitrdPath)
 	log.Info()
 
 	vmConfig := config.NewVirtualMachine(
-		opts.vcpus,
-		uint64(opts.memoryMiB*units.MiB),
+		opts.Vcpus,
+		uint64(opts.MemoryMiB*units.MiB),
 		bootLoader,
 	)
 	log.Info("virtual machine parameters:")
-	log.Infof("\tvCPUs: %d", opts.vcpus)
-	log.Infof("\tmemory: %d MiB", opts.memoryMiB)
+	log.Infof("\tvCPUs: %d", opts.Vcpus)
+	log.Infof("\tmemory: %d MiB", opts.MemoryMiB)
 	log.Info()
 
-	if err := vmConfig.AddTimeSyncFromCmdLine(opts.timeSync); err != nil {
+	if err := vmConfig.AddTimeSyncFromCmdLine(opts.TimeSync); err != nil {
 		return nil, err
 	}
 
-	if err := vmConfig.AddDevicesFromCmdLine(opts.devices); err != nil {
+	if err := vmConfig.AddDevicesFromCmdLine(opts.Devices); err != nil {
 		return nil, err
 	}
 
