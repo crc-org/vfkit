@@ -156,6 +156,8 @@ func (dev *VirtioVsock) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConf
 
 func AddToVirtualMachineConfig(dev config.VirtioDevice, vmConfig *vzVirtualMachineConfiguration) error {
 	switch d := dev.(type) {
+	case *config.USBMassStorage:
+		return (*USBMassStorage)(d).AddToVirtualMachineConfig(vmConfig)
 	case *config.VirtioBlk:
 		return (*VirtioBlk)(d).AddToVirtualMachineConfig(vmConfig)
 	case *config.VirtioFs:
@@ -180,4 +182,26 @@ func (config *StorageConfig) toVz() (vz.StorageDeviceAttachment, error) {
 	return vz.NewDiskImageStorageDeviceAttachment(config.ImagePath, config.ReadOnly)
 }
 
+func (dev *USBMassStorage) toVz() (vz.StorageDeviceConfiguration, error) {
+	var storageConfig StorageConfig = StorageConfig(dev.StorageConfig)
+	attachment, err := storageConfig.toVz()
+	if err != nil {
+		return nil, err
+	}
+	return vz.NewUSBMassStorageDeviceConfiguration(attachment)
+}
+
+func (dev *USBMassStorage) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfiguration) error {
+	storageDeviceConfig, err := dev.toVz()
+	if err != nil {
+		return err
+	}
+	log.Infof("Adding USB mass storage device (imagePath: %s)", dev.ImagePath)
+	vmConfig.storageDeviceConfiguration = append(vmConfig.storageDeviceConfiguration, storageDeviceConfig)
+
+	return nil
+}
+
 type StorageConfig config.StorageConfig
+
+type USBMassStorage config.USBMassStorage
