@@ -107,6 +107,8 @@ func deviceFromCmdLine(deviceOpts string) (VirtioDevice, error) {
 		dev = &VirtioSerial{}
 	case "virtio-vsock":
 		dev = &VirtioVsock{}
+	case "usb-mass-storage":
+		dev = usbMassStorageNewEmpty()
 	default:
 		return nil, fmt.Errorf("unknown device type: %s", opts[0])
 	}
@@ -316,6 +318,27 @@ func (dev *VirtioFs) FromOptions(options []option) error {
 		}
 	}
 	return nil
+}
+
+type USBMassStorage struct {
+	StorageConfig
+}
+
+func usbMassStorageNewEmpty() *USBMassStorage {
+	return &USBMassStorage{
+		StorageConfig{
+			DevName: "usb-mass-storage",
+		},
+	}
+}
+
+// USBMassStorageNew creates a new USB disk to use in the virtual machine. It will use
+// the file at imagePath as the disk image. This image must be in raw or ISO format.
+func USBMassStorageNew(imagePath string) (VMComponent, error) {
+	usbMassStorage := usbMassStorageNewEmpty()
+	usbMassStorage.ImagePath = imagePath
+
+	return usbMassStorage, nil
 }
 
 // StorageConfig configures a disk device.

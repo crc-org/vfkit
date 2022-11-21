@@ -113,6 +113,19 @@ See also [vz/CreateDiskImage](https://pkg.go.dev/github.com/Code-Hex/vz/v3#Creat
 `--device virtio-blk,path=/Users/virtuser/vfkit.img`
 
 
+### USB Mass Storage
+
+#### Description
+
+The `--device usb-mass-storage` option adds a USB mass storage device to the virtual machine. The disk is backed by an image file on the host machine. This file is a raw image file or an ISO image.
+
+#### Arguments
+- `path`: the absolute path to the disk image file.
+
+#### Example
+`--device usb-mass-storage,path=/Users/virtuser/distro.iso`
+
+
 ### Networking
 
 #### Description
