@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/crc-org/vfkit/pkg/cmdline"
 	"github.com/spf13/cobra"
 )
 
 const vfkitVersion = "0.0.4"
 
-var opts = &cmdlineOptions{}
+var opts = &cmdline.Options{}
 
 var rootCmd = &cobra.Command{
 	Use:   "vfkit",
@@ -27,20 +28,7 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.Flags().StringVarP(&opts.vmlinuzPath, "kernel", "k", "", "path to the virtual machine linux kernel")
-	rootCmd.Flags().StringVarP(&opts.kernelCmdline, "kernel-cmdline", "C", "", "linux kernel command line")
-	rootCmd.Flags().StringVarP(&opts.initrdPath, "initrd", "i", "", "path to the virtual machine initrd")
-	rootCmd.MarkFlagRequired("kernel")
-	rootCmd.MarkFlagRequired("kernel-cmdline")
-	rootCmd.MarkFlagRequired("initrd")
-
-	rootCmd.Flags().UintVarP(&opts.vcpus, "cpus", "c", 1, "number of virtual CPUs")
-	// FIXME: use go-units for parsing
-	rootCmd.Flags().UintVarP(&opts.memoryMiB, "memory", "m", 512, "virtual machine RAM size in mibibytes")
-
-	rootCmd.Flags().StringVarP(&opts.timeSync, "timesync", "t", "", "sync guest time when host wakes up from sleep")
-
-	rootCmd.Flags().StringArrayVarP(&opts.devices, "device", "d", []string{}, "devices")
+	cmdline.AddFlags(rootCmd, opts)
 
 	// this is almost the cobra default template with an added ':' before the version for crc's convenience
 	versionTmpl := `{{with .Name}}{{printf "%s " .}}{{end}}{{printf "version: %s" .Version}}
