@@ -33,23 +33,42 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func newVMConfiguration(opts *cmdline.Options) (*config.VirtualMachine, error) {
-	log.Info(opts)
-	bootLoader := config.NewLinuxBootloader(
+func newLegacyBootloader(opts *cmdline.Options) config.Bootloader {
+	if opts.VmlinuzPath == "" && opts.KernelCmdline == "" && opts.InitrdPath == "" {
+		return nil
+	}
+
+	return config.NewLinuxBootloader(
 		opts.VmlinuzPath,
 		opts.KernelCmdline,
 		opts.InitrdPath,
 	)
-	log.Info("boot parameters:")
-	log.Infof("\tkernel: %s", opts.VmlinuzPath)
-	log.Infof("\tkernel command line:%s", opts.KernelCmdline)
-	log.Infof("\tinitrd: %s", opts.InitrdPath)
+}
+
+func newBootloaderConfiguration(opts *cmdline.Options) (config.Bootloader, error) {
+	legacyBootloader := newLegacyBootloader(opts)
+
+	if legacyBootloader != nil {
+		return legacyBootloader, nil
+	}
+
+	return config.BootloaderFromCmdLine(opts.Bootloader.GetSlice())
+}
+
+func newVMConfiguration(opts *cmdline.Options) (*config.VirtualMachine, error) {
+	bootloader, err := newBootloaderConfiguration(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Info(opts)
+	log.Infof("boot parameters: %+v", bootloader)
 	log.Info()
 
 	vmConfig := config.NewVirtualMachine(
 		opts.Vcpus,
 		uint64(opts.MemoryMiB*units.MiB),
-		bootLoader,
+		bootloader,
 	)
 	log.Info("virtual machine parameters:")
 	log.Infof("\tvCPUs: %d", opts.Vcpus)
