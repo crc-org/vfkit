@@ -21,8 +21,64 @@ Number of virtual CPUs (vCPU) available in the VM. It defaults to 1 vCPU.
 
 Amount of memory available in the virtual machine. The value is in MiB (mibibytes, 1024 * 1024 * 1024 bytes), and the default is 512 MiB.
 
+### Time Synchronization Configuration
 
-### Bootloader Configuration
+#### Description
+
+When the host system is suspended, the guest clock stops running, and it's unable to get back to the correct time upon resume.
+The `--timesync` option can be used to let `vfkit` set the guest clock to the correct time when it detects the host.
+At the moment, this can only be done using `qemu-guest-agent`, which has to be installed in the guest.
+It must be configured to communicate over virtio-vsock.
+
+#### Arguments
+- `vsockPort`: vsock port used for communication with the guest agent.
+
+
+## Bootloader Configuration
+
+A bootloader is required to tell vfkit _how_ it should be starting the guest OS.
+
+### Linux bootloader
+
+#### Description
+
+`--bootloader linux` replaces the legacy `--kernel`, `--kernel-cmdline` and `--initrd` options.
+It allows to specify which kernel and initrd should be used when starting the VM.
+
+#### Arguments
+
+- `kernel`: path to the kernel to use to start the virtual machine. The kernel *must* be uncompressed or the VM will hang when trying to start. See [the kernel documentation](https://www.kernel.org/doc/Documentation/arm64/booting.txt) for more details.
+- `initrd`: path to the initrd file to use when starting the virtual machine.
+- `cmdline`: kernel command line to use when starting the virtual machine.
+
+#### Example
+
+`--bootloader linux,kernel=~/kernels/vmlinuz-5.18.18-200.fc36.aarch64,initrd=~/kernels/initramfs-5.18.18-200.fc36.aarch64.img,cmdline="\"console=hvc0 root=UUID=164b4fc3-dc5a-40ea-a40b-c689a7bf41cf rw\""`
+
+The kernel command line must be enclosed in `"`, and depending on your shell, they might need to be escaped (`\"`)
+
+
+### EFI bootloader
+
+#### Description
+
+`--bootloader efi` is only available when running on macOS 13 or newer.
+This allows to boot a disk image using EFI, which removes the need for providing external kernel/initrd/...
+The disk image bootloader will be started by the EFI firmware, which will in turn know which kernel it should be booting.
+
+#### Arguments
+
+- `variable-store: path to a file which EFI can use to store its variables
+- `create`: indicate whether the `variable-store` file should be created or not if missing.
+
+### Deprecated options
+
+#### Description
+
+The `--kernel`, `--initrd` and `--kernel-cmdline options are deprecated and have been replaced by the more generic `--bootloader` option.
+
+#### Options
+
 - `--kernel`
 
 Path to the kernel to use to start the virtual machine. The kernel *must* be uncompressed or the VM will hang when trying to start.
@@ -35,19 +91,6 @@ Path to the initrd file to use when starting the virtual machine.
 - `--kernel-cmdline`
 
 Kernel command line to use when starting the virtual machine.
-
-
-### Time Synchronization Configuration
-
-#### Description
-
-When the host system is suspended, the guest clock stops running, and it's unable to get back to the correct time upon resume.
-The `--timesync` option can be used to let `vfkit` set the guest clock to the correct time when it detects the host.
-At the moment, this can only be done using `qemu-guest-agent`, which has to be installed in the guest.
-It must be configured to communicate over virtio-vsock.
-
-##### Arguments
-- `vsockPort`: vsock port used for communication with the guest agent.
 
 
 ## Device Configuration
