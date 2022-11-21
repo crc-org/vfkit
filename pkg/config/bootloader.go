@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/crc-org/vfkit/pkg/util"
+
 	"github.com/Code-Hex/vz/v3"
 	"github.com/h2non/filetype"
 	"github.com/h2non/filetype/matchers"
@@ -11,6 +13,7 @@ import (
 
 type Bootloader interface {
 	toVzBootloader() (vz.BootLoader, error)
+	FromOptions(options []option) error
 }
 
 type LinuxBootloader struct {
@@ -73,6 +76,22 @@ func (bootloader *LinuxBootloader) toVzBootloader() (vz.BootLoader, error) {
 	)
 }
 
+func (bootloader *LinuxBootloader) FromOptions(options []option) error {
+	for _, option := range options {
+		switch option.key {
+		case "kernel":
+			bootloader.vmlinuzPath = option.value
+		case "cmdline":
+			bootloader.kernelCmdLine = util.TrimQuotes(option.value)
+		case "initrd":
+			bootloader.initrdPath = option.value
+		default:
+			return fmt.Errorf("Unknown option for linux bootloaders: %s", option.key)
+		}
+	}
+	return nil
+}
+
 func NewEFIBootloader(efiVariableStorePath string, createVariableStore bool) *EFIBootloader {
 	return &EFIBootloader{
 		efiVariableStorePath: efiVariableStorePath,
@@ -96,4 +115,43 @@ func (bootloader *EFIBootloader) toVzBootloader() (vz.BootLoader, error) {
 	return vz.NewEFIBootLoader(
 		vz.WithEFIVariableStore(efiVariableStore),
 	)
+}
+
+func (bootloader *EFIBootloader) FromOptions(options []option) error {
+	for _, option := range options {
+		switch option.key {
+		case "variable-store":
+			bootloader.efiVariableStorePath = option.value
+		case "create":
+			if option.value != "" {
+				return fmt.Errorf("Unexpected value for EFI bootloader 'create' option: %s", option.value)
+			}
+			bootloader.createVariableStore = true
+		default:
+			return fmt.Errorf("Unknown option for EFI bootloaders: %s", option.key)
+		}
+	}
+	return nil
+}
+
+func BootloaderFromCmdLine(optsStrv []string) (Bootloader, error) {
+	var bootloader Bootloader
+
+	if len(optsStrv) < 1 {
+		return nil, fmt.Errorf("empty option list in --bootloader command line argument")
+	}
+	bootloaderType := optsStrv[0]
+	switch bootloaderType {
+	case "efi":
+		bootloader = &EFIBootloader{}
+	case "linux":
+		bootloader = &LinuxBootloader{}
+	default:
+		return nil, fmt.Errorf("unknown bootloader type: %s", bootloaderType)
+	}
+	options := strvToOptions(optsStrv[1:])
+	if err := bootloader.FromOptions(options); err != nil {
+		return nil, err
+	}
+	return bootloader, nil
 }

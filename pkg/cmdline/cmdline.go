@@ -10,6 +10,8 @@ type Options struct {
 	KernelCmdline string
 	InitrdPath    string
 
+	Bootloader stringSliceValue
+
 	TimeSync string
 
 	Devices []string
@@ -20,9 +22,12 @@ func AddFlags(cmd *cobra.Command, opts *Options) {
 	cmd.Flags().StringVarP(&opts.KernelCmdline, "kernel-cmdline", "C", "", "linux kernel command line")
 	cmd.Flags().StringVarP(&opts.InitrdPath, "initrd", "i", "", "path to the virtual machine initrd")
 
-	cmd.MarkFlagRequired("kernel")
-	cmd.MarkFlagRequired("kernel-cmdline")
-	cmd.MarkFlagRequired("initrd")
+	cmd.Flags().VarP(&opts.Bootloader, "bootloader", "b", "bootloader configuration")
+
+	cmd.MarkFlagsMutuallyExclusive("kernel", "bootloader")
+	cmd.MarkFlagsMutuallyExclusive("initrd", "bootloader")
+	cmd.MarkFlagsMutuallyExclusive("kernel-cmdline", "bootloader")
+	cmd.MarkFlagsRequiredTogether("kernel", "initrd", "kernel-cmdline")
 
 	cmd.Flags().UintVarP(&opts.Vcpus, "cpus", "c", 1, "number of virtual CPUs")
 	// FIXME: use go-units for parsing
