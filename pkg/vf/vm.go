@@ -39,6 +39,7 @@ func ToVzVirtualMachineConfig(vm *config.VirtualMachine) (*vz.VirtualMachineConf
 			return nil, err
 		}
 	}
+	vzVMConfig.SetStorageDevicesVirtualMachineConfiguration(vzVMConfig.storageDeviceConfiguration)
 
 	if vm.Timesync != nil && vm.Timesync.VsockPort != 0 {
 		// automatically add the vsock device we'll need for communication over VsockPort

@@ -32,9 +32,8 @@ func (dev *VirtioBlk) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfig
 		return err
 	}
 	log.Infof("Adding virtio-blk device (imagePath: %s)", dev.ImagePath)
-	vmConfig.SetStorageDevicesVirtualMachineConfiguration([]vz.StorageDeviceConfiguration{
-		storageDeviceConfig,
-	})
+	vmConfig.storageDeviceConfiguration = append(vmConfig.storageDeviceConfiguration, storageDeviceConfig)
+
 	return nil
 }
 
