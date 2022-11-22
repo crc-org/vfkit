@@ -26,6 +26,7 @@ type VirtioVsock struct {
 // VirtioBlk configures a disk device.
 type VirtioBlk struct {
 	StorageConfig
+	DeviceIdentifier string
 }
 
 // VirtioFs configures directory sharing between the guest and the host.
@@ -220,19 +221,56 @@ func (dev *VirtioRng) FromOptions(options []option) error {
 
 func virtioBlkNewEmpty() *VirtioBlk {
 	return &VirtioBlk{
-		StorageConfig{
+		StorageConfig: StorageConfig{
 			DevName: "virtio-blk",
 		},
+		DeviceIdentifier: "",
 	}
 }
 
 // VirtioBlkNew creates a new disk to use in the virtual machine. It will use
 // the file at imagePath as the disk image. This image must be in raw format.
-func VirtioBlkNew(imagePath string) (VirtioDevice, error) {
+func VirtioBlkNew(imagePath string) (*VirtioBlk, error) {
 	virtioBlk := virtioBlkNewEmpty()
 	virtioBlk.ImagePath = imagePath
 
 	return virtioBlk, nil
+}
+
+func (dev *VirtioBlk) SetDeviceIdentifier(devId string) {
+	dev.DeviceIdentifier = devId
+}
+
+func (dev *VirtioBlk) FromOptions(options []option) error {
+	unhandledOpts := []option{}
+	for _, option := range options {
+		switch option.key {
+		case "deviceId":
+			dev.DeviceIdentifier = option.value
+		default:
+			unhandledOpts = append(unhandledOpts, option)
+		}
+	}
+
+	if err := dev.StorageConfig.FromOptions(unhandledOpts); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (dev *VirtioBlk) ToCmdLine() ([]string, error) {
+	cmdLine, err := dev.StorageConfig.ToCmdLine()
+	if err != nil {
+		return []string{}, err
+	}
+	if len(cmdLine) != 2 {
+		return []string{}, fmt.Errorf("Unexpected storage config commandline")
+	}
+	if dev.DeviceIdentifier != "" {
+		cmdLine[1] = fmt.Sprintf("%s,deviceId=%s", cmdLine[1], dev.DeviceIdentifier)
+	}
+	return cmdLine, nil
 }
 
 // VirtioVsockNew creates a new virtio-vsock device for 2-way communication

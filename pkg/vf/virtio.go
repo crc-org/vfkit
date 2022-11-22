@@ -23,7 +23,19 @@ func (dev *VirtioBlk) toVz() (vz.StorageDeviceConfiguration, error) {
 	if err != nil {
 		return nil, err
 	}
-	return vz.NewVirtioBlockDeviceConfiguration(attachment)
+	devConfig, err := vz.NewVirtioBlockDeviceConfiguration(attachment)
+	if err != nil {
+		return nil, err
+	}
+
+	if dev.DeviceIdentifier != "" {
+		err := devConfig.SetBlockDeviceIdentifier(dev.DeviceIdentifier)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return devConfig, nil
 }
 
 func (dev *VirtioBlk) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfiguration) error {
