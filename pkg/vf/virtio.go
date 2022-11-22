@@ -26,7 +26,7 @@ func (dev *VirtioBlk) toVz() (vz.StorageDeviceConfiguration, error) {
 	return vz.NewVirtioBlockDeviceConfiguration(attachment)
 }
 
-func (dev *VirtioBlk) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineConfiguration) error {
+func (dev *VirtioBlk) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfiguration) error {
 	storageDeviceConfig, err := dev.toVz()
 	if err != nil {
 		return err
@@ -38,7 +38,7 @@ func (dev *VirtioBlk) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineConfi
 	return nil
 }
 
-func (dev *VirtioFs) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineConfiguration) error {
+func (dev *VirtioFs) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfiguration) error {
 	log.Infof("Adding virtio-fs device")
 	if dev.SharedDir == "" {
 		return fmt.Errorf("missing mandatory 'sharedDir' option for virtio-fs device")
@@ -69,7 +69,7 @@ func (dev *VirtioFs) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineConfig
 	return nil
 }
 
-func (dev *VirtioNet) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineConfiguration) error {
+func (dev *VirtioNet) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfiguration) error {
 	var (
 		mac *vz.MACAddress
 		err error
@@ -105,7 +105,7 @@ func (dev *VirtioNet) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineConfi
 	return nil
 }
 
-func (dev *VirtioRng) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineConfiguration) error {
+func (dev *VirtioRng) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfiguration) error {
 	log.Infof("Adding virtio-rng device")
 	entropyConfig, err := vz.NewVirtioEntropyDeviceConfiguration()
 	if err != nil {
@@ -118,7 +118,7 @@ func (dev *VirtioRng) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineConfi
 	return nil
 }
 
-func (dev *VirtioSerial) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineConfiguration) error {
+func (dev *VirtioSerial) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfiguration) error {
 	if dev.LogFile == "" {
 		return fmt.Errorf("missing mandatory 'logFile' option for virtio-serial device")
 	}
@@ -140,7 +140,7 @@ func (dev *VirtioSerial) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineCo
 	return nil
 }
 
-func (dev *VirtioVsock) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineConfiguration) error {
+func (dev *VirtioVsock) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfiguration) error {
 	if len(vmConfig.SocketDevices()) != 0 {
 		log.Debugf("virtio-vsock device already present, not adding a second one")
 		return nil
@@ -155,7 +155,7 @@ func (dev *VirtioVsock) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineCon
 	return nil
 }
 
-func AddToVirtualMachineConfig(dev config.VirtioDevice, vmConfig *vz.VirtualMachineConfiguration) error {
+func AddToVirtualMachineConfig(dev config.VirtioDevice, vmConfig *vzVirtualMachineConfiguration) error {
 	switch d := dev.(type) {
 	case *config.VirtioBlk:
 		return (*VirtioBlk)(d).AddToVirtualMachineConfig(vmConfig)
