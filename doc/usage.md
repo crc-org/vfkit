@@ -108,6 +108,7 @@ See also [vz/CreateDiskImage](https://pkg.go.dev/github.com/Code-Hex/vz/v3#Creat
 
 #### Arguments
 - `path`: the absolute path to the disk image file.
+- `deviceId`: `/dev/disk/by-id/` identifier to use for this device.
 
 #### Example
 `--device virtio-blk,path=/Users/virtuser/vfkit.img`
