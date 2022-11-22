@@ -17,27 +17,27 @@ type VirtioRng config.VirtioRng
 type VirtioSerial config.VirtioSerial
 type VirtioVsock config.VirtioVsock
 
+func (dev *VirtioBlk) toVz() (vz.StorageDeviceConfiguration, error) {
+	var storageConfig StorageConfig = StorageConfig(dev.StorageConfig)
+	attachment, err := storageConfig.toVz()
+	if err != nil {
+		return nil, err
+	}
+	return vz.NewVirtioBlockDeviceConfiguration(attachment)
+}
+
 func (dev *VirtioBlk) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineConfiguration) error {
-	if dev.ImagePath == "" {
-		return fmt.Errorf("missing mandatory 'path' option for virtio-blk device")
+	storageDeviceConfig, err := dev.toVz()
+	if err != nil {
+		return err
 	}
 	log.Infof("Adding virtio-blk device (imagePath: %s)", dev.ImagePath)
-	diskImageAttachment, err := vz.NewDiskImageStorageDeviceAttachment(
-		dev.ImagePath,
-		false,
-	)
-	if err != nil {
-		return err
-	}
-	storageDeviceConfig, err := vz.NewVirtioBlockDeviceConfiguration(diskImageAttachment)
-	if err != nil {
-		return err
-	}
 	vmConfig.SetStorageDevicesVirtualMachineConfiguration([]vz.StorageDeviceConfiguration{
 		storageDeviceConfig,
 	})
 	return nil
 }
+
 func (dev *VirtioFs) AddToVirtualMachineConfig(vmConfig *vz.VirtualMachineConfiguration) error {
 	log.Infof("Adding virtio-fs device")
 	if dev.SharedDir == "" {
@@ -173,3 +173,12 @@ func AddToVirtualMachineConfig(dev config.VirtioDevice, vmConfig *vz.VirtualMach
 		return fmt.Errorf("Unexpected virtio device type: %T", d)
 	}
 }
+
+func (config *StorageConfig) toVz() (vz.StorageDeviceAttachment, error) {
+	if config.ImagePath == "" {
+		return nil, fmt.Errorf("missing mandatory 'path' option for %s device", config.DevName)
+	}
+	return vz.NewDiskImageStorageDeviceAttachment(config.ImagePath, config.ReadOnly)
+}
+
+type StorageConfig config.StorageConfig
