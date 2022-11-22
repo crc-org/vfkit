@@ -7,13 +7,29 @@ import (
 	"github.com/crc-org/vfkit/pkg/config"
 )
 
-func ToVzVirtualMachineConfig(vm *config.VirtualMachine) (*vz.VirtualMachineConfiguration, error) {
+type vzVirtualMachineConfiguration struct {
+	*vz.VirtualMachineConfiguration
+	storageDeviceConfiguration []vz.StorageDeviceConfiguration
+}
+
+func newVzVirtualMachineConfiguration(vm *config.VirtualMachine) (*vzVirtualMachineConfiguration, error) {
 	vzBootloader, err := ToVzBootloader(vm.Bootloader)
 	if err != nil {
 		return nil, err
 	}
 
 	vzVMConfig, err := vz.NewVirtualMachineConfiguration(vzBootloader, vm.Vcpus, vm.MemoryBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return &vzVirtualMachineConfiguration{
+		VirtualMachineConfiguration: vzVMConfig,
+	}, nil
+}
+
+func ToVzVirtualMachineConfig(vm *config.VirtualMachine) (*vz.VirtualMachineConfiguration, error) {
+	vzVMConfig, err := newVzVirtualMachineConfiguration(vm)
 	if err != nil {
 		return nil, err
 	}
@@ -43,5 +59,5 @@ func ToVzVirtualMachineConfig(vm *config.VirtualMachine) (*vz.VirtualMachineConf
 		return nil, fmt.Errorf("Invalid virtual machine configuration")
 	}
 
-	return vzVMConfig, nil
+	return vzVMConfig.VirtualMachineConfiguration, nil
 }
