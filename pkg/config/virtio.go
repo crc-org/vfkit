@@ -25,7 +25,7 @@ type VirtioVsock struct {
 
 // VirtioBlk configures a disk device.
 type VirtioBlk struct {
-	ImagePath string
+	StorageConfig
 }
 
 // VirtioFs configures directory sharing between the guest and the host.
@@ -96,7 +96,7 @@ func deviceFromCmdLine(deviceOpts string) (VirtioDevice, error) {
 	var dev VirtioDevice
 	switch opts[0] {
 	case "virtio-blk":
-		dev = &VirtioBlk{}
+		dev = virtioBlkNewEmpty()
 	case "virtio-fs":
 		dev = &VirtioFs{}
 	case "virtio-net":
@@ -216,31 +216,21 @@ func (dev *VirtioRng) FromOptions(options []option) error {
 	return nil
 }
 
+func virtioBlkNewEmpty() *VirtioBlk {
+	return &VirtioBlk{
+		StorageConfig{
+			DevName: "virtio-blk",
+		},
+	}
+}
+
 // VirtioBlkNew creates a new disk to use in the virtual machine. It will use
 // the file at imagePath as the disk image. This image must be in raw format.
 func VirtioBlkNew(imagePath string) (VirtioDevice, error) {
-	return &VirtioBlk{
-		ImagePath: imagePath,
-	}, nil
-}
+	virtioBlk := virtioBlkNewEmpty()
+	virtioBlk.ImagePath = imagePath
 
-func (dev *VirtioBlk) ToCmdLine() ([]string, error) {
-	if dev.ImagePath == "" {
-		return nil, fmt.Errorf("virtio-blk needs the path to a disk image")
-	}
-	return []string{"--device", fmt.Sprintf("virtio-blk,path=%s", dev.ImagePath)}, nil
-}
-
-func (dev *VirtioBlk) FromOptions(options []option) error {
-	for _, option := range options {
-		switch option.key {
-		case "path":
-			dev.ImagePath = option.value
-		default:
-			return fmt.Errorf("Unknown option for virtio-blk devices: %s", option.key)
-		}
-	}
-	return nil
+	return virtioBlk, nil
 }
 
 // VirtioVsockNew creates a new virtio-vsock device for 2-way communication
@@ -323,6 +313,32 @@ func (dev *VirtioFs) FromOptions(options []option) error {
 			dev.MountTag = option.value
 		default:
 			return fmt.Errorf("Unknown option for virtio-fs devices: %s", option.key)
+		}
+	}
+	return nil
+}
+
+// StorageConfig configures a disk device.
+type StorageConfig struct {
+	DevName   string
+	ImagePath string
+	ReadOnly  bool
+}
+
+func (config *StorageConfig) ToCmdLine() ([]string, error) {
+	if config.ImagePath == "" {
+		return nil, fmt.Errorf("%s devices need the path to a disk image", config.DevName)
+	}
+	return []string{"--device", fmt.Sprintf("%s,path=%s", config.DevName, config.ImagePath)}, nil
+}
+
+func (config *StorageConfig) FromOptions(options []option) error {
+	for _, option := range options {
+		switch option.key {
+		case "path":
+			config.ImagePath = option.value
+		default:
+			return fmt.Errorf("Unknown option for %s devices: %s", config.DevName, option.key)
 		}
 	}
 	return nil
