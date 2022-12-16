@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"net"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -42,13 +43,13 @@ type VirtioRng struct {
 // TODO: Add BridgedNetwork support
 // https://github.com/Code-Hex/vz/blob/d70a0533bf8ed0fa9ab22fa4d4ca554b7c3f3ce5/network.go#L81-L82
 
-// TODO: Add FileHandleNetwork support
-// https://github.com/Code-Hex/vz/blob/d70a0533bf8ed0fa9ab22fa4d4ca554b7c3f3ce5/network.go#L109-L112
-
 // VirtioNet configures the virtual machine networking.
 type VirtioNet struct {
 	Nat        bool
 	MacAddress net.HardwareAddr
+	// file parameter is holding a connected datagram socket.
+	// see https://github.com/Code-Hex/vz/blob/7f648b6fb9205d6f11792263d79876e3042c33ec/network.go#L113-L155
+	Socket *os.File
 }
 
 // VirtioSerial configures the virtual machine serial ports.
@@ -152,7 +153,7 @@ func (dev *VirtioSerial) FromOptions(options []option) error {
 
 // VirtioNetNew creates a new network device for the virtual machine. It will
 // use macAddress as its MAC address.
-func VirtioNetNew(macAddress string) (VirtioDevice, error) {
+func VirtioNetNew(macAddress string) (*VirtioNet, error) {
 	var hwAddr net.HardwareAddr
 
 	if macAddress != "" {
@@ -167,13 +168,41 @@ func VirtioNetNew(macAddress string) (VirtioDevice, error) {
 	}, nil
 }
 
-func (dev *VirtioNet) ToCmdLine() ([]string, error) {
-	if !dev.Nat {
-		return nil, fmt.Errorf("virtio-net only support 'nat' networking")
+// Set the socket to use for the network communication
+//
+// This maps the virtual machine network interface to a connected datagram
+// socket. This means all network traffic on this interface will go through
+// file.
+// file must be a connected datagram (SOCK_DGRAM) socket.
+func (dev *VirtioNet) SetSocket(file *os.File) {
+	dev.Socket = file
+	dev.Nat = false
+}
+
+func (dev *VirtioNet) validate() error {
+	if dev.Nat && dev.Socket != nil {
+		return fmt.Errorf("'nat' and 'fd' cannot be set at the same time")
 	}
+	if !dev.Nat && dev.Socket == nil {
+		return fmt.Errorf("One of 'nat' or 'fd' must be set")
+	}
+
+	return nil
+}
+
+func (dev *VirtioNet) ToCmdLine() ([]string, error) {
+	if err := dev.validate(); err != nil {
+		return nil, err
+	}
+
 	builder := strings.Builder{}
 	builder.WriteString("virtio-net")
-	builder.WriteString(",nat")
+	if dev.Nat {
+		builder.WriteString(",nat")
+	} else {
+		fmt.Fprintf(&builder, ",fd=%d", dev.Socket.Fd())
+	}
+
 	if len(dev.MacAddress) != 0 {
 		builder.WriteString(fmt.Sprintf(",mac=%s", dev.MacAddress))
 	}
@@ -195,11 +224,18 @@ func (dev *VirtioNet) FromOptions(options []option) error {
 				return err
 			}
 			dev.MacAddress = macAddress
+		case "fd":
+			fd, err := strconv.Atoi(option.value)
+			if err != nil {
+				return err
+			}
+			dev.Socket = os.NewFile(uintptr(fd), "vfkit virtio-net socket")
 		default:
 			return fmt.Errorf("Unknown option for virtio-net devices: %s", option.key)
 		}
 	}
-	return nil
+
+	return dev.validate()
 }
 
 // VirtioRngNew creates a new random number generator device to feed entropy
