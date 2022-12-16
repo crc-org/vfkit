@@ -86,11 +86,10 @@ func (dev *VirtioNet) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfig
 		err error
 	)
 
-	if !dev.Nat {
-		return fmt.Errorf("NAT is the only supported networking mode")
-	}
-
 	log.Infof("Adding virtio-net device (nat: %t macAddress: [%s])", dev.Nat, dev.MacAddress)
+	if dev.Socket != nil {
+		log.Infof("Using fd %d", dev.Socket.Fd())
+	}
 
 	if len(dev.MacAddress) == 0 {
 		mac, err = vz.NewRandomLocallyAdministeredMACAddress()
@@ -100,11 +99,16 @@ func (dev *VirtioNet) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfig
 	if err != nil {
 		return err
 	}
-	natAttachment, err := vz.NewNATNetworkDeviceAttachment()
+	var attachment vz.NetworkDeviceAttachment
+	if dev.Socket != nil {
+		attachment, err = vz.NewFileHandleNetworkDeviceAttachment(dev.Socket)
+	} else {
+		attachment, err = vz.NewNATNetworkDeviceAttachment()
+	}
 	if err != nil {
 		return err
 	}
-	networkConfig, err := vz.NewVirtioNetworkDeviceConfiguration(natAttachment)
+	networkConfig, err := vz.NewVirtioNetworkDeviceConfiguration(attachment)
 	if err != nil {
 		return err
 	}

@@ -135,9 +135,13 @@ The `--device virtio-net` option adds a network interface to the virtual machine
 
 #### Arguments
 - `mac`: optional argument to specify the MAC address of the VM. If it's omitted, a random MAC address will be used.
+- `fd`: file descriptor to attach to the guest network interface. The file descriptor must be a connected datagram socket. See [VZFileHandleNetworkDeviceAttachment](https://developer.apple.com/documentation/virtualization/vzfilehandlenetworkdeviceattachment?language=objc) for more details.
+- `nat`: guest network traffic will be NAT'ed through the host. This is the default. See [VZNATNetworkDeviceAttachment](https://developer.apple.com/documentation/virtualization/vznatnetworkdeviceattachment?language=objc) for more details.
+
+`fd` and `nat` are mutually exclusive.
 
 #### Example
-`--device virtio-net,mac=52:54:00:70:2b:71`
+`--device virtio-net,nat,mac=52:54:00:70:2b:71`
 
 
 ### Serial Port
