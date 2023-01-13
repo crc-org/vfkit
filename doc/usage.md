@@ -75,7 +75,7 @@ The disk image bootloader will be started by the EFI firmware, which will in tur
 
 #### Description
 
-The `--kernel`, `--initrd` and `--kernel-cmdline options are deprecated and have been replaced by the more generic `--bootloader` option.
+The `--kernel`, `--initrd` and `--kernel-cmdline` options are deprecated and have been replaced by the more generic `--bootloader` option.
 
 #### Options
 
