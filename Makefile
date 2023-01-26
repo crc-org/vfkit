@@ -1,10 +1,13 @@
-.PHONY: all build clean
+.PHONY: all build clean test
 
 CGO_CFLAGS=-mmacosx-version-min=11.0
 
 all: build
 
 build: out/vfkit
+
+test:
+	go test ./pkg/...
 
 clean:
 	rm -rf out
