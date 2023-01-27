@@ -98,6 +98,21 @@ var virtioDevTests = map[string]virtioDevTest{
 		},
 		expectedCmdLine: []string{"--device", "virtio-net,nat"},
 	},
+	"NewVirtioNetWithPath": {
+		newDev: func() (VirtioDevice, error) {
+			dev, err := VirtioNetNew("")
+			if err != nil {
+				return nil, err
+			}
+			dev.SetUnixSocketPath("/tmp/unix.sock")
+			return dev, nil
+		},
+		expectedDev: &VirtioNet{
+			Nat:            false,
+			UnixSocketPath: "/tmp/unix.sock",
+		},
+		expectedCmdLine: []string{"--device", "virtio-net,unixSocketPath=/tmp/unix.sock"},
+	},
 	"NewVirtioNetWithMacAddress": {
 		newDev: func() (VirtioDevice, error) { return VirtioNetNew("00:11:22:33:44:55") },
 		expectedDev: &VirtioNet{

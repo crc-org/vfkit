@@ -50,6 +50,8 @@ type VirtioNet struct {
 	// file parameter is holding a connected datagram socket.
 	// see https://github.com/Code-Hex/vz/blob/7f648b6fb9205d6f11792263d79876e3042c33ec/network.go#L113-L155
 	Socket *os.File
+
+	UnixSocketPath string
 }
 
 // VirtioSerial configures the virtual machine serial ports.
@@ -179,12 +181,23 @@ func (dev *VirtioNet) SetSocket(file *os.File) {
 	dev.Nat = false
 }
 
+func (dev *VirtioNet) SetUnixSocketPath(path string) {
+	dev.UnixSocketPath = path
+	dev.Nat = false
+}
+
 func (dev *VirtioNet) validate() error {
 	if dev.Nat && dev.Socket != nil {
 		return fmt.Errorf("'nat' and 'fd' cannot be set at the same time")
 	}
-	if !dev.Nat && dev.Socket == nil {
-		return fmt.Errorf("One of 'nat' or 'fd' must be set")
+	if dev.Nat && dev.UnixSocketPath != "" {
+		return fmt.Errorf("'nat' and 'unixSocketPath' cannot be set at the same time")
+	}
+	if dev.Socket != nil && dev.UnixSocketPath != "" {
+		return fmt.Errorf("'fd' and 'unixSocketPath' cannot be set at the same time")
+	}
+	if !dev.Nat && dev.Socket == nil && dev.UnixSocketPath == "" {
+		return fmt.Errorf("One of 'nat' or 'fd' or 'unixSocketPath' must be set")
 	}
 
 	return nil
@@ -199,6 +212,8 @@ func (dev *VirtioNet) ToCmdLine() ([]string, error) {
 	builder.WriteString("virtio-net")
 	if dev.Nat {
 		builder.WriteString(",nat")
+	} else if dev.UnixSocketPath != "" {
+		fmt.Fprintf(&builder, ",unixSocketPath=%s", dev.UnixSocketPath)
 	} else {
 		fmt.Fprintf(&builder, ",fd=%d", dev.Socket.Fd())
 	}
@@ -230,6 +245,8 @@ func (dev *VirtioNet) FromOptions(options []option) error {
 				return err
 			}
 			dev.Socket = os.NewFile(uintptr(fd), "vfkit virtio-net socket")
+		case "unixSocketPath":
+			dev.UnixSocketPath = option.value
 		default:
 			return fmt.Errorf("Unknown option for virtio-net devices: %s", option.key)
 		}

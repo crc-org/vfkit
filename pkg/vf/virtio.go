@@ -2,6 +2,7 @@ package vf
 
 import (
 	"fmt"
+	"net"
 	"path/filepath"
 
 	"github.com/crc-org/vfkit/pkg/config"
@@ -80,6 +81,21 @@ func (dev *VirtioFs) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfigu
 	return nil
 }
 
+func (dev *VirtioNet) connectUnixPath() error {
+	conn, err := net.Dial("unix", dev.UnixSocketPath)
+	if err != nil {
+		return err
+	}
+	fd, err := conn.(*net.UnixConn).File()
+	if err != nil {
+		return err
+	}
+
+	dev.Socket = fd
+	dev.UnixSocketPath = ""
+	return nil
+}
+
 func (dev *VirtioNet) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfiguration) error {
 	var (
 		mac *vz.MACAddress
@@ -89,6 +105,12 @@ func (dev *VirtioNet) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfig
 	log.Infof("Adding virtio-net device (nat: %t macAddress: [%s])", dev.Nat, dev.MacAddress)
 	if dev.Socket != nil {
 		log.Infof("Using fd %d", dev.Socket.Fd())
+	}
+	if dev.UnixSocketPath != "" {
+		log.Infof("Using unix socket %s", dev.UnixSocketPath)
+		if err := dev.connectUnixPath(); err != nil {
+			return err
+		}
 	}
 
 	if len(dev.MacAddress) == 0 {
