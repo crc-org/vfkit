@@ -2,6 +2,8 @@ package config
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 )
@@ -73,6 +75,36 @@ func (vm *VirtualMachine) ToCmdLine() ([]string, error) {
 	}
 
 	return args, nil
+}
+
+func (vm *VirtualMachine) extraFiles() []*os.File {
+	extraFiles := []*os.File{}
+	for _, dev := range vm.Devices {
+		virtioNet, ok := dev.(*VirtioNet)
+		if !ok {
+			continue
+		}
+		if virtioNet.Socket != nil {
+			extraFiles = append(extraFiles, virtioNet.Socket)
+		}
+	}
+
+	return extraFiles
+}
+
+// Cmd creates an exec.Cmd to start vfkit with the configured devices.
+// In particular it will set ExtraFiles appropriately when mapping
+// a file with a network interface.
+func (vm *VirtualMachine) Cmd(vfkitPath string) (*exec.Cmd, error) {
+	args, err := vm.ToCmdLine()
+	if err != nil {
+		return nil, err
+	}
+
+	cmd := exec.Command(vfkitPath, args...)
+	cmd.ExtraFiles = vm.extraFiles()
+
+	return cmd, nil
 }
 
 func (vm *VirtualMachine) AddDevicesFromCmdLine(cmdlineOpts []string) error {
