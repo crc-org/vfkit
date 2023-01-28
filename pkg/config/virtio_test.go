@@ -91,6 +91,13 @@ var virtioDevTests = map[string]virtioDevTest{
 		},
 		expectedCmdLine: []string{"--device", "virtio-serial,logFilePath=/foo/bar.log"},
 	},
+	"NewVirtioSerialStdio": {
+		newDev: func() (VirtioDevice, error) { return VirtioSerialNewStdio() },
+		expectedDev: &VirtioSerial{
+                        UsesStdio: true,
+		},
+		expectedCmdLine: []string{"--device", "virtio-serial,stdio"},
+	},
 	"NewVirtioNet": {
 		newDev: func() (VirtioDevice, error) { return VirtioNetNew("") },
 		expectedDev: &VirtioNet{

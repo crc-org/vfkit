@@ -56,7 +56,8 @@ type VirtioNet struct {
 
 // VirtioSerial configures the virtual machine serial ports.
 type VirtioSerial struct {
-	LogFile string
+	LogFile   string
+	UsesStdio bool
 }
 
 // TODO: Add VirtioBalloon
@@ -134,10 +135,31 @@ func VirtioSerialNew(logFilePath string) (VirtioDevice, error) {
 	}, nil
 }
 
-func (dev *VirtioSerial) ToCmdLine() ([]string, error) {
-	if dev.LogFile == "" {
-		return nil, fmt.Errorf("virtio-serial needs the path to the log file")
+func VirtioSerialNewStdio() (VirtioDevice, error) {
+	return &VirtioSerial{
+		UsesStdio: true,
+	}, nil
+}
+
+func (dev *VirtioSerial) validate() error {
+	if dev.LogFile != "" && dev.UsesStdio {
+		return fmt.Errorf("'logFilePath' and 'stdio' cannot be set at the same time")
 	}
+	if dev.LogFile == "" && !dev.UsesStdio {
+		return fmt.Errorf("One of 'logFilePath' or 'stdio' must be set")
+	}
+
+	return nil
+}
+
+func (dev *VirtioSerial) ToCmdLine() ([]string, error) {
+	if err := dev.validate(); err != nil {
+		return nil, err
+	}
+	if dev.UsesStdio {
+		return []string{"--device", "virtio-serial,stdio"}, nil
+	}
+
 	return []string{"--device", fmt.Sprintf("virtio-serial,logFilePath=%s", dev.LogFile)}, nil
 }
 
@@ -146,11 +168,17 @@ func (dev *VirtioSerial) FromOptions(options []option) error {
 		switch option.key {
 		case "logFilePath":
 			dev.LogFile = option.value
+		case "stdio":
+			if option.value != "" {
+				return fmt.Errorf("Unexpected value for virtio-serial 'stdio' option: %s", option.value)
+			}
+			dev.UsesStdio = true
 		default:
 			return fmt.Errorf("Unknown option for virtio-serial devices: %s", option.key)
 		}
 	}
-	return nil
+
+	return dev.validate()
 }
 
 // VirtioNetNew creates a new network device for the virtual machine. It will
