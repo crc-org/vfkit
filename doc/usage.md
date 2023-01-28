@@ -150,9 +150,11 @@ The `--device virtio-net` option adds a network interface to the virtual machine
 #### Description
 
 The `--device virtio-serial` option adds a serial device to the virtual machine. This is useful to redirect text output from the virtual machine to a log file.
+The `logFilePath` and `stdio` arguments are mutually exclusive.
 
 #### Arguments
 - `logFilePath`: path where the serial port output should be written.
+- `stdio`: uses stdin/stdout for the serial console input/output.
 
 #### Example
 `--device virtio-serial,logFilePath=/Users/virtuser/vfkit.log`

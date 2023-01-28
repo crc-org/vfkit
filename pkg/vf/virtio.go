@@ -3,12 +3,15 @@ package vf
 import (
 	"fmt"
 	"net"
+	"os"
 	"path/filepath"
+        "syscall"
 
 	"github.com/crc-org/vfkit/pkg/config"
 
 	"github.com/Code-Hex/vz/v3"
 	log "github.com/sirupsen/logrus"
+        "golang.org/x/sys/unix"
 )
 
 type VirtioBlk config.VirtioBlk
@@ -155,17 +158,46 @@ func (dev *VirtioRng) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfig
 	return nil
 }
 
-func (dev *VirtioSerial) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfiguration) error {
-	if dev.LogFile == "" {
-		return fmt.Errorf("missing mandatory 'logFile' option for virtio-serial device")
-	}
-	log.Infof("Adding virtio-serial device (logFile: %s)", dev.LogFile)
+// https://developer.apple.com/documentation/virtualization/running_linux_in_a_virtual_machine?language=objc#:~:text=Configure%20the%20Serial%20Port%20Device%20for%20Standard%20In%20and%20Out
+func setRawMode(f *os.File) {
+	// Get settings for terminal
+	attr, _ := unix.IoctlGetTermios(int(f.Fd()), unix.TIOCGETA)
 
-	//serialPortAttachment := vz.NewFileHandleSerialPortAttachment(os.Stdin, tty)
-	serialPortAttachment, err := vz.NewFileSerialPortAttachment(dev.LogFile, false)
+	// Put stdin into raw mode, disabling local echo, input canonicalization,
+	// and CR-NL mapping.
+	attr.Iflag &^= syscall.ICRNL
+	attr.Lflag &^= syscall.ICANON | syscall.ECHO
+
+	// Set minimum characters when reading = 1 char
+	attr.Cc[syscall.VMIN] = 1
+
+	// set timeout when reading as non-canonical mode
+	attr.Cc[syscall.VTIME] = 0
+
+	// reflects the changed settings
+	unix.IoctlSetTermios(int(f.Fd()), unix.TIOCSETA, attr)
+}
+
+func (dev *VirtioSerial) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfiguration) error {
+	if dev.LogFile != "" {
+		log.Infof("Adding virtio-serial device (logFile: %s)", dev.LogFile)
+	}
+	if dev.UsesStdio {
+		log.Infof("Adding stdio console")
+	}
+
+	var serialPortAttachment vz.SerialPortAttachment
+	var err error
+	if dev.UsesStdio {
+		setRawMode(os.Stdin)
+		serialPortAttachment, err = vz.NewFileHandleSerialPortAttachment(os.Stdin, os.Stdout)
+	} else {
+		serialPortAttachment, err = vz.NewFileSerialPortAttachment(dev.LogFile, false)
+	}
 	if err != nil {
 		return err
 	}
+
 	consoleConfig, err := vz.NewVirtioConsoleDeviceSerialPortConfiguration(serialPortAttachment)
 	if err != nil {
 		return err
