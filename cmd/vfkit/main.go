@@ -19,6 +19,7 @@ limitations under the License.
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -86,6 +87,8 @@ func newVMConfiguration(opts *cmdline.Options) (*config.VirtualMachine, error) {
 	return vmConfig, nil
 }
 
+var vmStateTimeoutErr = fmt.Errorf("timeout waiting for VM state")
+
 func waitForVMState(vm *vz.VirtualMachine, state vz.VirtualMachineState) error {
 	signalCh := make(chan os.Signal, 1)
 	signal.Notify(signalCh, syscall.SIGPIPE)
@@ -102,7 +105,7 @@ func waitForVMState(vm *vz.VirtualMachine, state vz.VirtualMachineState) error {
 				return fmt.Errorf("hypervisor virtualization error")
 			}
 		case <-time.After(5 * time.Second):
-			return fmt.Errorf("timeout waiting for VM state %v", state)
+			return vmStateTimeoutErr
 		}
 	}
 }
@@ -158,6 +161,11 @@ func runVirtualMachine(vmConfig *config.VirtualMachine) error {
 			log.Infof("VM is stopped")
 			break
 		}
+		if !errors.Is(err, vmStateTimeoutErr) {
+			log.Infof("virtualization error: %v", err)
+			return err
+		}
+		// vmStateTimeoutErr -> keep looping
 	}
 
 	return nil
