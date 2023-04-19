@@ -68,7 +68,7 @@ The disk image bootloader will be started by the EFI firmware, which will in tur
 
 #### Arguments
 
-- `variable-store: path to a file which EFI can use to store its variables
+- `variable-store`: path to a file which EFI can use to store its variables
 - `create`: indicate whether the `variable-store` file should be created or not if missing.
 
 ### Deprecated options
