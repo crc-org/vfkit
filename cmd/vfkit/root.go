@@ -30,7 +30,7 @@ var rootCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return runVirtualMachine(vmConfig)
+		return runVFKit(vmConfig, opts)
 	},
 	Version: vfkitVersion,
 }

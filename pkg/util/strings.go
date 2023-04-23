@@ -9,3 +9,15 @@ func TrimQuotes(str string) string {
 
 	return str
 }
+
+func StringInSlice(st string, sl []string) bool {
+	if sl == nil {
+		return false
+	}
+	for _, s := range sl {
+		if st == s {
+			return true
+		}
+	}
+	return false
+}
