@@ -13,6 +13,12 @@ Device configuration is optional, but most VM will need a disk image and a netwo
 
 Set the log-level for VFKit.  Supported values are `debug`, `info`, and `error`.
 
+- `--restful-URI`
+
+The URI (address) of the restful service.  The default is `tcp://localhost:8081`.  Valid schemes are
+`tcp`, `none`, or `unix`.  In the case of unix, the "host" portion would be a path to where the unix domain
+socket will be stored. A scheme of `none` disables the restful service.
+
 ### Virtual Machine Resources
 
 These options specify the amount of RAM and the number of CPUs which will be available to the virtual machine.
@@ -208,3 +214,31 @@ The share can be mounted in the guest with `mount -t virtio-fs vfkitTag /mnt`, w
 #### Example
 `--device virtio-fs,sharedDir=/Users/virtuser/vfkit/,mountTag=vfkit-share`
 
+
+## Restful Service
+
+### Get VM state
+
+Used to obtain the state of the virtual machine that is being run by VFKit.
+
+GET `/vm/state`
+Response: {"state": "string"}
+
+### Change VM State
+
+Change the state of the virtual machine. Valid states are:
+* Hardstop
+* Pause
+* Resume
+* Stop
+
+POST `/vm/state` {"new_state": "new value"}
+
+Response: http 200
+
+### Inspect VM
+
+Get description of the virtual machine
+
+GET `/vm/inspect`
+Response: { "cpus": uint, "memory": uint64, "devices": []config.VirtIODevice }

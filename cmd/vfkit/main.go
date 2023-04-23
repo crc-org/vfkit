@@ -1,3 +1,4 @@
+//go:build darwin
 // +build darwin
 
 /*
@@ -29,6 +30,7 @@ import (
 	"github.com/Code-Hex/vz/v3"
 	"github.com/crc-org/vfkit/pkg/cmdline"
 	"github.com/crc-org/vfkit/pkg/config"
+	"github.com/crc-org/vfkit/pkg/rest"
 	"github.com/crc-org/vfkit/pkg/vf"
 	"github.com/docker/go-units"
 	log "github.com/sirupsen/logrus"
@@ -110,18 +112,29 @@ func waitForVMState(vm *vz.VirtualMachine, state vz.VirtualMachineState) error {
 	}
 }
 
-func runVirtualMachine(vmConfig *config.VirtualMachine) error {
+func runVFKit(vmConfig *config.VirtualMachine, opts *cmdline.Options) error {
 	vzVMConfig, err := vf.ToVzVirtualMachineConfig(vmConfig)
 	if err != nil {
 		return err
 	}
-
 	vm, err := vz.NewVirtualMachine(vzVMConfig)
 	if err != nil {
 		return err
 	}
 
-	err = vm.Start()
+	// Do not enable the rests server if user sets scheme to None
+	if opts.RestfulURI != cmdline.DefaultRestfulURI {
+		srv, err := rest.NewServer(rest.NewVzVirtualMachine(vm, vzVMConfig), opts.RestfulURI)
+		if err != nil {
+			return err
+		}
+		srv.Start()
+	}
+	return runVirtualMachine(vmConfig, vm)
+}
+
+func runVirtualMachine(vmConfig *config.VirtualMachine, vm *vz.VirtualMachine) error {
+	err := vm.Start()
 	if err != nil {
 		return err
 	}

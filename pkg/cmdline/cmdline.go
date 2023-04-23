@@ -1,6 +1,8 @@
 package cmdline
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/spf13/cobra"
+)
 
 type Options struct {
 	Vcpus     uint
@@ -16,8 +18,12 @@ type Options struct {
 
 	Devices []string
 
+	RestfulURI string
+
 	LogLevel string
 }
+
+const DefaultRestfulURI = "none://"
 
 func AddFlags(cmd *cobra.Command, opts *Options) {
 	cmd.Flags().StringVarP(&opts.VmlinuzPath, "kernel", "k", "", "path to the virtual machine linux kernel")
@@ -36,8 +42,9 @@ func AddFlags(cmd *cobra.Command, opts *Options) {
 	cmd.Flags().UintVarP(&opts.MemoryMiB, "memory", "m", 512, "virtual machine RAM size in mibibytes")
 
 	cmd.Flags().StringVarP(&opts.TimeSync, "timesync", "t", "", "sync guest time when host wakes up from sleep")
-
 	cmd.Flags().StringArrayVarP(&opts.Devices, "device", "d", []string{}, "devices")
 
 	cmd.Flags().StringVar(&opts.LogLevel, "log-level", "", "set log level")
+	cmd.Flags().StringVar(&opts.RestfulURI, "restful-uri", DefaultRestfulURI, "URI address for RestFul services")
+
 }
