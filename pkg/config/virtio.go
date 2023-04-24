@@ -334,11 +334,7 @@ func (dev *VirtioBlk) FromOptions(options []option) error {
 		}
 	}
 
-	if err := dev.StorageConfig.FromOptions(unhandledOpts); err != nil {
-		return err
-	}
-
-	return nil
+	return dev.StorageConfig.FromOptions(unhandledOpts)
 }
 
 func (dev *VirtioBlk) ToCmdLine() ([]string, error) {
