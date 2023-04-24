@@ -319,8 +319,8 @@ func VirtioBlkNew(imagePath string) (*VirtioBlk, error) {
 	return virtioBlk, nil
 }
 
-func (dev *VirtioBlk) SetDeviceIdentifier(devId string) {
-	dev.DeviceIdentifier = devId
+func (dev *VirtioBlk) SetDeviceIdentifier(devID string) {
+	dev.DeviceIdentifier = devID
 }
 
 func (dev *VirtioBlk) FromOptions(options []option) error {
