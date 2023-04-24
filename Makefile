@@ -4,6 +4,9 @@ CGO_CFLAGS=-mmacosx-version-min=11.0
 
 all: build
 
+TOOLS_DIR := tools
+include tools/tools.mk
+
 build: out/vfkit
 
 test:
@@ -27,3 +30,7 @@ out/vfkit: out/vfkit-amd64 out/vfkit-arm64
 # changed, without adding explicit dependencies to the go files/go.mod
 .PHONY: force-build
 force-build:
+
+.PHONY: lint
+lint: $(TOOLS_BINDIR)/golangci-lint
+	"$(TOOLS_BINDIR)"/golangci-lint run
