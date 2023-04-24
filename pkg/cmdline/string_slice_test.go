@@ -18,9 +18,12 @@ func setUpSSFlagSet(ssp *stringSliceValue) *pflag.FlagSet {
 	return f
 }
 
-func setUpSSFlagSetWithDefault(ssp *stringSliceValue) *pflag.FlagSet {
+func setUpSSFlagSetWithDefault(t *testing.T, ssp *stringSliceValue) *pflag.FlagSet {
 	f := pflag.NewFlagSet("test", pflag.ContinueOnError)
-	ssp.Replace([]string{"default", "values"})
+	err := ssp.Replace([]string{"default", "values"})
+	if err != nil {
+		t.Fatal("expected no error; got", err)
+	}
 	f.Var(ssp, "ss", "Command separated list!")
 	return f
 }
@@ -93,7 +96,7 @@ func TestSSDoubleQuotes(t *testing.T) {
 
 func TestSSDefault(t *testing.T) {
 	var ss stringSliceValue
-	f := setUpSSFlagSetWithDefault(&ss)
+	f := setUpSSFlagSetWithDefault(t, &ss)
 
 	vals := []string{"default", "values"}
 
@@ -112,7 +115,7 @@ func TestSSDefault(t *testing.T) {
 
 func TestSSWithDefault(t *testing.T) {
 	var ss stringSliceValue
-	f := setUpSSFlagSetWithDefault(&ss)
+	f := setUpSSFlagSetWithDefault(t, &ss)
 
 	vals := []string{"one", "two", "4", "3"}
 	arg := fmt.Sprintf("--ss=%s", strings.Join(vals, ","))
