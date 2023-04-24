@@ -5,13 +5,13 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-        "syscall"
+	"syscall"
 
 	"github.com/crc-org/vfkit/pkg/config"
 
 	"github.com/Code-Hex/vz/v3"
 	log "github.com/sirupsen/logrus"
-        "golang.org/x/sys/unix"
+	"golang.org/x/sys/unix"
 )
 
 type VirtioBlk config.VirtioBlk

@@ -92,9 +92,9 @@ var virtioDevTests = map[string]virtioDevTest{
 		expectedCmdLine: []string{"--device", "virtio-serial,logFilePath=/foo/bar.log"},
 	},
 	"NewVirtioSerialStdio": {
-		newDev:      VirtioSerialNewStdio,
+		newDev: VirtioSerialNewStdio,
 		expectedDev: &VirtioSerial{
-                        UsesStdio: true,
+			UsesStdio: true,
 		},
 		expectedCmdLine: []string{"--device", "virtio-serial,stdio"},
 	},
