@@ -2,7 +2,6 @@ package vf
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net"
 	"net/url"
@@ -46,7 +45,7 @@ func connectVsock(vm *vz.VirtualMachine, port uint, vsockPath string) error {
 			addr := net.UnixAddr{Net: "unix", Name: parsed.EscapedPath()}
 			return net.ListenUnix("unix", &addr)
 		default:
-			return nil, errors.New(fmt.Sprintf("unexpected scheme '%s'", parsed.Scheme))
+			return nil, fmt.Errorf("unexpected scheme '%s'", parsed.Scheme)
 		}
 	}
 
@@ -62,7 +61,7 @@ func connectVsock(vm *vz.VirtualMachine, port uint, vsockPath string) error {
 			case "vsock":
 				return ConnectVsockSync(vm, port)
 			default:
-				return nil, errors.New(fmt.Sprintf("unexpected scheme '%s'", parsed.Scheme))
+				return nil, fmt.Errorf("unexpected scheme '%s'", parsed.Scheme)
 			}
 		},
 	})
@@ -91,7 +90,7 @@ func listenVsock(vm *vz.VirtualMachine, port uint, vsockPath string) error {
 			}
 			return socketDevices[0].Listen(uint32(port))
 		default:
-			return nil, errors.New(fmt.Sprintf("unexpected scheme '%s'", parsed.Scheme))
+			return nil, fmt.Errorf("unexpected scheme '%s'", parsed.Scheme)
 		}
 	}
 
@@ -108,7 +107,7 @@ func listenVsock(vm *vz.VirtualMachine, port uint, vsockPath string) error {
 				var d net.Dialer
 				return d.DialContext(ctx, parsed.Scheme, parsed.Path)
 			default:
-				return nil, errors.New(fmt.Sprintf("unexpected scheme '%s'", parsed.Scheme))
+				return nil, fmt.Errorf("unexpected scheme '%s'", parsed.Scheme)
 			}
 		},
 	})
