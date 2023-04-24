@@ -14,9 +14,8 @@ import (
 func ExposeVsock(vm *vz.VirtualMachine, port uint, vsockPath string, listen bool) error {
 	if listen {
 		return listenVsock(vm, port, vsockPath)
-	} else {
-		return connectVsock(vm, port, vsockPath)
 	}
+	return connectVsock(vm, port, vsockPath)
 }
 
 func ConnectVsockSync(vm *vz.VirtualMachine, port uint) (net.Conn, error) {
