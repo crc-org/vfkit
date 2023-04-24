@@ -80,7 +80,7 @@ var virtioDevTests = map[string]virtioDevTest{
 		alternateCmdLine: []string{"--device", "virtio-vsock,socketURL=/foo/bar.unix,listen,port=1234"},
 	},
 	"NewVirtioRng": {
-		newDev:          func() (VirtioDevice, error) { return VirtioRngNew() },
+		newDev:          VirtioRngNew,
 		expectedDev:     &VirtioRng{},
 		expectedCmdLine: []string{"--device", "virtio-rng"},
 	},
@@ -92,7 +92,7 @@ var virtioDevTests = map[string]virtioDevTest{
 		expectedCmdLine: []string{"--device", "virtio-serial,logFilePath=/foo/bar.log"},
 	},
 	"NewVirtioSerialStdio": {
-		newDev: func() (VirtioDevice, error) { return VirtioSerialNewStdio() },
+		newDev:      VirtioSerialNewStdio,
 		expectedDev: &VirtioSerial{
                         UsesStdio: true,
 		},
