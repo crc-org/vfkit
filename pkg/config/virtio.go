@@ -238,11 +238,12 @@ func (dev *VirtioNet) ToCmdLine() ([]string, error) {
 
 	builder := strings.Builder{}
 	builder.WriteString("virtio-net")
-	if dev.Nat {
+	switch {
+	case dev.Nat:
 		builder.WriteString(",nat")
-	} else if dev.UnixSocketPath != "" {
+	case dev.UnixSocketPath != "":
 		fmt.Fprintf(&builder, ",unixSocketPath=%s", dev.UnixSocketPath)
-	} else {
+	default:
 		fmt.Fprintf(&builder, ",fd=%d", dev.Socket.Fd())
 	}
 
