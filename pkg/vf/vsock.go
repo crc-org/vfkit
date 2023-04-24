@@ -110,6 +110,6 @@ func listenVsock(vm *vz.VirtualMachine, port uint, vsockPath string) error {
 			}
 		},
 	})
-	//defer proxy.Close()
+	// FIXME: defer proxy.Close()
 	return proxy.Start()
 }
