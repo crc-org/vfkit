@@ -420,9 +420,9 @@ func (dev *VirtioFs) ToCmdLine() ([]string, error) {
 	}
 	if dev.MountTag != "" {
 		return []string{"--device", fmt.Sprintf("virtio-fs,sharedDir=%s,mountTag=%s", dev.SharedDir, dev.MountTag)}, nil
-	} else {
-		return []string{"--device", fmt.Sprintf("virtio-fs,sharedDir=%s", dev.SharedDir)}, nil
 	}
+
+	return []string{"--device", fmt.Sprintf("virtio-fs,sharedDir=%s", dev.SharedDir)}, nil
 }
 
 func (dev *VirtioFs) FromOptions(options []option) error {
