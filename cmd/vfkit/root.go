@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/crc-org/vfkit/pkg/cmdline"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -18,6 +19,13 @@ var rootCmd = &cobra.Command{
 	Long: `A hypervisor written in Go using Apple's virtualization framework to run linux virtual machines.
                 Complete documentation is available at https://github.com/crc-org/vfkit`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if len(opts.LogLevel) > 0 {
+			ll, err := getLogLevel()
+			if err != nil {
+				return err
+			}
+			logrus.SetLevel(ll)
+		}
 		vmConfig, err := newVMConfiguration(opts)
 		if err != nil {
 			return err
@@ -34,6 +42,18 @@ func init() {
 	versionTmpl := `{{with .Name}}{{printf "%s " .}}{{end}}{{printf "version: %s" .Version}}
 `
 	rootCmd.SetVersionTemplate(versionTmpl)
+}
+
+func getLogLevel() (logrus.Level, error) {
+	switch opts.LogLevel {
+	case "error":
+		return logrus.ErrorLevel, nil
+	case "debug":
+		return logrus.DebugLevel, nil
+	case "info":
+		return logrus.InfoLevel, nil
+	}
+	return 0, fmt.Errorf("unknown log level: %s", opts.LogLevel)
 }
 
 func Execute() {
