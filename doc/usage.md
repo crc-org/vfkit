@@ -8,6 +8,11 @@ Specifying VM bootloader configuration is mandatory.
 Device configuration is optional, but most VM will need a disk image and a network interface to be configured.
 
 ## Generic Options
+
+- `--log-level`
+
+Set the log-level for VFKit.  Supported values are `debug`, `info`, and `error`.
+
 ### Virtual Machine Resources
 
 These options specify the amount of RAM and the number of CPUs which will be available to the virtual machine.

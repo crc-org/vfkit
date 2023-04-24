@@ -15,6 +15,8 @@ type Options struct {
 	TimeSync string
 
 	Devices []string
+
+	LogLevel string
 }
 
 func AddFlags(cmd *cobra.Command, opts *Options) {
@@ -36,4 +38,6 @@ func AddFlags(cmd *cobra.Command, opts *Options) {
 	cmd.Flags().StringVarP(&opts.TimeSync, "timesync", "t", "", "sync guest time when host wakes up from sleep")
 
 	cmd.Flags().StringArrayVarP(&opts.Devices, "device", "d", []string{}, "devices")
+
+	cmd.Flags().StringVar(&opts.LogLevel, "log-level", "", "set log level")
 }
