@@ -28,6 +28,8 @@ jobs:
         run: make
       - name: vet
         run: go vet ./...
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
       - name: Upload vfkit artifact
         uses: actions/upload-artifact@v3
         with:
