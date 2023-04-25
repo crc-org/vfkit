@@ -159,7 +159,7 @@ func (dev *VirtioRng) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfig
 }
 
 // https://developer.apple.com/documentation/virtualization/running_linux_in_a_virtual_machine?language=objc#:~:text=Configure%20the%20Serial%20Port%20Device%20for%20Standard%20In%20and%20Out
-func setRawMode(f *os.File) {
+func setRawMode(f *os.File) error {
 	// Get settings for terminal
 	attr, _ := unix.IoctlGetTermios(int(f.Fd()), unix.TIOCGETA)
 
@@ -175,7 +175,7 @@ func setRawMode(f *os.File) {
 	attr.Cc[syscall.VTIME] = 0
 
 	// reflects the changed settings
-	unix.IoctlSetTermios(int(f.Fd()), unix.TIOCSETA, attr)
+	return unix.IoctlSetTermios(int(f.Fd()), unix.TIOCSETA, attr)
 }
 
 func (dev *VirtioSerial) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfiguration) error {
@@ -189,7 +189,9 @@ func (dev *VirtioSerial) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineCon
 	var serialPortAttachment vz.SerialPortAttachment
 	var err error
 	if dev.UsesStdio {
-		setRawMode(os.Stdin)
+		if err := setRawMode(os.Stdin); err != nil {
+			return err
+		}
 		serialPortAttachment, err = vz.NewFileHandleSerialPortAttachment(os.Stdin, os.Stdout)
 	} else {
 		serialPortAttachment, err = vz.NewFileSerialPortAttachment(dev.LogFile, false)
