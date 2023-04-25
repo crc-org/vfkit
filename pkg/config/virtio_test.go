@@ -171,8 +171,9 @@ func testVirtioDev(t *testing.T, test *virtioDevTest) {
 
 func TestVirtioDevices(t *testing.T) {
 	t.Run("virtio-devices", func(t *testing.T) {
-		for name, test := range virtioDevTests {
+		for name := range virtioDevTests {
 			t.Run(name, func(t *testing.T) {
+				test := virtioDevTests[name]
 				testVirtioDev(t, &test)
 			})
 		}
