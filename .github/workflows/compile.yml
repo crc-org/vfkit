@@ -27,6 +27,8 @@ jobs:
           go-version: ${{ matrix.go }}
       - name: Build
         run: make
+      - name: Test
+        run: make test
       - name: vet
         run: go vet ./...
       - name: golangci-lint
