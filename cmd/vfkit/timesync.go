@@ -43,23 +43,20 @@ func watchWakeupNotifications(vm *vz.VirtualMachine, vsockPort uint) {
 	}()
 
 	sleepNotifierCh := sleepnotifier.GetInstance().Start()
-	for {
-		select {
-		case activity := <-sleepNotifierCh:
-			log.Debugf("Sleep notification: %s", activity)
-			if activity.Type == sleepnotifier.Awake {
-				log.Infof("machine awake")
-				if vsockConn == nil {
-					var err error
-					vsockConn, err = vf.ConnectVsockSync(vm, vsockPort)
-					if err != nil {
-						log.Debugf("error connecting to vsock port %d: %v", vsockPort, err)
-						break
-					}
+	for activity := range sleepNotifierCh {
+		log.Debugf("Sleep notification: %s", activity)
+		if activity.Type == sleepnotifier.Awake {
+			log.Infof("machine awake")
+			if vsockConn == nil {
+				var err error
+				vsockConn, err = vf.ConnectVsockSync(vm, vsockPort)
+				if err != nil {
+					log.Debugf("error connecting to vsock port %d: %v", vsockPort, err)
+					break
 				}
-				if err := syncGuestTime(vsockConn); err != nil {
-					log.Debugf("error syncing guest time: %v", err)
-				}
+			}
+			if err := syncGuestTime(vsockConn); err != nil {
+				log.Debugf("error syncing guest time: %v", err)
 			}
 		}
 	}
