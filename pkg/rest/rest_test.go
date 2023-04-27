@@ -2,9 +2,10 @@ package rest
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"net/url"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestParseRestfulURI(t *testing.T) {
@@ -130,7 +131,7 @@ func TestToRestScheme(t *testing.T) {
 			args: args{
 				s: "tcp",
 			},
-			want:    Tcp,
+			want:    TCP,
 			wantErr: assert.NoError,
 		},
 		{

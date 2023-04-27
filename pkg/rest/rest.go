@@ -29,7 +29,7 @@ func (v *VFKitService) Start() {
 	go func() {
 		var err error
 		switch v.Scheme {
-		case Tcp:
+		case TCP:
 			err = v.router.Run(v.Host)
 		case Unix:
 			err = v.router.RunUnix(v.Path)
@@ -89,8 +89,7 @@ func (vm *VzVirtualMachine) getVMState(c *gin.Context) {
 // HardStop - forceably stops a running machine
 func (vm *VzVirtualMachine) setVMState(c *gin.Context) {
 	var (
-		response error
-		s        define.StateChangeRequest
+		s define.VMState
 	)
 
 	if err := c.ShouldBindJSON(&s); err != nil {
@@ -98,24 +97,9 @@ func (vm *VzVirtualMachine) setVMState(c *gin.Context) {
 		return
 	}
 
-	switch s.NewState {
-	case define.Pause:
-		response = vm.Pause()
-	case define.Resume:
-		response = vm.Resume()
-	case define.Stop:
-		response = vm.Stop()
-	case define.HardStop:
-		response = vm.HardStop()
-	default:
-		eMsg := fmt.Errorf("invalid new StateResponse: %s", s.NewState)
-		logrus.Error(eMsg)
-		c.JSON(http.StatusBadRequest, gin.H{"error": eMsg.Error()})
-		return
-
-	}
+	response := vm.ChangeState(define.StateChange(s.State))
 	if response != nil {
-		logrus.Errorf("failed action %s: %q", s.NewState, response)
+		logrus.Errorf("failed action %s: %q", s.State, response)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": response.Error()})
 		return
 	}
@@ -132,13 +116,13 @@ func ParseRestfulURI(inputURI string) (*url.URL, error) {
 	if err != nil {
 		return nil, err
 	}
-	if scheme == Tcp && len(restURI.Host) < 1 {
+	if scheme == TCP && len(restURI.Host) < 1 {
 		return nil, errors.New("invalid TCP uri: missing host")
 	}
-	if scheme == Tcp && len(restURI.Path) > 0 {
+	if scheme == TCP && len(restURI.Path) > 0 {
 		return nil, errors.New("invalid TCP uri: path is forbidden")
 	}
-	if scheme == Tcp && restURI.Port() == "" {
+	if scheme == TCP && restURI.Port() == "" {
 		return nil, errors.New("invalid TCP uri: missing port")
 	}
 	if scheme == Unix && len(restURI.Path) < 1 {
@@ -158,7 +142,7 @@ func ToRestScheme(s string) (ServiceScheme, error) {
 	case "UNIX":
 		return Unix, nil
 	case "TCP":
-		return Tcp, nil
+		return TCP, nil
 	}
 	return None, fmt.Errorf("invalid scheme %s", s)
 }
