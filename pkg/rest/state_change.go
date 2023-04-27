@@ -1,19 +1,32 @@
 package rest
 
 import (
-	"errors"
+	"fmt"
 
 	"github.com/Code-Hex/vz/v3"
 	"github.com/crc-org/vfkit/pkg/rest/define"
 	"github.com/sirupsen/logrus"
 )
 
-// ErrNotImplemented Temporary Error Message
-var ErrNotImplemented = errors.New("function not implemented yet")
-
 // ChangeState execute a state change (i.e. running to stopped)
 func (vm *VzVirtualMachine) ChangeState(newState define.StateChange) error {
-	return ErrNotImplemented
+	var (
+		response error
+	)
+	switch newState {
+	case define.Pause:
+		response = vm.Pause()
+	case define.Resume:
+		response = vm.Resume()
+	case define.Stop:
+		response = vm.Stop()
+	case define.HardStop:
+		response = vm.HardStop()
+	default:
+		logrus.Error(response)
+		return fmt.Errorf("invalid new VMState: %s", newState)
+	}
+	return response
 }
 
 // GetState returns state of the VM

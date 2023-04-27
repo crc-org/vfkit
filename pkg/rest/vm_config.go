@@ -6,7 +6,6 @@ import (
 
 type VzVirtualMachine struct {
 	VzVM   *vz.VirtualMachine
-	state  vz.VirtualMachineState
 	config *vz.VirtualMachineConfiguration
 }
 

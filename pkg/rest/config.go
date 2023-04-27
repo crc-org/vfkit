@@ -3,7 +3,7 @@ package rest
 type ServiceScheme int
 
 const (
-	Tcp ServiceScheme = iota
+	TCP ServiceScheme = iota
 	Unix
 	None
 )
