@@ -6,4 +6,5 @@ const (
 	TCP ServiceScheme = iota
 	Unix
 	None
+	HTTP
 )

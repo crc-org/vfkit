@@ -13,15 +13,49 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type Endpoint struct {
+	Host   string
+	Path   string
+	Scheme ServiceScheme
+}
+
+func NewEndpoint(input string) (*Endpoint, error) {
+	uri, err := parseRestfulURI(input)
+	if err != nil {
+		return nil, err
+	}
+	scheme, err := toRestScheme(uri.Scheme)
+	if err != nil {
+		return nil, err
+	}
+	return &Endpoint{
+		Host:   uri.Host,
+		Path:   uri.Path,
+		Scheme: scheme,
+	}, nil
+}
+
+func (ep *Endpoint) ToCmdLine() ([]string, error) {
+	args := []string{"--restful-uri"}
+	switch ep.Scheme {
+	case Unix:
+		args = append(args, fmt.Sprintf("unix://%s", ep.Path))
+	case TCP:
+		args = append(args, fmt.Sprintf("tcp://%s%s", ep.Host, ep.Path))
+	case None:
+		return []string{}, nil
+	default:
+		return []string{}, errors.New("invalid endpoint scheme")
+	}
+	return args, nil
+}
+
 // VFKitService is used for the restful service; it describes
 // the variables of the service like host/path but also has
 // the router object
 type VFKitService struct {
-	Host   string
-	Path   string
-	Port   int
+	*Endpoint
 	router *gin.Engine
-	Scheme ServiceScheme
 }
 
 // Start initiates the already configured gin service
@@ -40,20 +74,14 @@ func (v *VFKitService) Start() {
 
 // NewServer creates a new restful service
 func NewServer(vm *VzVirtualMachine, endpoint string) (*VFKitService, error) {
-	uri, err := ParseRestfulURI(endpoint)
-	if err != nil {
-		return nil, err
-	}
-	scheme, err := ToRestScheme(uri.Scheme)
-	if err != nil {
-		return nil, err
-	}
 	r := gin.Default()
+	ep, err := NewEndpoint(endpoint)
+	if err != nil {
+		return nil, err
+	}
 	s := VFKitService{
-		router: r,
-		Host:   uri.Host,
-		Path:   uri.Path,
-		Scheme: scheme,
+		router:   r,
+		Endpoint: ep,
 	}
 
 	// Handlers for the restful service.  This is where endpoints are defined.
@@ -106,13 +134,13 @@ func (vm *VzVirtualMachine) setVMState(c *gin.Context) {
 	c.Status(http.StatusAccepted)
 }
 
-// ParseRestfulURI validates the input URI and returns an URL object
-func ParseRestfulURI(inputURI string) (*url.URL, error) {
+// parseRestfulURI validates the input URI and returns an URL object
+func parseRestfulURI(inputURI string) (*url.URL, error) {
 	restURI, err := url.ParseRequestURI(inputURI)
 	if err != nil {
 		return nil, err
 	}
-	scheme, err := ToRestScheme(restURI.Scheme)
+	scheme, err := toRestScheme(restURI.Scheme)
 	if err != nil {
 		return nil, err
 	}
@@ -134,14 +162,14 @@ func ParseRestfulURI(inputURI string) (*url.URL, error) {
 	return restURI, err
 }
 
-// ToRestScheme converts a string to a ServiceScheme
-func ToRestScheme(s string) (ServiceScheme, error) {
+// toRestScheme converts a string to a ServiceScheme
+func toRestScheme(s string) (ServiceScheme, error) {
 	switch strings.ToUpper(s) {
 	case "NONE":
 		return None, nil
 	case "UNIX":
 		return Unix, nil
-	case "TCP":
+	case "TCP", "HTTP":
 		return TCP, nil
 	}
 	return None, fmt.Errorf("invalid scheme %s", s)
@@ -149,7 +177,7 @@ func ToRestScheme(s string) (ServiceScheme, error) {
 
 func validateRestfulURI(inputURI string) error {
 	if inputURI != cmdline.DefaultRestfulURI {
-		if _, err := ParseRestfulURI(inputURI); err != nil {
+		if _, err := parseRestfulURI(inputURI); err != nil {
 			return err
 		}
 	}
