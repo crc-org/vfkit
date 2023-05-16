@@ -1,6 +1,6 @@
 module github.com/crc-org/vfkit
 
-go 1.17
+go 1.18
 
 require (
 	github.com/Code-Hex/vz/v3 v3.0.4

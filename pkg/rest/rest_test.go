@@ -91,11 +91,11 @@ func TestParseRestfulURI(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ParseRestfulURI(tt.args.inputURI)
-			if !tt.wantErr(t, err, fmt.Sprintf("ParseRestfulURI(%v)", tt.args.inputURI)) {
+			got, err := parseRestfulURI(tt.args.inputURI)
+			if !tt.wantErr(t, err, fmt.Sprintf("parseRestfulURI(%v)", tt.args.inputURI)) {
 				return
 			}
-			assert.Equalf(t, tt.want, got, "ParseRestfulURI(%v)", tt.args.inputURI)
+			assert.Equalf(t, tt.want, got, "parseRestfulURI(%v)", tt.args.inputURI)
 		})
 	}
 }
@@ -153,11 +153,11 @@ func TestToRestScheme(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ToRestScheme(tt.args.s)
-			if !tt.wantErr(t, err, fmt.Sprintf("ToRestScheme(%v)", tt.args.s)) {
+			got, err := toRestScheme(tt.args.s)
+			if !tt.wantErr(t, err, fmt.Sprintf("toRestScheme(%v)", tt.args.s)) {
 				return
 			}
-			assert.Equalf(t, tt.want, got, "ToRestScheme(%v)", tt.args.s)
+			assert.Equalf(t, tt.want, got, "toRestScheme(%v)", tt.args.s)
 		})
 	}
 }
