@@ -11,11 +11,11 @@ import (
 // VirtualMachine is the top-level type. It describes the virtual machine
 // configuration (bootloader, devices, ...).
 type VirtualMachine struct {
-	Vcpus       uint
-	MemoryBytes uint64
-	Bootloader  Bootloader
-	Devices     []VirtioDevice
-	Timesync    *TimeSync
+	Vcpus       uint           `json:"vcpus"`
+	MemoryBytes uint64         `json:"memoryBytes"`
+	Bootloader  Bootloader     `json:"bootloader"`
+	Devices     []VirtioDevice `json:"devices"`
+	Timesync    *TimeSync      `json:"timesync"`
 }
 
 // TimeSync enables synchronization of the host time to the linux guest after the host was suspended.
