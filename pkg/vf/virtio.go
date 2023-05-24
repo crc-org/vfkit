@@ -159,12 +159,69 @@ func (dev *VirtioFs) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfigu
 	return nil
 }
 
+func localUnixSocketPath() (string, error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	dir := filepath.Join(homeDir, "Library", "Application Support", "vfkit")
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return "", err
+	}
+	tmpFile, err := os.CreateTemp(dir, fmt.Sprintf("net-%d-*.sock", os.Getpid()))
+	if err != nil {
+		return "", err
+	}
+	// slightly racy, but this is in a directory only user-writable
+	defer tmpFile.Close()
+	defer os.Remove(tmpFile.Name())
+
+	return tmpFile.Name(), nil
+}
+
 func (dev *VirtioNet) connectUnixPath() error {
-	conn, err := net.Dial("unix", dev.UnixSocketPath)
+	remoteAddr := net.UnixAddr{
+		Name: dev.UnixSocketPath,
+		Net:  "unixgram",
+	}
+	localSocketPath, err := localUnixSocketPath()
 	if err != nil {
 		return err
 	}
-	fd, err := conn.(*net.UnixConn).File()
+	// FIXME: need to remove localSocketPath at process  exit
+	localAddr := net.UnixAddr{
+		Name: localSocketPath,
+		Net:  "unixgram",
+	}
+	conn, err := net.DialUnix("unixgram", &localAddr, &remoteAddr)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	rawConn, err := conn.SyscallConn()
+	if err != nil {
+		return err
+	}
+	err = rawConn.Control(func(fd uintptr) {
+		if err = syscall.SetsockoptInt(int(fd), syscall.SOL_SOCKET, syscall.SO_SNDBUF, 1*1024*1024); err != nil {
+			return
+		}
+		if err = syscall.SetsockoptInt(int(fd), syscall.SOL_SOCKET, syscall.SO_RCVBUF, 4*1024*1024); err != nil {
+			return
+		}
+	})
+	if err != nil {
+		return err
+	}
+
+	/* send vfkit magic so that the remote end can identify our connection attempt */
+	if _, err := conn.Write([]byte("VFKT")); err != nil {
+		return err
+	}
+	log.Infof("local: %v remote: %v", conn.LocalAddr(), conn.RemoteAddr())
+
+	fd, err := conn.File()
 	if err != nil {
 		return err
 	}
