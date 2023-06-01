@@ -204,7 +204,7 @@ See `man 4 vsock` for more details. The vsock port will be exposed as a unix soc
 #### Description
 
 The `-device virtio-fs` option allows to share directories between the host and the guest. The sharing will be done using virtio-fs.
-The share can be mounted in the guest with `mount -t virtio-fs vfkitTag /mnt`, with `vfkitTag` corresponding to the value of the `mountTag` option.
+The share can be mounted in the guest with `mount -t virtiofs vfkitTag /mnt`, with `vfkitTag` corresponding to the value of the `mountTag` option.
 
 
 #### Arguments
