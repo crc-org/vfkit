@@ -9,7 +9,8 @@ import (
 
 type vzVirtualMachineConfiguration struct {
 	*vz.VirtualMachineConfiguration
-	storageDeviceConfiguration []vz.StorageDeviceConfiguration
+	storageDeviceConfiguration          []vz.StorageDeviceConfiguration
+	directorySharingDeviceConfiguration []vz.DirectorySharingDeviceConfiguration
 }
 
 func newVzVirtualMachineConfiguration(vm *config.VirtualMachine) (*vzVirtualMachineConfiguration, error) {
@@ -40,6 +41,7 @@ func ToVzVirtualMachineConfig(vm *config.VirtualMachine) (*vz.VirtualMachineConf
 		}
 	}
 	vzVMConfig.SetStorageDevicesVirtualMachineConfiguration(vzVMConfig.storageDeviceConfiguration)
+	vzVMConfig.SetDirectorySharingDevicesVirtualMachineConfiguration(vzVMConfig.directorySharingDeviceConfiguration)
 
 	if vm.Timesync != nil && vm.Timesync.VsockPort != 0 {
 		// automatically add the vsock device we'll need for communication over VsockPort

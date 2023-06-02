@@ -53,10 +53,9 @@ func (dev *VirtioBlk) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfig
 	return nil
 }
 
-func (dev *VirtioFs) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfiguration) error {
-	log.Infof("Adding virtio-fs device")
+func (dev *VirtioFs) toVz() (vz.DirectorySharingDeviceConfiguration, error) {
 	if dev.SharedDir == "" {
-		return fmt.Errorf("missing mandatory 'sharedDir' option for virtio-fs device")
+		return nil, fmt.Errorf("missing mandatory 'sharedDir' option for virtio-fs device")
 	}
 	var mountTag string
 	if dev.MountTag != "" {
@@ -67,20 +66,28 @@ func (dev *VirtioFs) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfigu
 
 	sharedDir, err := vz.NewSharedDirectory(dev.SharedDir, false)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	sharedDirConfig, err := vz.NewSingleDirectoryShare(sharedDir)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	fileSystemDeviceConfig, err := vz.NewVirtioFileSystemDeviceConfiguration(mountTag)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	fileSystemDeviceConfig.SetDirectoryShare(sharedDirConfig)
-	vmConfig.SetDirectorySharingDevicesVirtualMachineConfiguration([]vz.DirectorySharingDeviceConfiguration{
-		fileSystemDeviceConfig,
-	})
+
+	return fileSystemDeviceConfig, nil
+}
+
+func (dev *VirtioFs) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfiguration) error {
+	fileSystemDeviceConfig, err := dev.toVz()
+	if err != nil {
+		return err
+	}
+	log.Infof("Adding virtio-fs device")
+	vmConfig.directorySharingDeviceConfiguration = append(vmConfig.directorySharingDeviceConfiguration, fileSystemDeviceConfig)
 	return nil
 }
 
