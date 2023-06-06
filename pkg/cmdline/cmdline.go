@@ -21,6 +21,8 @@ type Options struct {
 	RestfulURI string
 
 	LogLevel string
+
+	UseGUI bool
 }
 
 const DefaultRestfulURI = "none://"
@@ -31,6 +33,7 @@ func AddFlags(cmd *cobra.Command, opts *Options) {
 	cmd.Flags().StringVarP(&opts.InitrdPath, "initrd", "i", "", "path to the virtual machine initrd")
 
 	cmd.Flags().VarP(&opts.Bootloader, "bootloader", "b", "bootloader configuration")
+	cmd.Flags().BoolVar(&opts.UseGUI, "gui", false, "display the contents of the virtual machine onto a graphical user interface")
 
 	cmd.MarkFlagsMutuallyExclusive("kernel", "bootloader")
 	cmd.MarkFlagsMutuallyExclusive("initrd", "bootloader")

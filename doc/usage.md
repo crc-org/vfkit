@@ -214,6 +214,33 @@ The share can be mounted in the guest with `mount -t virtiofs vfkitTag /mnt`, wi
 #### Example
 `--device virtio-fs,sharedDir=/Users/virtuser/vfkit/,mountTag=vfkit-share`
 
+### GPU
+
+#### Description
+
+The `--device virtio-gpu` option allows the user to add graphical devices to the virtual machine.
+
+#### Arguments
+- `height`: the vertical resolution of the graphical device's resolution. Defaults to 800
+- `width`: the horizontal resolution of the graphical device's resolution. Defaults to 600
+
+#### Example
+`--device virtio-gpu,height=1920,width=1080`
+
+### Input
+
+#### Description
+
+The `--device virtio-input` option allows the user to add an input device to the virtual machine. This currently supports `pointing` and `keyboard` devices.
+
+#### Arguments
+
+None
+
+#### Example
+
+`--device virtio-input,pointing`
+
 
 ## Restful Service
 
@@ -242,3 +269,20 @@ Get description of the virtual machine
 
 GET `/vm/inspect`
 Response: { "cpus": uint, "memory": uint64, "devices": []config.VirtIODevice }
+
+## Enabling a Graphical User Interface
+
+### Add a virtio-gpu device
+
+In order to successfully start a graphical application window, a virtio-gpu device must be added to the virtual machine.
+
+### Pass the `--gui` flag
+
+In order to tell vfkit that you want to start a graphical application window, you need to pass the `--gui` flag in your command.
+
+### Usage
+
+Proper use of this flag may look similar to the following section of a command: 
+```bash
+--device virtio-input,keyboard --device virtio-input,pointing --device virtio-gpu,height=1920,width=1000 --gui
+```

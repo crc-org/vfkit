@@ -118,6 +118,17 @@ func (vm *VirtualMachine) AddDevicesFromCmdLine(cmdlineOpts []string) error {
 	return nil
 }
 
+func (vm *VirtualMachine) VirtioGPUDevices() []*VirtioGPU {
+	gpuDevs := []*VirtioGPU{}
+	for _, dev := range vm.Devices {
+		if gpuDev, isVirtioGPU := dev.(*VirtioGPU); isVirtioGPU {
+			gpuDevs = append(gpuDevs, gpuDev)
+		}
+	}
+
+	return gpuDevs
+}
+
 func (vm *VirtualMachine) VirtioVsockDevices() []*VirtioVsock {
 	vsockDevs := []*VirtioVsock{}
 	for _, dev := range vm.Devices {

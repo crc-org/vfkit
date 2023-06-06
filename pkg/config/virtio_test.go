@@ -140,6 +140,43 @@ var virtioDevTests = map[string]virtioDevTest{
 		},
 		expectedCmdLine: []string{"--device", "usb-mass-storage,path=/foo/bar"},
 	},
+	"NewVirtioInputWithPointingDevice": {
+		newDev: func() (VirtioDevice, error) { return VirtioInputNew("pointing") },
+		expectedDev: &VirtioInput{
+			InputType: "pointing",
+		},
+		expectedCmdLine: []string{"--device", "virtio-input,pointing"},
+	},
+	"NewVirtioInputWithKeyboardDevice": {
+		newDev: func() (VirtioDevice, error) { return VirtioInputNew("keyboard") },
+		expectedDev: &VirtioInput{
+			InputType: "keyboard",
+		},
+		expectedCmdLine: []string{"--device", "virtio-input,keyboard"},
+	},
+	"NewVirtioGPUDevice": {
+		newDev: VirtioGPUNew,
+		expectedDev: &VirtioGPU{
+			false,
+			VirtioGPUResolution{800, 600},
+		},
+		expectedCmdLine: []string{"--device", "virtio-gpu,height=800,width=600"},
+	},
+	"NewVirtioGPUDeviceWithDimensions": {
+		newDev: func() (VirtioDevice, error) {
+			dev, err := VirtioGPUNew()
+			if err != nil {
+				return nil, err
+			}
+			dev.(*VirtioGPU).VirtioGPUResolution = VirtioGPUResolution{1920, 1080}
+			return dev, nil
+		},
+		expectedDev: &VirtioGPU{
+			false,
+			VirtioGPUResolution{1920, 1080},
+		},
+		expectedCmdLine: []string{"--device", "virtio-gpu,height=1920,width=1080"},
+	},
 }
 
 func testVirtioDev(t *testing.T, test *virtioDevTest) {
