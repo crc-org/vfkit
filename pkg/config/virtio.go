@@ -11,6 +11,37 @@ import (
 // The VirtioDevice interface is an interface which is implemented by all virtio devices.
 type VirtioDevice VMComponent
 
+const (
+	// Possible values for VirtioInput.InputType
+	VirtioInputPointingDevice = "pointing"
+	VirtioInputKeyboardDevice = "keyboard"
+
+	// Options for VirtioGPUResolution
+	VirtioGPUResolutionHeight = "height"
+	VirtioGPUResolutionWidth  = "width"
+
+	// Default VirtioGPU Resolution
+	defaultVirtioGPUResolutionHeight = 800
+	defaultVirtioGPUResolutionWidth  = 600
+)
+
+// VirtioInput configures an input device, such as a keyboard or pointing device
+// (mouse) that the virtual machine can use
+type VirtioInput struct {
+	InputType string `json:"inputType"` // currently supports "pointing" and "keyboard" input types
+}
+
+type VirtioGPUResolution struct {
+	Height int `json:"height"`
+	Width  int `json:"width"`
+}
+
+// VirtioGPU configures a GPU device, such as the host computer's display
+type VirtioGPU struct {
+	UsesGUI bool `json:"usesGUI"`
+	VirtioGPUResolution
+}
+
 // VirtioVsock configures of a virtio-vsock device allowing 2-way communication
 // between the host and the virtual machine type
 type VirtioVsock struct {
@@ -114,6 +145,10 @@ func deviceFromCmdLine(deviceOpts string) (VirtioDevice, error) {
 		dev = &VirtioVsock{}
 	case "usb-mass-storage":
 		dev = usbMassStorageNewEmpty()
+	case "virtio-input":
+		dev = &VirtioInput{}
+	case "virtio-gpu":
+		dev = &VirtioGPU{}
 	default:
 		return nil, fmt.Errorf("unknown device type: %s", opts[0])
 	}
@@ -176,6 +211,110 @@ func (dev *VirtioSerial) FromOptions(options []option) error {
 		default:
 			return fmt.Errorf("Unknown option for virtio-serial devices: %s", option.key)
 		}
+	}
+
+	return dev.validate()
+}
+
+// VirtioInputNew creates a new input device for the virtual machine.
+// The inputType parameter is the type of virtio-input device that will be added
+// to the machine.
+func VirtioInputNew(inputType string) (VirtioDevice, error) {
+	dev := &VirtioInput{
+		InputType: inputType,
+	}
+	if err := dev.validate(); err != nil {
+		return nil, err
+	}
+
+	return dev, nil
+}
+
+func (dev *VirtioInput) validate() error {
+	if dev.InputType != VirtioInputPointingDevice && dev.InputType != VirtioInputKeyboardDevice {
+		return fmt.Errorf("Unknown option for virtio-input devices: %s", dev.InputType)
+	}
+
+	return nil
+}
+
+func (dev *VirtioInput) ToCmdLine() ([]string, error) {
+	if err := dev.validate(); err != nil {
+		return nil, err
+	}
+
+	return []string{"--device", fmt.Sprintf("virtio-input,%s", dev.InputType)}, nil
+}
+
+func (dev *VirtioInput) FromOptions(options []option) error {
+	for _, option := range options {
+		switch option.key {
+		case VirtioInputPointingDevice, VirtioInputKeyboardDevice:
+			if option.value != "" {
+				return fmt.Errorf(fmt.Sprintf("Unexpected value for virtio-input %s option: %s", option.key, option.value))
+			}
+			dev.InputType = option.key
+		default:
+			return fmt.Errorf("Unknown option for virtio-input devices: %s", option.key)
+		}
+	}
+	return dev.validate()
+}
+
+// VirtioGPUNew creates a new gpu device for the virtual machine.
+// The usesGUI parameter determines whether a graphical application window will
+// be displayed
+func VirtioGPUNew() (VirtioDevice, error) {
+	return &VirtioGPU{
+		UsesGUI: false,
+		VirtioGPUResolution: VirtioGPUResolution{
+			Height: defaultVirtioGPUResolutionHeight,
+			Width:  defaultVirtioGPUResolutionWidth,
+		},
+	}, nil
+}
+
+func (dev *VirtioGPU) validate() error {
+	if dev.Height < 1 || dev.Width < 1 {
+		return fmt.Errorf("Invalid dimensions for virtio-gpu device resolution: %dx%d", dev.Height, dev.Width)
+	}
+
+	return nil
+}
+
+func (dev *VirtioGPU) ToCmdLine() ([]string, error) {
+	if err := dev.validate(); err != nil {
+		return nil, err
+	}
+
+	return []string{"--device", fmt.Sprintf("virtio-gpu,height=%d,width=%d", dev.Height, dev.Width)}, nil
+}
+
+func (dev *VirtioGPU) FromOptions(options []option) error {
+	for _, option := range options {
+		switch option.key {
+		case VirtioGPUResolutionHeight:
+			height, err := strconv.Atoi(option.value)
+			if err != nil || height < 1 {
+				return fmt.Errorf(fmt.Sprintf("Invalid value for virtio-gpu %s: %s", option.key, option.value))
+			}
+
+			dev.Height = height
+		case VirtioGPUResolutionWidth:
+			width, err := strconv.Atoi(option.value)
+			if err != nil || width < 1 {
+				return fmt.Errorf(fmt.Sprintf("Invalid value for virtio-gpu %s: %s", option.key, option.value))
+			}
+
+			dev.Width = width
+		default:
+			return fmt.Errorf("Unknown option for virtio-gpu devices: %s", option.key)
+		}
+	}
+
+	if dev.Width == 0 && dev.Height == 0 {
+		dev.Width = defaultVirtioGPUResolutionWidth
+		dev.Height = defaultVirtioGPUResolutionHeight
 	}
 
 	return dev.validate()

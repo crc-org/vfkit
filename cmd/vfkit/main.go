@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 	"time"
 
@@ -113,10 +114,18 @@ func waitForVMState(vm *vz.VirtualMachine, state vz.VirtualMachineState) error {
 }
 
 func runVFKit(vmConfig *config.VirtualMachine, opts *cmdline.Options) error {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
 	vzVMConfig, err := vf.ToVzVirtualMachineConfig(vmConfig)
 	if err != nil {
 		return err
 	}
+
+	gpuDevs := vmConfig.VirtioGPUDevices()
+	if opts.UseGUI && len(gpuDevs) > 0 {
+		gpuDevs[0].UsesGUI = true
+	}
+
 	vm, err := vz.NewVirtualMachine(vzVMConfig)
 	if err != nil {
 		return err
@@ -168,18 +177,35 @@ func runVirtualMachine(vmConfig *config.VirtualMachine, vm *vz.VirtualMachine) e
 	}
 
 	log.Infof("waiting for VM to stop")
-	for {
-		err := waitForVMState(vm, vz.VirtualMachineStateStopped)
-		if err == nil {
-			log.Infof("VM is stopped")
+
+	errCh := make(chan error, 1)
+	go func() {
+		for {
+			err := waitForVMState(vm, vz.VirtualMachineStateStopped)
+			if err == nil {
+				log.Infof("VM is stopped")
+				errCh <- nil
+				return
+			}
+			if !errors.Is(err, errVMStateTimeout) {
+				errCh <- fmt.Errorf("virtualization error: %v", err)
+				return
+			}
+			// errVMStateTimeout -> keep looping
+		}
+	}()
+
+	for _, gpuDev := range vmConfig.VirtioGPUDevices() {
+		if gpuDev.UsesGUI {
+			runtime.LockOSThread()
+			err := vm.StartGraphicApplication(float64(gpuDev.Height), float64(gpuDev.Width))
+			runtime.UnlockOSThread()
+			if err != nil {
+				return err
+			}
 			break
 		}
-		if !errors.Is(err, errVMStateTimeout) {
-			log.Infof("virtualization error: %v", err)
-			return err
-		}
-		// errVMStateTimeout -> keep looping
 	}
 
-	return nil
+	return <-errCh
 }

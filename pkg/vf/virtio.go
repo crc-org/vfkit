@@ -20,6 +20,8 @@ type VirtioNet config.VirtioNet
 type VirtioRng config.VirtioRng
 type VirtioSerial config.VirtioSerial
 type VirtioVsock config.VirtioVsock
+type VirtioInput config.VirtioInput
+type VirtioGPU config.VirtioGPU
 
 func (dev *VirtioBlk) toVz() (vz.StorageDeviceConfiguration, error) {
 	var storageConfig StorageConfig = StorageConfig(dev.StorageConfig)
@@ -49,6 +51,78 @@ func (dev *VirtioBlk) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfig
 	}
 	log.Infof("Adding virtio-blk device (imagePath: %s)", dev.ImagePath)
 	vmConfig.storageDeviceConfiguration = append(vmConfig.storageDeviceConfiguration, storageDeviceConfig)
+
+	return nil
+}
+
+func (dev *VirtioInput) toVz() (interface{}, error) {
+	var inputConfig interface{}
+	if dev.InputType == config.VirtioInputPointingDevice {
+		inputConfig, err := vz.NewUSBScreenCoordinatePointingDeviceConfiguration()
+		if err != nil {
+			return nil, fmt.Errorf("failed to create pointing device configuration: %w", err)
+		}
+
+		return inputConfig, nil
+	}
+
+	inputConfig, err := vz.NewUSBKeyboardConfiguration()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create keyboard device configuration: %w", err)
+	}
+
+	return inputConfig, nil
+}
+
+func (dev *VirtioInput) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfiguration) error {
+	inputDeviceConfig, err := dev.toVz()
+	if err != nil {
+		return err
+	}
+
+	log.Infof("Adding virtio-input device")
+
+	switch conf := inputDeviceConfig.(type) {
+	case *vz.USBScreenCoordinatePointingDeviceConfiguration:
+		vmConfig.SetPointingDevicesVirtualMachineConfiguration([]vz.PointingDeviceConfiguration{
+			conf,
+		})
+	case *vz.USBKeyboardConfiguration:
+		vmConfig.SetKeyboardsVirtualMachineConfiguration([]vz.KeyboardConfiguration{
+			conf,
+		})
+	}
+
+	return nil
+}
+
+func (dev *VirtioGPU) toVZ() (vz.GraphicsDeviceConfiguration, error) {
+	gpuDeviceConfig, err := vz.NewVirtioGraphicsDeviceConfiguration()
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize virtio graphic device: %w", err)
+	}
+	graphicsScanoutConfig, err := vz.NewVirtioGraphicsScanoutConfiguration(int64(dev.Height), int64(dev.Width))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create graphics scanout: %w", err)
+	}
+	gpuDeviceConfig.SetScanouts(
+		graphicsScanoutConfig,
+	)
+
+	return gpuDeviceConfig, nil
+}
+
+func (dev *VirtioGPU) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfiguration) error {
+	gpuDeviceConfig, err := dev.toVZ()
+	if err != nil {
+		return err
+	}
+
+	log.Infof("Adding virtio-gpu device")
+
+	vmConfig.SetGraphicsDevicesVirtualMachineConfiguration([]vz.GraphicsDeviceConfiguration{
+		gpuDeviceConfig,
+	})
 
 	return nil
 }
@@ -249,6 +323,10 @@ func AddToVirtualMachineConfig(dev config.VirtioDevice, vmConfig *vzVirtualMachi
 		return (*VirtioSerial)(d).AddToVirtualMachineConfig(vmConfig)
 	case *config.VirtioVsock:
 		return (*VirtioVsock)(d).AddToVirtualMachineConfig(vmConfig)
+	case *config.VirtioInput:
+		return (*VirtioInput)(d).AddToVirtualMachineConfig(vmConfig)
+	case *config.VirtioGPU:
+		return (*VirtioGPU)(d).AddToVirtualMachineConfig(vmConfig)
 	default:
 		return fmt.Errorf("Unexpected virtio device type: %T", d)
 	}
