@@ -68,6 +68,89 @@ func unmarshalBootloader(rawMsg json.RawMessage) (Bootloader, error) {
 	return bootloader, nil
 }
 
+func unmarshalDevices(rawMsg json.RawMessage) ([]VirtioDevice, error) {
+	var (
+		rawDevices []*json.RawMessage
+		devices    []VirtioDevice
+		dmap       map[string]*json.RawMessage
+		kind       string
+	)
+
+	err := json.Unmarshal(rawMsg, &rawDevices)
+
+	for _, msg := range rawDevices {
+		if err := json.Unmarshal(*msg, &dmap); err != nil {
+			return nil, err
+		}
+		rawKind := dmap["kind"]
+		if rawKind == nil {
+			return nil, fmt.Errorf("missing 'kind' node")
+		}
+		if err := json.Unmarshal(*rawKind, &kind); err != nil {
+			return nil, err
+		}
+		delete(dmap, "kind")
+		b, err := json.Marshal(dmap)
+		if err != nil {
+			return nil, err
+		}
+		switch kind {
+		case string(vfNet):
+			var newDevice VirtioNet
+			err = json.Unmarshal(b, &newDevice)
+			if err == nil {
+				devices = append(devices, &newDevice)
+			}
+		case string(vfVsock):
+			var newDevice VirtioVsock
+			err = json.Unmarshal(b, &newDevice)
+			if err == nil {
+				devices = append(devices, &newDevice)
+			}
+		case string(vfBlk):
+			var newDevice VirtioBlk
+			err = json.Unmarshal(b, &newDevice)
+			if err == nil {
+				devices = append(devices, &newDevice)
+			}
+		case string(vfFs):
+			var newDevice VirtioFs
+			err = json.Unmarshal(b, &newDevice)
+			if err == nil {
+				devices = append(devices, &newDevice)
+			}
+		case string(vfRng):
+			var newDevice VirtioRng
+			err = json.Unmarshal(b, &newDevice)
+			if err == nil {
+				devices = append(devices, &newDevice)
+			}
+		case string(vfSerial):
+			var newDevice VirtioSerial
+			err = json.Unmarshal(b, &newDevice)
+			if err == nil {
+				devices = append(devices, &newDevice)
+			}
+		case string(vfGpu):
+			var newDevice VirtioGPU
+			err = json.Unmarshal(b, &newDevice)
+			if err == nil {
+				devices = append(devices, &newDevice)
+			}
+		case string(vfInput):
+			var newDevice VirtioInput
+			err = json.Unmarshal(b, &newDevice)
+			if err == nil {
+				devices = append(devices, &newDevice)
+			}
+		default:
+			return nil, fmt.Errorf("unknown 'kind' field: '%s'", kind)
+		}
+	}
+
+	return devices, err
+}
+
 // UnmarshalJSON is a custom deserializer for VirtualMachine.  The custom work
 // is needed because VirtualMachine uses interfaces in its struct and JSON cannot
 // determine which implementation of the interface to deserialize to.
@@ -99,90 +182,17 @@ func (vm *VirtualMachine) UnmarshalJSON(b []byte) error {
 		case "timesync":
 			err = json.Unmarshal(*rawMsg, &vm.Timesync)
 		case "devices":
-			var (
-				devices []*json.RawMessage
-				dmap    map[string]*json.RawMessage
-				kind    string
-			)
-
-			err = json.Unmarshal(*rawMsg, &devices)
-
-			for _, msg := range devices {
-				if err := json.Unmarshal(*msg, &dmap); err != nil {
-					return err
-				}
-				rawKind := dmap["kind"]
-				if rawKind == nil {
-					return fmt.Errorf("missing 'kind' node")
-				}
-				if err := json.Unmarshal(*rawKind, &kind); err != nil {
-					return err
-				}
-				delete(dmap, "kind")
-				b, err := json.Marshal(dmap)
-				if err != nil {
-					return err
-				}
-				switch kind {
-				case string(vfNet):
-					var newDevice VirtioNet
-					err = json.Unmarshal(b, &newDevice)
-					if err == nil {
-						vm.Devices = append(vm.Devices, &newDevice)
-					}
-				case string(vfVsock):
-					var newDevice VirtioVsock
-					err = json.Unmarshal(b, &newDevice)
-					if err == nil {
-						vm.Devices = append(vm.Devices, &newDevice)
-					}
-				case string(vfBlk):
-					var newDevice VirtioBlk
-					err = json.Unmarshal(b, &newDevice)
-					if err == nil {
-						vm.Devices = append(vm.Devices, &newDevice)
-					}
-				case string(vfFs):
-					var newDevice VirtioFs
-					err = json.Unmarshal(b, &newDevice)
-					if err == nil {
-						vm.Devices = append(vm.Devices, &newDevice)
-					}
-				case string(vfRng):
-					var newDevice VirtioRng
-					err = json.Unmarshal(b, &newDevice)
-					if err == nil {
-						vm.Devices = append(vm.Devices, &newDevice)
-					}
-				case string(vfSerial):
-					var newDevice VirtioSerial
-					err = json.Unmarshal(b, &newDevice)
-					if err == nil {
-						vm.Devices = append(vm.Devices, &newDevice)
-					}
-				case string(vfGpu):
-					var newDevice VirtioGPU
-					err = json.Unmarshal(b, &newDevice)
-					if err == nil {
-						vm.Devices = append(vm.Devices, &newDevice)
-					}
-				case string(vfInput):
-					var newDevice VirtioInput
-					err = json.Unmarshal(b, &newDevice)
-					if err == nil {
-						vm.Devices = append(vm.Devices, &newDevice)
-					}
-				default:
-					err = fmt.Errorf("unknown 'kind' field: '%s'", kind)
-				}
-			} // end for-loop for devices
-
-		} // end switch
+			var devices []VirtioDevice
+			devices, err = unmarshalDevices(*rawMsg)
+			if err == nil {
+				vm.Devices = devices
+			}
+		}
 
 		if err != nil {
 			return err
 		}
-	} // end for-loop
+	}
 	return nil
 }
 
