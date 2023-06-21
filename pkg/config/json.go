@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
 // The technique for json (de)serialization was explained here:
@@ -55,7 +56,12 @@ func (vm *VirtualMachine) UnmarshalJSON(b []byte) error {
 			if err := json.Unmarshal(*rawMsg, &blmap); err != nil {
 				return err
 			}
-			if err := json.Unmarshal(*blmap["kind"], &kind); err != nil {
+
+			rawKind := blmap["kind"]
+			if rawKind == nil {
+				return fmt.Errorf("missing 'kind' node")
+			}
+			if err := json.Unmarshal(*rawKind, &kind); err != nil {
 				return err
 			}
 			delete(blmap, "kind")
@@ -93,7 +99,11 @@ func (vm *VirtualMachine) UnmarshalJSON(b []byte) error {
 				if err := json.Unmarshal(*msg, &dmap); err != nil {
 					return err
 				}
-				if err := json.Unmarshal(*dmap["kind"], &kind); err != nil {
+				rawKind := dmap["kind"]
+				if rawKind == nil {
+					return fmt.Errorf("missing 'kind' node")
+				}
+				if err := json.Unmarshal(*rawKind, &kind); err != nil {
 					return err
 				}
 				delete(dmap, "kind")
