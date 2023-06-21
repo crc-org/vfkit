@@ -250,7 +250,7 @@ func (dev *VirtioSerial) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (dev *VirtioGPU) MashallJSON() ([]byte, error) {
+func (dev *VirtioGPU) MarshalJSON() ([]byte, error) {
 	type devWithKind struct {
 		Kind vmComponentKind `json:"kind"`
 		VirtioGPU
@@ -261,7 +261,7 @@ func (dev *VirtioGPU) MashallJSON() ([]byte, error) {
 	})
 }
 
-func (dev *VirtioInput) MashallJSON() ([]byte, error) {
+func (dev *VirtioInput) MarshalJSON() ([]byte, error) {
 	type devWithKind struct {
 		Kind vmComponentKind `json:"kind"`
 		VirtioInput
