@@ -26,6 +26,48 @@ const (
 	vfInput  vmComponentKind = "virtioinput"
 )
 
+func unmarshalBootloader(rawMsg json.RawMessage) (Bootloader, error) {
+	var (
+		kind       string
+		blmap      map[string]*json.RawMessage
+		bootloader Bootloader
+	)
+	if err := json.Unmarshal(rawMsg, &blmap); err != nil {
+		return nil, err
+	}
+
+	rawKind := blmap["kind"]
+	if rawKind == nil {
+		return nil, fmt.Errorf("missing 'kind' node")
+	}
+	if err := json.Unmarshal(*rawKind, &kind); err != nil {
+		return nil, err
+	}
+	delete(blmap, "kind")
+	b, err := json.Marshal(blmap)
+	if err != nil {
+		return nil, err
+	}
+	switch kind {
+	case string(efiBootloader):
+		var efi EFIBootloader
+		err = json.Unmarshal(b, &efi)
+		if err == nil {
+			bootloader = &efi
+		}
+	case string(linuxBootloader):
+		var linux LinuxBootloader
+		err = json.Unmarshal(b, &linux)
+		if err == nil {
+			bootloader = &linux
+		}
+	default:
+		return nil, fmt.Errorf("unknown 'kind' field: '%s'", kind)
+	}
+
+	return bootloader, nil
+}
+
 // UnmarshalJSON is a custom deserializer for VirtualMachine.  The custom work
 // is needed because VirtualMachine uses interfaces in its struct and JSON cannot
 // determine which implementation of the interface to deserialize to.
@@ -49,43 +91,10 @@ func (vm *VirtualMachine) UnmarshalJSON(b []byte) error {
 		case "memoryBytes":
 			err = json.Unmarshal(*rawMsg, &vm.MemoryBytes)
 		case "bootloader":
-			var (
-				kind  string
-				blmap map[string]*json.RawMessage
-			)
-			if err := json.Unmarshal(*rawMsg, &blmap); err != nil {
-				return err
-			}
-
-			rawKind := blmap["kind"]
-			if rawKind == nil {
-				return fmt.Errorf("missing 'kind' node")
-			}
-			if err := json.Unmarshal(*rawKind, &kind); err != nil {
-				return err
-			}
-			delete(blmap, "kind")
-			b, err := json.Marshal(blmap)
-			if err != nil {
-				return err
-			}
-			switch kind {
-			case string(efiBootloader):
-				var efi EFIBootloader
-				err = json.Unmarshal(b, &efi)
-				if err == nil {
-					vm.Bootloader = &efi
-				}
-			case string(linuxBootloader):
-				var linux LinuxBootloader
-				err = json.Unmarshal(b, &linux)
-				if err == nil {
-					vm.Bootloader = &linux
-				}
-
-			default:
-				err = fmt.Errorf("unknown 'kind' field: '%s'", kind)
-
+			var bootloader Bootloader
+			bootloader, err = unmarshalBootloader(*rawMsg)
+			if err == nil {
+				vm.Bootloader = bootloader
 			}
 		case "timesync":
 			err = json.Unmarshal(*rawMsg, &vm.Timesync)
