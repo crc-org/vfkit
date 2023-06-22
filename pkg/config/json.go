@@ -26,6 +26,14 @@ const (
 	vfInput  vmComponentKind = "virtioinput"
 )
 
+type jsonKind struct {
+	Kind vmComponentKind `json:"kind"`
+}
+
+func kind(k vmComponentKind) jsonKind {
+	return jsonKind{Kind: k}
+}
+
 func unmarshalBootloader(rawMsg json.RawMessage) (Bootloader, error) {
 	var (
 		kind       string
@@ -197,110 +205,110 @@ func (vm *VirtualMachine) UnmarshalJSON(b []byte) error {
 
 func (bootloader *EFIBootloader) MarshalJSON() ([]byte, error) {
 	type blWithKind struct {
-		Kind vmComponentKind `json:"kind"`
+		jsonKind
 		EFIBootloader
 	}
 	return json.Marshal(blWithKind{
-		Kind:          efiBootloader,
+		jsonKind:      kind(efiBootloader),
 		EFIBootloader: *bootloader,
 	})
 }
 
 func (bootloader *LinuxBootloader) MarshalJSON() ([]byte, error) {
 	type blWithKind struct {
-		Kind vmComponentKind `json:"kind"`
+		jsonKind
 		LinuxBootloader
 	}
 	return json.Marshal(blWithKind{
-		Kind:            linuxBootloader,
+		jsonKind:        kind(linuxBootloader),
 		LinuxBootloader: *bootloader,
 	})
 }
 
 func (dev *VirtioNet) MarshalJSON() ([]byte, error) {
 	type devWithKind struct {
-		Kind vmComponentKind `json:"kind"`
+		jsonKind
 		VirtioNet
 	}
 	return json.Marshal(devWithKind{
-		Kind:      vfNet,
+		jsonKind:  kind(vfNet),
 		VirtioNet: *dev,
 	})
 }
 
 func (dev *VirtioVsock) MarshalJSON() ([]byte, error) {
 	type devWithKind struct {
-		Kind vmComponentKind `json:"kind"`
+		jsonKind
 		VirtioVsock
 	}
 	return json.Marshal(devWithKind{
-		Kind:        vfVsock,
+		jsonKind:    kind(vfVsock),
 		VirtioVsock: *dev,
 	})
 }
 
 func (dev *VirtioBlk) MarshalJSON() ([]byte, error) {
 	type devWithKind struct {
-		Kind vmComponentKind `json:"kind"`
+		jsonKind
 		VirtioBlk
 	}
 	return json.Marshal(devWithKind{
-		Kind:      vfBlk,
+		jsonKind:  kind(vfBlk),
 		VirtioBlk: *dev,
 	})
 }
 
 func (dev *VirtioFs) MarshalJSON() ([]byte, error) {
 	type devWithKind struct {
-		Kind vmComponentKind `json:"kind"`
+		jsonKind
 		VirtioFs
 	}
 	return json.Marshal(devWithKind{
-		Kind:     vfFs,
+		jsonKind: kind(vfFs),
 		VirtioFs: *dev,
 	})
 }
 
 func (dev *VirtioRng) MarshalJSON() ([]byte, error) {
 	type devWithKind struct {
-		Kind vmComponentKind `json:"kind"`
+		jsonKind
 		VirtioRng
 	}
 	return json.Marshal(devWithKind{
-		Kind:      vfRng,
+		jsonKind:  kind(vfRng),
 		VirtioRng: *dev,
 	})
 }
 
 func (dev *VirtioSerial) MarshalJSON() ([]byte, error) {
 	type devWithKind struct {
-		Kind vmComponentKind `json:"kind"`
+		jsonKind
 		VirtioSerial
 	}
 	return json.Marshal(devWithKind{
-		Kind:         vfSerial,
+		jsonKind:     kind(vfSerial),
 		VirtioSerial: *dev,
 	})
 }
 
 func (dev *VirtioGPU) MarshalJSON() ([]byte, error) {
 	type devWithKind struct {
-		Kind vmComponentKind `json:"kind"`
+		jsonKind
 		VirtioGPU
 	}
 	return json.Marshal(devWithKind{
-		Kind:      vfGpu,
+		jsonKind:  kind(vfGpu),
 		VirtioGPU: *dev,
 	})
 }
 
 func (dev *VirtioInput) MarshalJSON() ([]byte, error) {
 	type devWithKind struct {
-		Kind vmComponentKind `json:"kind"`
+		jsonKind
 		VirtioInput
 	}
 	return json.Marshal(devWithKind{
-		Kind:        vfInput,
+		jsonKind:    kind(vfInput),
 		VirtioInput: *dev,
 	})
 }
