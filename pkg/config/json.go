@@ -83,6 +83,9 @@ func (vm *VirtualMachine) UnmarshalJSON(b []byte) error {
 					vm.Bootloader = &linux
 				}
 
+			default:
+				err = fmt.Errorf("unknown 'kind' field: '%s'", kind)
+
 			}
 		case "timesync":
 			err = json.Unmarshal(*rawMsg, &vm.Timesync)
@@ -160,6 +163,8 @@ func (vm *VirtualMachine) UnmarshalJSON(b []byte) error {
 					if err == nil {
 						vm.Devices = append(vm.Devices, &newDevice)
 					}
+				default:
+					err = fmt.Errorf("unknown 'kind' field: '%s'", kind)
 				}
 			} // end for-loop for devices
 
