@@ -36,36 +36,23 @@ func kind(k vmComponentKind) jsonKind {
 
 func unmarshalBootloader(rawMsg json.RawMessage) (Bootloader, error) {
 	var (
-		kind       string
-		blmap      map[string]*json.RawMessage
+		kind       jsonKind
 		bootloader Bootloader
+		err        error
 	)
-	if err := json.Unmarshal(rawMsg, &blmap); err != nil {
+	if err := json.Unmarshal(rawMsg, &kind); err != nil {
 		return nil, err
 	}
-
-	rawKind := blmap["kind"]
-	if rawKind == nil {
-		return nil, fmt.Errorf("missing 'kind' node")
-	}
-	if err := json.Unmarshal(*rawKind, &kind); err != nil {
-		return nil, err
-	}
-	delete(blmap, "kind")
-	b, err := json.Marshal(blmap)
-	if err != nil {
-		return nil, err
-	}
-	switch kind {
-	case string(efiBootloader):
+	switch kind.Kind {
+	case efiBootloader:
 		var efi EFIBootloader
-		err = json.Unmarshal(b, &efi)
+		err = json.Unmarshal(rawMsg, &efi)
 		if err == nil {
 			bootloader = &efi
 		}
-	case string(linuxBootloader):
+	case linuxBootloader:
 		var linux LinuxBootloader
-		err = json.Unmarshal(b, &linux)
+		err = json.Unmarshal(rawMsg, &linux)
 		if err == nil {
 			bootloader = &linux
 		}
