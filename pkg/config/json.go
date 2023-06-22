@@ -58,10 +58,10 @@ func unmarshalBootloader(rawMsg json.RawMessage) (Bootloader, error) {
 			bootloader = &linux
 		}
 	default:
-		return nil, fmt.Errorf("unknown 'kind' field: '%s'", kind)
+		err = fmt.Errorf("unknown 'kind' field: '%s'", kind)
 	}
 
-	return bootloader, nil
+	return bootloader, err
 }
 
 func unmarshalDevices(rawMsg json.RawMessage) ([]VirtioDevice, error) {
@@ -71,15 +71,19 @@ func unmarshalDevices(rawMsg json.RawMessage) ([]VirtioDevice, error) {
 	)
 
 	err := json.Unmarshal(rawMsg, &rawDevices)
+	if err != nil {
+		return nil, err
+	}
 
 	for _, msg := range rawDevices {
 		dev, err := unmarshalDevice(*msg)
-		if err == nil {
-			devices = append(devices, dev)
+		if err != nil {
+			return nil, err
 		}
+		devices = append(devices, dev)
 	}
 
-	return devices, err
+	return devices, nil
 }
 
 func unmarshalDevice(rawMsg json.RawMessage) (VirtioDevice, error) {
@@ -129,7 +133,7 @@ func unmarshalDevice(rawMsg json.RawMessage) (VirtioDevice, error) {
 		err = json.Unmarshal(rawMsg, &newDevice)
 		dev = &newDevice
 	default:
-		return nil, fmt.Errorf("unknown 'kind' field: '%s'", kind)
+		err = fmt.Errorf("unknown 'kind' field: '%s'", kind)
 	}
 
 	if err != nil {
