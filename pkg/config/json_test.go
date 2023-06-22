@@ -114,12 +114,43 @@ var jsonTests = map[string]jsonTest{
 	},
 }
 
+type invalidJSONTest struct {
+	json string
+}
+
+var invalidJSONTests = map[string]invalidJSONTest{
+	"TestEmptyBootloaderKind": {
+		json: `{"vcpus":3,"memoryBytes":4000000000,"bootloader":{"kind":"empty",VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"}}`,
+	},
+	"TestInvalidBootloaderKind": {
+		json: `{"vcpus":3,"memoryBytes":4000000000,"bootloader":{"kind":"invalid",VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"}}`,
+	},
+	"TestMissingBootloaderKind": {
+		json: `{"vcpus":3,"memoryBytes":4000000000,"bootloader":{"VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"}}`,
+	},
+	"TestEmptyDeviceKind": {
+		json: `{"vcpus":3,"memoryBytes":4000000000,"bootloader":{"kind":"linuxBootloader","VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"},"devices":[{"kind":"","DevName":"virtio-blk","ImagePath":"/virtioblk1","ReadOnly":false,"DeviceIdentifier":""}]}`,
+	},
+	"TestInvalidDeviceKind": {
+		json: `{"vcpus":3,"memoryBytes":4000000000,"bootloader":{"kind":"linuxBootloader","VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"},"devices":[{"kind":"invalid","DevName":"virtio-blk","ImagePath":"/virtioblk1","ReadOnly":false,"DeviceIdentifier":""}]}`,
+	},
+	"TestMissingDeviceKind": {
+		json: `{"vcpus":3,"memoryBytes":4000000000,"bootloader":{"kind":"linuxBootloader","VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"},"devices":[{"DevName":"virtio-blk","ImagePath":"/virtioblk1","ReadOnly":false,"DeviceIdentifier":""}]}`,
+	},
+}
+
 func TestJSON(t *testing.T) {
 	t.Run("json", func(t *testing.T) {
 		for name := range jsonTests {
 			t.Run(name, func(t *testing.T) {
 				test := jsonTests[name]
 				testJSON(t, &test)
+			})
+		}
+		for name := range invalidJSONTests {
+			t.Run(name, func(t *testing.T) {
+				test := invalidJSONTests[name]
+				testInvalidJSON(t, &test)
 			})
 		}
 
@@ -137,6 +168,12 @@ func testJSON(t *testing.T, test *jsonTest) {
 	require.NoError(t, err)
 
 	require.Equal(t, *vm, unmarshalledVM)
+}
+
+func testInvalidJSON(t *testing.T, test *invalidJSONTest) {
+	var vm VirtualMachine
+	err := json.Unmarshal([]byte(test.json), &vm)
+	require.Error(t, err)
 }
 
 func newLinuxVM(*testing.T) *VirtualMachine {
