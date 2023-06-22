@@ -14,8 +14,8 @@ type VirtualMachine struct {
 	Vcpus       uint           `json:"vcpus"`
 	MemoryBytes uint64         `json:"memoryBytes"`
 	Bootloader  Bootloader     `json:"bootloader"`
-	Devices     []VirtioDevice `json:"devices"`
-	Timesync    *TimeSync      `json:"timesync"`
+	Devices     []VirtioDevice `json:"devices,omitempty"`
+	Timesync    *TimeSync      `json:"timesync,omitempty"`
 }
 
 // TimeSync enables synchronization of the host time to the linux guest after the host was suspended.
