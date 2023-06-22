@@ -16,14 +16,15 @@ const (
 	linuxBootloader vmComponentKind = "linuxBootloader"
 
 	// VirtIO device kinds
-	vfNet    vmComponentKind = "virtionet"
-	vfVsock  vmComponentKind = "virtiosock"
-	vfBlk    vmComponentKind = "virtioblk"
-	vfFs     vmComponentKind = "virtiofs"
-	vfRng    vmComponentKind = "virtiorng"
-	vfSerial vmComponentKind = "virtioserial"
-	vfGpu    vmComponentKind = "virtiogpu"
-	vfInput  vmComponentKind = "virtioinput"
+	vfNet          vmComponentKind = "virtionet"
+	vfVsock        vmComponentKind = "virtiosock"
+	vfBlk          vmComponentKind = "virtioblk"
+	vfFs           vmComponentKind = "virtiofs"
+	vfRng          vmComponentKind = "virtiorng"
+	vfSerial       vmComponentKind = "virtioserial"
+	vfGpu          vmComponentKind = "virtiogpu"
+	vfInput        vmComponentKind = "virtioinput"
+	usbMassStorage vmComponentKind = "usbmassstorage"
 )
 
 type jsonKind struct {
@@ -121,6 +122,10 @@ func unmarshalDevice(rawMsg json.RawMessage) (VirtioDevice, error) {
 		dev = &newDevice
 	case vfInput:
 		var newDevice VirtioInput
+		err = json.Unmarshal(rawMsg, &newDevice)
+		dev = &newDevice
+	case usbMassStorage:
+		var newDevice USBMassStorage
 		err = json.Unmarshal(rawMsg, &newDevice)
 		dev = &newDevice
 	default:
@@ -285,5 +290,16 @@ func (dev *VirtioInput) MarshalJSON() ([]byte, error) {
 	return json.Marshal(devWithKind{
 		jsonKind:    kind(vfInput),
 		VirtioInput: *dev,
+	})
+}
+
+func (dev *USBMassStorage) MarshalJSON() ([]byte, error) {
+	type devWithKind struct {
+		jsonKind
+		USBMassStorage
+	}
+	return json.Marshal(devWithKind{
+		jsonKind:       kind(usbMassStorage),
+		USBMassStorage: *dev,
 	})
 }
