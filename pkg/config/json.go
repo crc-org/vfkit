@@ -96,60 +96,48 @@ func unmarshalDevices(rawMsg json.RawMessage) ([]VirtioDevice, error) {
 
 func unmarshalDevice(rawMsg json.RawMessage) (VirtioDevice, error) {
 	var (
-		dmap map[string]*json.RawMessage
-		kind string
+		kind jsonKind
+		dev  VirtioDevice
+		err  error
 	)
-	if err := json.Unmarshal(rawMsg, &dmap); err != nil {
+	if err := json.Unmarshal(rawMsg, &kind); err != nil {
 		return nil, err
 	}
-	rawKind := dmap["kind"]
-	if rawKind == nil {
-		return nil, fmt.Errorf("missing 'kind' node")
-	}
-	if err := json.Unmarshal(*rawKind, &kind); err != nil {
-		return nil, err
-	}
-	delete(dmap, "kind")
-	b, err := json.Marshal(dmap)
-	if err != nil {
-		return nil, err
-	}
-	var dev VirtioDevice
-	switch kind {
-	case string(vfNet):
+	switch kind.Kind {
+	case vfNet:
 		var newDevice VirtioNet
-		err = json.Unmarshal(b, &newDevice)
+		err = json.Unmarshal(rawMsg, &newDevice)
 		dev = &newDevice
-	case string(vfVsock):
+	case vfVsock:
 		var newDevice VirtioVsock
-		err = json.Unmarshal(b, &newDevice)
+		err = json.Unmarshal(rawMsg, &newDevice)
 		dev = &newDevice
-	case string(vfBlk):
+	case vfBlk:
 		var newDevice VirtioBlk
-		err = json.Unmarshal(b, &newDevice)
+		err = json.Unmarshal(rawMsg, &newDevice)
 		dev = &newDevice
-	case string(vfFs):
+	case vfFs:
 		var newDevice VirtioFs
-		err = json.Unmarshal(b, &newDevice)
+		err = json.Unmarshal(rawMsg, &newDevice)
 		dev = &newDevice
-	case string(vfRng):
+	case vfRng:
 		var newDevice VirtioRng
-		err = json.Unmarshal(b, &newDevice)
+		err = json.Unmarshal(rawMsg, &newDevice)
 		dev = &newDevice
-	case string(vfSerial):
+	case vfSerial:
 		var newDevice VirtioSerial
-		err = json.Unmarshal(b, &newDevice)
+		err = json.Unmarshal(rawMsg, &newDevice)
 		dev = &newDevice
-	case string(vfGpu):
+	case vfGpu:
 		var newDevice VirtioGPU
-		err = json.Unmarshal(b, &newDevice)
+		err = json.Unmarshal(rawMsg, &newDevice)
 		dev = &newDevice
-	case string(vfInput):
+	case vfInput:
 		var newDevice VirtioInput
-		err = json.Unmarshal(b, &newDevice)
+		err = json.Unmarshal(rawMsg, &newDevice)
 		dev = &newDevice
 	default:
-		return nil, fmt.Errorf("unknown 'kind' field: %s", kind)
+		return nil, fmt.Errorf("unknown 'kind' field: '%s'", kind)
 	}
 
 	if err != nil {
