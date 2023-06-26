@@ -3,7 +3,7 @@ module github.com/crc-org/vfkit
 go 1.18
 
 require (
-	github.com/Code-Hex/vz/v3 v3.0.4
+	github.com/Code-Hex/vz/v3 v3.0.6
 	github.com/docker/go-units v0.4.0
 	github.com/gin-gonic/gin v1.9.0
 	github.com/h2non/filetype v1.1.3
@@ -17,6 +17,7 @@ require (
 )
 
 require (
+	github.com/Code-Hex/go-infinity-channel v1.0.0 // indirect
 	github.com/bytedance/sonic v1.8.0 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect

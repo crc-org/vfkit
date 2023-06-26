@@ -1,5 +1,7 @@
-github.com/Code-Hex/vz/v3 v3.0.4 h1:oB74JSjSdIijjHkoYWG5ws7bHpx69m1w3PopFQdjFSc=
-github.com/Code-Hex/vz/v3 v3.0.4/go.mod h1:+xPQOXVzNaZ4OeIIhlJFumtbFhsvRfqKwX7wuZS4dFA=
+github.com/Code-Hex/go-infinity-channel v1.0.0 h1:M8BWlfDOxq9or9yvF9+YkceoTkDI1pFAqvnP87Zh0Nw=
+github.com/Code-Hex/go-infinity-channel v1.0.0/go.mod h1:5yUVg/Fqao9dAjcpzoQ33WwfdMWmISOrQloDRn3bsvY=
+github.com/Code-Hex/vz/v3 v3.0.6 h1:YoW0ZHbdb9G1lYDw9h/QrbBC5lAI1k9LAZMmTGR/Rpw=
+github.com/Code-Hex/vz/v3 v3.0.6/go.mod h1:xUfvg1VJ5A6ZQNuzQERwXJ7l2ZdTnY6eCy9CIS6/DYQ=
 github.com/armon/go-proxyproto v0.0.0-20210323213023-7e956b284f0a/go.mod h1:QmP9hvJ91BbJmGVGSbutW19IC0Q9phDCLGaomwTJbgU=
 github.com/bytedance/sonic v1.5.0/go.mod h1:ED5hyg4y6t3/9Ku1R6dU/4KyJ48DZ4jPhfY1O2AihPM=
 github.com/bytedance/sonic v1.8.0 h1:ea0Xadu+sHlu7x5O3gKhRpQ1IKiMrSiHttPF0ybECuA=
