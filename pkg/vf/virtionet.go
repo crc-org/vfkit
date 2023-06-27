@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"syscall"
 
@@ -13,7 +14,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type VirtioNet config.VirtioNet
+type VirtioNet struct {
+	*config.VirtioNet
+	localAddr *net.UnixAddr
+}
 
 func localUnixSocketPath() (string, error) {
 	homeDir, err := os.UserHomeDir()
@@ -83,7 +87,9 @@ func (dev *VirtioNet) connectUnixPath() error {
 	}
 
 	dev.Socket = fd
+	dev.localAddr = &localAddr
 	dev.UnixSocketPath = ""
+	registerExitHandler(func() { _ = dev.Shutdown() })
 	return nil
 }
 
@@ -138,4 +144,31 @@ func (dev *VirtioNet) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfig
 	vmConfig.networkDevicesConfiguration = append(vmConfig.networkDevicesConfiguration, netConfig)
 
 	return nil
+}
+
+func (dev *VirtioNet) Shutdown() error {
+	if dev.localAddr != nil {
+		if err := os.Remove(dev.localAddr.Name); err != nil {
+			return err
+		}
+	}
+	if dev.Socket != nil {
+		if err := dev.Socket.Close(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func registerExitHandler(handler func()) {
+	sigChan := make(chan os.Signal, 2)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
+	go func() {
+		for sig := range sigChan {
+			log.Printf("captured %v, calling exit handlers and exiting..", sig)
+			handler()
+			os.Exit(1)
+		}
+	}()
 }
