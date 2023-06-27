@@ -251,7 +251,8 @@ func AddToVirtualMachineConfig(dev config.VirtioDevice, vmConfig *vzVirtualMachi
 	case *config.VirtioFs:
 		return (*VirtioFs)(d).AddToVirtualMachineConfig(vmConfig)
 	case *config.VirtioNet:
-		return (*VirtioNet)(d).AddToVirtualMachineConfig(vmConfig)
+		dev := VirtioNet{VirtioNet: d}
+		return dev.AddToVirtualMachineConfig(vmConfig)
 	case *config.VirtioRng:
 		return (*VirtioRng)(d).AddToVirtualMachineConfig(vmConfig)
 	case *config.VirtioSerial:
