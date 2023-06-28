@@ -9,6 +9,7 @@ require (
 	github.com/crc-org/crc/v2 v2.33.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/onsi/gocleanup v0.0.0-20140331211545-c1a5478700b5
+	github.com/pkg/term v1.1.0
 	github.com/prashantgupta24/mac-sleep-notifier v1.0.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.0

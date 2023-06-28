@@ -15,6 +15,7 @@ import (
 	"github.com/crc-org/vfkit/pkg/config"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -272,7 +273,7 @@ var pciidVersionedTests = map[int]map[string]pciidTest{
 	14: pciidMacOS14Tests,
 }
 
-func checkRestDevices(t *testing.T, vm *testVM) {
+func restInspect(t *testing.T, vm *testVM) *config.VirtualMachine {
 	tr := &http.Transport{
 		Dial: func(_, _ string) (conn net.Conn, err error) {
 			return net.Dial("unix", vm.restSocketPath)
@@ -287,7 +288,7 @@ func checkRestDevices(t *testing.T, vm *testVM) {
 	var unmarshalledVM config.VirtualMachine
 	err = json.Unmarshal(body, &unmarshalledVM)
 	require.NoError(t, err)
-	require.Equal(t, vm.config, &unmarshalledVM)
+	return &unmarshalledVM
 }
 
 func testPCIId(t *testing.T, test pciidTest, provider OsProvider) {
@@ -303,7 +304,9 @@ func testPCIId(t *testing.T, test pciidTest, provider OsProvider) {
 	vm.Start(t)
 	vm.WaitForSSH(t)
 	checkPCIDevice(t, vm, test.vendorID, test.deviceID)
-	checkRestDevices(t, vm)
+
+	unmarshalledVM := restInspect(t, vm)
+	require.Equal(t, vm.config, unmarshalledVM)
 
 	vm.Stop(t)
 }
@@ -332,6 +335,39 @@ func TestPCIIds(t *testing.T) {
 			t.Logf("Skipping macOS %d tests", macosVersion)
 		}
 	}
+}
+
+func TestVirtioSerialPTY(t *testing.T) {
+	puipuiProvider := NewPuipuiProvider()
+	log.Info("fetching os image")
+	tempDir := t.TempDir()
+	err := puipuiProvider.Fetch(tempDir)
+	require.NoError(t, err)
+
+	vm := NewTestVM(t, puipuiProvider)
+	defer vm.Close(t)
+	require.NotNil(t, vm)
+
+	vm.AddSSH(t, "tcp")
+	dev, err := config.VirtioSerialNewPty()
+	require.NoError(t, err)
+	vm.AddDevice(t, dev)
+
+	vm.Start(t)
+	vm.WaitForSSH(t)
+	runtimeVM := restInspect(t, vm)
+	var foundVirtioSerial bool
+	for _, dev := range runtimeVM.Devices {
+		runtimeDev, ok := dev.(*config.VirtioSerial)
+		if ok {
+			assert.NotEmpty(t, runtimeDev.PtyName)
+			foundVirtioSerial = true
+			break
+		}
+	}
+	require.True(t, foundVirtioSerial)
+
+	vm.Stop(t)
 }
 
 func checkPCIDevice(t *testing.T, vm *testVM, vendorID, deviceID int) {

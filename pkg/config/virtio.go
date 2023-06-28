@@ -104,6 +104,10 @@ type VirtioNet struct {
 type VirtioSerial struct {
 	LogFile   string `json:"logFile,omitempty"`
 	UsesStdio bool   `json:"usesStdio,omitempty"`
+	UsesPty   bool   `json:"usesPty,omitempty"`
+	// PtyName must not be set when creating the VM, from a user perspective, it's read-only,
+	// vfkit will set it during VM startup.
+	PtyName string `json:"ptyName,omitempty"`
 }
 
 // TODO: Add VirtioBalloon
@@ -195,12 +199,24 @@ func VirtioSerialNewStdio() (VirtioDevice, error) {
 	}, nil
 }
 
+func VirtioSerialNewPty() (VirtioDevice, error) {
+	return &VirtioSerial{
+		UsesPty: true,
+	}, nil
+}
+
 func (dev *VirtioSerial) validate() error {
 	if dev.LogFile != "" && dev.UsesStdio {
 		return fmt.Errorf("'logFilePath' and 'stdio' cannot be set at the same time")
 	}
-	if dev.LogFile == "" && !dev.UsesStdio {
-		return fmt.Errorf("one of 'logFilePath' or 'stdio' must be set")
+	if dev.LogFile != "" && dev.UsesPty {
+		return fmt.Errorf("'logFilePath' and 'pty' cannot be set at the same time")
+	}
+	if dev.UsesStdio && dev.UsesPty {
+		return fmt.Errorf("'stdio' and 'pty' cannot be set at the same time")
+	}
+	if dev.LogFile == "" && !dev.UsesStdio && !dev.UsesPty {
+		return fmt.Errorf("one of 'logFilePath', 'stdio' or 'pty' must be set")
 	}
 
 	return nil
@@ -210,11 +226,16 @@ func (dev *VirtioSerial) ToCmdLine() ([]string, error) {
 	if err := dev.validate(); err != nil {
 		return nil, err
 	}
-	if dev.UsesStdio {
+	switch {
+	case dev.UsesStdio:
 		return []string{"--device", "virtio-serial,stdio"}, nil
+	case dev.UsesPty:
+		return []string{"--device", "virtio-serial,pty"}, nil
+	case dev.LogFile != "":
+		fallthrough
+	default:
+		return []string{"--device", fmt.Sprintf("virtio-serial,logFilePath=%s", dev.LogFile)}, nil
 	}
-
-	return []string{"--device", fmt.Sprintf("virtio-serial,logFilePath=%s", dev.LogFile)}, nil
 }
 
 func (dev *VirtioSerial) FromOptions(options []option) error {
@@ -227,6 +248,8 @@ func (dev *VirtioSerial) FromOptions(options []option) error {
 				return fmt.Errorf("unexpected value for virtio-serial 'stdio' option: %s", option.value)
 			}
 			dev.UsesStdio = true
+		case "pty":
+			dev.UsesPty = true
 		default:
 			return fmt.Errorf("unknown option for virtio-serial devices: %s", option.key)
 		}
