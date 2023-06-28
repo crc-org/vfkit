@@ -9,10 +9,12 @@ import (
 	"syscall"
 
 	"github.com/crc-org/vfkit/pkg/config"
+	"github.com/onsi/gocleanup"
+	"golang.org/x/sys/unix"
 
 	"github.com/Code-Hex/vz/v3"
+	"github.com/pkg/term/termios"
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/sys/unix"
 )
 
 // vf will define toVZ() and AddToVirtualMachineConfig() methods on these types
@@ -265,17 +267,38 @@ func setRawMode(f *os.File) error {
 
 func (dev *VirtioSerial) toVz() (*vz.VirtioConsoleDeviceSerialPortConfiguration, error) {
 	var serialPortAttachment vz.SerialPortAttachment
-	var err error
-	if dev.UsesStdio {
+	var retErr error
+	switch {
+	case dev.UsesStdio:
 		if err := setRawMode(os.Stdin); err != nil {
 			return nil, err
 		}
-		serialPortAttachment, err = vz.NewFileHandleSerialPortAttachment(os.Stdin, os.Stdout)
-	} else {
-		serialPortAttachment, err = vz.NewFileSerialPortAttachment(dev.LogFile, false)
+		serialPortAttachment, retErr = vz.NewFileHandleSerialPortAttachment(os.Stdin, os.Stdout)
+	case dev.UsesPty:
+		master, slave, err := termios.Pty()
+		if err != nil {
+			return nil, err
+		}
+		// as far as I can tell, we have no use for the slave fd in the
+		// vfkit process, the user will open minicom/screen/... /dev/ttys00?
+		// when needed
+		defer slave.Close()
+
+		// the master fd must stay open for vfkit's lifetime
+		gocleanup.Register(func() { _ = master.Close() })
+
+		dev.PtyName = slave.Name()
+
+		if err := setRawMode(master); err != nil {
+			return nil, err
+		}
+		serialPortAttachment, retErr = vz.NewFileHandleSerialPortAttachment(master, master)
+
+	default:
+		serialPortAttachment, retErr = vz.NewFileSerialPortAttachment(dev.LogFile, false)
 	}
-	if err != nil {
-		return nil, err
+	if retErr != nil {
+		return nil, retErr
 	}
 
 	return vz.NewVirtioConsoleDeviceSerialPortConfiguration(serialPortAttachment)
@@ -288,10 +311,16 @@ func (dev *VirtioSerial) AddToVirtualMachineConfig(vmConfig *VirtualMachineConfi
 	if dev.UsesStdio {
 		log.Infof("Adding stdio console")
 	}
+	if dev.PtyName != "" {
+		return fmt.Errorf("VirtioSerial.PtyName must be empty (current value: %s)", dev.PtyName)
+	}
 
 	consoleConfig, err := dev.toVz()
 	if err != nil {
 		return err
+	}
+	if dev.UsesPty {
+		log.Infof("Using PTY (pty path: %s)", dev.PtyName)
 	}
 	vmConfig.serialPortsConfiguration = append(vmConfig.serialPortsConfiguration, consoleConfig)
 
