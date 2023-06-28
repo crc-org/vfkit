@@ -9,8 +9,15 @@ import (
 
 type vzVirtualMachineConfiguration struct {
 	*vz.VirtualMachineConfiguration
-	storageDeviceConfiguration          []vz.StorageDeviceConfiguration
-	directorySharingDeviceConfiguration []vz.DirectorySharingDeviceConfiguration
+	storageDevicesConfiguration          []vz.StorageDeviceConfiguration
+	directorySharingDevicesConfiguration []vz.DirectorySharingDeviceConfiguration
+	keyboardConfiguration                []vz.KeyboardConfiguration
+	pointingDevicesConfiguration         []vz.PointingDeviceConfiguration
+	graphicsDevicesConfiguration         []vz.GraphicsDeviceConfiguration
+	networkDevicesConfiguration          []*vz.VirtioNetworkDeviceConfiguration
+	entropyDevicesConfiguration          []*vz.VirtioEntropyDeviceConfiguration
+	serialPortsConfiguration             []*vz.VirtioConsoleDeviceSerialPortConfiguration
+	socketDevicesConfiguration           []vz.SocketDeviceConfiguration
 }
 
 func newVzVirtualMachineConfiguration(vm *config.VirtualMachine) (*vzVirtualMachineConfiguration, error) {
@@ -40,8 +47,17 @@ func ToVzVirtualMachineConfig(vm *config.VirtualMachine) (*vz.VirtualMachineConf
 			return nil, err
 		}
 	}
-	vzVMConfig.SetStorageDevicesVirtualMachineConfiguration(vzVMConfig.storageDeviceConfiguration)
-	vzVMConfig.SetDirectorySharingDevicesVirtualMachineConfiguration(vzVMConfig.directorySharingDeviceConfiguration)
+	vzVMConfig.SetStorageDevicesVirtualMachineConfiguration(vzVMConfig.storageDevicesConfiguration)
+	vzVMConfig.SetDirectorySharingDevicesVirtualMachineConfiguration(vzVMConfig.directorySharingDevicesConfiguration)
+	vzVMConfig.SetPointingDevicesVirtualMachineConfiguration(vzVMConfig.pointingDevicesConfiguration)
+	vzVMConfig.SetKeyboardsVirtualMachineConfiguration(vzVMConfig.keyboardConfiguration)
+	vzVMConfig.SetGraphicsDevicesVirtualMachineConfiguration(vzVMConfig.graphicsDevicesConfiguration)
+	vzVMConfig.SetNetworkDevicesVirtualMachineConfiguration(vzVMConfig.networkDevicesConfiguration)
+	vzVMConfig.SetEntropyDevicesVirtualMachineConfiguration(vzVMConfig.entropyDevicesConfiguration)
+	vzVMConfig.SetSerialPortsVirtualMachineConfiguration(vzVMConfig.serialPortsConfiguration)
+	// len(vzVMConfig.socketDevicesConfiguration should be 0 or 1
+	// https://developer.apple.com/documentation/virtualization/vzvirtiosocketdeviceconfiguration?language=objc
+	vzVMConfig.SetSocketDevicesVirtualMachineConfiguration(vzVMConfig.socketDevicesConfiguration)
 
 	if vm.Timesync != nil && vm.Timesync.VsockPort != 0 {
 		// automatically add the vsock device we'll need for communication over VsockPort
