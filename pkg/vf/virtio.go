@@ -50,7 +50,7 @@ func (dev *VirtioBlk) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfig
 		return err
 	}
 	log.Infof("Adding virtio-blk device (imagePath: %s)", dev.ImagePath)
-	vmConfig.storageDeviceConfiguration = append(vmConfig.storageDeviceConfiguration, storageDeviceConfig)
+	vmConfig.storageDevicesConfiguration = append(vmConfig.storageDevicesConfiguration, storageDeviceConfig)
 
 	return nil
 }
@@ -80,17 +80,13 @@ func (dev *VirtioInput) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConf
 		return err
 	}
 
-	log.Infof("Adding virtio-input device")
-
 	switch conf := inputDeviceConfig.(type) {
-	case *vz.USBScreenCoordinatePointingDeviceConfiguration:
-		vmConfig.SetPointingDevicesVirtualMachineConfiguration([]vz.PointingDeviceConfiguration{
-			conf,
-		})
-	case *vz.USBKeyboardConfiguration:
-		vmConfig.SetKeyboardsVirtualMachineConfiguration([]vz.KeyboardConfiguration{
-			conf,
-		})
+	case vz.PointingDeviceConfiguration:
+		log.Info("Adding virtio-input pointing device")
+		vmConfig.pointingDevicesConfiguration = append(vmConfig.pointingDevicesConfiguration, conf)
+	case vz.KeyboardConfiguration:
+		log.Info("Adding virtio-input keyboard device")
+		vmConfig.keyboardConfiguration = append(vmConfig.keyboardConfiguration, conf)
 	}
 
 	return nil
@@ -120,9 +116,7 @@ func (dev *VirtioGPU) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfig
 
 	log.Infof("Adding virtio-gpu device")
 
-	vmConfig.SetGraphicsDevicesVirtualMachineConfiguration([]vz.GraphicsDeviceConfiguration{
-		gpuDeviceConfig,
-	})
+	vmConfig.graphicsDevicesConfiguration = append(vmConfig.graphicsDevicesConfiguration, gpuDeviceConfig)
 
 	return nil
 }
@@ -161,7 +155,7 @@ func (dev *VirtioFs) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfigu
 		return err
 	}
 	log.Infof("Adding virtio-fs device")
-	vmConfig.directorySharingDeviceConfiguration = append(vmConfig.directorySharingDeviceConfiguration, fileSystemDeviceConfig)
+	vmConfig.directorySharingDevicesConfiguration = append(vmConfig.directorySharingDevicesConfiguration, fileSystemDeviceConfig)
 	return nil
 }
 
@@ -180,12 +174,39 @@ func (dev *VirtioNet) connectUnixPath() error {
 	return nil
 }
 
-func (dev *VirtioNet) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfiguration) error {
+func (dev *VirtioNet) toVz() (*vz.VirtioNetworkDeviceConfiguration, error) {
 	var (
 		mac *vz.MACAddress
 		err error
 	)
 
+	if len(dev.MacAddress) == 0 {
+		mac, err = vz.NewRandomLocallyAdministeredMACAddress()
+	} else {
+		mac, err = vz.NewMACAddress(dev.MacAddress)
+	}
+	if err != nil {
+		return nil, err
+	}
+	var attachment vz.NetworkDeviceAttachment
+	if dev.Socket != nil {
+		attachment, err = vz.NewFileHandleNetworkDeviceAttachment(dev.Socket)
+	} else {
+		attachment, err = vz.NewNATNetworkDeviceAttachment()
+	}
+	if err != nil {
+		return nil, err
+	}
+	networkConfig, err := vz.NewVirtioNetworkDeviceConfiguration(attachment)
+	if err != nil {
+		return nil, err
+	}
+	networkConfig.SetMACAddress(mac)
+
+	return networkConfig, nil
+}
+
+func (dev *VirtioNet) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfiguration) error {
 	log.Infof("Adding virtio-net device (nat: %t macAddress: [%s])", dev.Nat, dev.MacAddress)
 	if dev.Socket != nil {
 		log.Infof("Using fd %d", dev.Socket.Fd())
@@ -196,45 +217,27 @@ func (dev *VirtioNet) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfig
 			return err
 		}
 	}
+	netConfig, err := dev.toVz()
+	if err != nil {
+		return err
+	}
 
-	if len(dev.MacAddress) == 0 {
-		mac, err = vz.NewRandomLocallyAdministeredMACAddress()
-	} else {
-		mac, err = vz.NewMACAddress(dev.MacAddress)
-	}
-	if err != nil {
-		return err
-	}
-	var attachment vz.NetworkDeviceAttachment
-	if dev.Socket != nil {
-		attachment, err = vz.NewFileHandleNetworkDeviceAttachment(dev.Socket)
-	} else {
-		attachment, err = vz.NewNATNetworkDeviceAttachment()
-	}
-	if err != nil {
-		return err
-	}
-	networkConfig, err := vz.NewVirtioNetworkDeviceConfiguration(attachment)
-	if err != nil {
-		return err
-	}
-	networkConfig.SetMACAddress(mac)
-	vmConfig.SetNetworkDevicesVirtualMachineConfiguration([]*vz.VirtioNetworkDeviceConfiguration{
-		networkConfig,
-	})
+	vmConfig.networkDevicesConfiguration = append(vmConfig.networkDevicesConfiguration, netConfig)
 
 	return nil
 }
 
+func (dev *VirtioRng) toVz() (*vz.VirtioEntropyDeviceConfiguration, error) {
+	return vz.NewVirtioEntropyDeviceConfiguration()
+}
+
 func (dev *VirtioRng) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfiguration) error {
 	log.Infof("Adding virtio-rng device")
-	entropyConfig, err := vz.NewVirtioEntropyDeviceConfiguration()
+	entropyConfig, err := dev.toVz()
 	if err != nil {
 		return err
 	}
-	vmConfig.SetEntropyDevicesVirtualMachineConfiguration([]*vz.VirtioEntropyDeviceConfiguration{
-		entropyConfig,
-	})
+	vmConfig.entropyDevicesConfiguration = append(vmConfig.entropyDevicesConfiguration, entropyConfig)
 
 	return nil
 }
@@ -259,6 +262,24 @@ func setRawMode(f *os.File) error {
 	return unix.IoctlSetTermios(int(f.Fd()), unix.TIOCSETA, attr)
 }
 
+func (dev *VirtioSerial) toVz() (*vz.VirtioConsoleDeviceSerialPortConfiguration, error) {
+	var serialPortAttachment vz.SerialPortAttachment
+	var err error
+	if dev.UsesStdio {
+		if err := setRawMode(os.Stdin); err != nil {
+			return nil, err
+		}
+		serialPortAttachment, err = vz.NewFileHandleSerialPortAttachment(os.Stdin, os.Stdout)
+	} else {
+		serialPortAttachment, err = vz.NewFileSerialPortAttachment(dev.LogFile, false)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return vz.NewVirtioConsoleDeviceSerialPortConfiguration(serialPortAttachment)
+
+}
 func (dev *VirtioSerial) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfiguration) error {
 	if dev.LogFile != "" {
 		log.Infof("Adding virtio-serial device (logFile: %s)", dev.LogFile)
@@ -267,33 +288,17 @@ func (dev *VirtioSerial) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineCon
 		log.Infof("Adding stdio console")
 	}
 
-	var serialPortAttachment vz.SerialPortAttachment
-	var err error
-	if dev.UsesStdio {
-		if err := setRawMode(os.Stdin); err != nil {
-			return err
-		}
-		serialPortAttachment, err = vz.NewFileHandleSerialPortAttachment(os.Stdin, os.Stdout)
-	} else {
-		serialPortAttachment, err = vz.NewFileSerialPortAttachment(dev.LogFile, false)
-	}
+	consoleConfig, err := dev.toVz()
 	if err != nil {
 		return err
 	}
-
-	consoleConfig, err := vz.NewVirtioConsoleDeviceSerialPortConfiguration(serialPortAttachment)
-	if err != nil {
-		return err
-	}
-	vmConfig.SetSerialPortsVirtualMachineConfiguration([]*vz.VirtioConsoleDeviceSerialPortConfiguration{
-		consoleConfig,
-	})
+	vmConfig.serialPortsConfiguration = append(vmConfig.serialPortsConfiguration, consoleConfig)
 
 	return nil
 }
 
 func (dev *VirtioVsock) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfiguration) error {
-	if len(vmConfig.SocketDevices()) != 0 {
+	if len(vmConfig.socketDevicesConfiguration) != 0 {
 		log.Debugf("virtio-vsock device already present, not adding a second one")
 		return nil
 	}
@@ -302,7 +307,7 @@ func (dev *VirtioVsock) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConf
 	if err != nil {
 		return err
 	}
-	vmConfig.SetSocketDevicesVirtualMachineConfiguration([]vz.SocketDeviceConfiguration{vzdev})
+	vmConfig.socketDevicesConfiguration = append(vmConfig.socketDevicesConfiguration, vzdev)
 
 	return nil
 }
@@ -354,7 +359,7 @@ func (dev *USBMassStorage) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineC
 		return err
 	}
 	log.Infof("Adding USB mass storage device (imagePath: %s)", dev.ImagePath)
-	vmConfig.storageDeviceConfiguration = append(vmConfig.storageDeviceConfiguration, storageDeviceConfig)
+	vmConfig.storageDevicesConfiguration = append(vmConfig.storageDevicesConfiguration, storageDeviceConfig)
 
 	return nil
 }
