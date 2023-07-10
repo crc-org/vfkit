@@ -3,12 +3,10 @@ package rest
 import (
 	"errors"
 	"fmt"
-	"net/http"
 	"net/url"
 	"strings"
 
 	"github.com/crc-org/vfkit/pkg/cmdline"
-	"github.com/crc-org/vfkit/pkg/rest/define"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
@@ -73,7 +71,7 @@ func (v *VFKitService) Start() {
 }
 
 // NewServer creates a new restful service
-func NewServer(vm *VzVirtualMachine, endpoint string) (*VFKitService, error) {
+func NewServer(inspector VirtualMachineInspector, stateHandler VirtualMachineStateHandler, endpoint string) (*VFKitService, error) {
 	r := gin.Default()
 	ep, err := NewEndpoint(endpoint)
 	if err != nil {
@@ -85,53 +83,19 @@ func NewServer(vm *VzVirtualMachine, endpoint string) (*VFKitService, error) {
 	}
 
 	// Handlers for the restful service.  This is where endpoints are defined.
-	r.GET("/vm/state", vm.getVMState)
-	r.POST("/vm/state", vm.setVMState)
-	r.GET("/vm/inspect", vm.inspect)
+	r.GET("/vm/state", stateHandler.GetVMState)
+	r.POST("/vm/state", stateHandler.SetVMState)
+	r.GET("/vm/inspect", inspector.Inspect)
 	return &s, nil
 }
 
-// inspect returns information about the virtual machine like hw resources
-// and devices
-func (vm *VzVirtualMachine) inspect(c *gin.Context) {
-	ii := define.InspectResponse{
-		// TODO complete me
-		CPUs:   1,
-		Memory: 2048,
-		//Devices: vm.Devices,
-	}
-	c.JSON(http.StatusOK, ii)
+type VirtualMachineInspector interface {
+	Inspect(c *gin.Context)
 }
 
-// getVMState retrieves the current vm state
-func (vm *VzVirtualMachine) getVMState(c *gin.Context) {
-	current := vm.GetState()
-	c.JSON(http.StatusOK, gin.H{"state": current.String()})
-}
-
-// setVMState requests a state change on a virtual machine.  At this time only
-// the following states are valid:
-// Pause - pause a running machine
-// Resume - resume a paused machine
-// Stop - stops a running machine
-// HardStop - forceably stops a running machine
-func (vm *VzVirtualMachine) setVMState(c *gin.Context) {
-	var (
-		s define.VMState
-	)
-
-	if err := c.ShouldBindJSON(&s); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	response := vm.ChangeState(define.StateChange(s.State))
-	if response != nil {
-		logrus.Errorf("failed action %s: %q", s.State, response)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": response.Error()})
-		return
-	}
-	c.Status(http.StatusAccepted)
+type VirtualMachineStateHandler interface {
+	GetVMState(c *gin.Context)
+	SetVMState(c *gin.Context)
 }
 
 // parseRestfulURI validates the input URI and returns an URL object
