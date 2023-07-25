@@ -4,7 +4,7 @@ vfkit - Simple command line tool to start VMs through virtualization framework
 ### Introduction
 
 vfkit offers a command-line interface to start virtual machines using virtualization framework.
-It also provides a github.com/code-ready/vfkit/tree/main/pkg/client go package.
+It also provides a `github.com/crc-org/vfkit/pkg/config` go package.
 This package provides a native go API to generate the vfkit command line.
 
 
