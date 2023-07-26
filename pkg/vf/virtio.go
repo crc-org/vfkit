@@ -13,6 +13,7 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+type RosettaShare config.RosettaShare
 type VirtioBlk config.VirtioBlk
 type VirtioFs config.VirtioFs
 type VirtioRng config.VirtioRng
@@ -248,6 +249,8 @@ func AddToVirtualMachineConfig(dev config.VirtioDevice, vmConfig *vzVirtualMachi
 		return (*USBMassStorage)(d).AddToVirtualMachineConfig(vmConfig)
 	case *config.VirtioBlk:
 		return (*VirtioBlk)(d).AddToVirtualMachineConfig(vmConfig)
+	case *config.RosettaShare:
+		return (*RosettaShare)(d).AddToVirtualMachineConfig(vmConfig)
 	case *config.VirtioFs:
 		return (*VirtioFs)(d).AddToVirtualMachineConfig(vmConfig)
 	case *config.VirtioNet:

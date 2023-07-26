@@ -282,6 +282,38 @@ mount -t virtiofs vfkit-share /mount
 ```
 
 
+### Rosetta
+
+#### Description
+
+The `-device rosetta` option allows to use Rosetta to run x86_64 binaries in an arm64 linux VM. This option will share a directory containing the rosetta binaries over virtio-fs.
+The share can be mounted in the guest with `mount -t virtiofs vfkitTag /mnt`, with `vfkitTag` corresponding to the value of the `mountTag` option.
+Then, [`binfmt`](https://docs.kernel.org/admin-guide/binfmt-misc.html) needs to be configured to use this rosetta binary for x86_64 executables.
+On systems using systemd, this can be achieved by creating a /etc/binfmt.d/rosetta.conf file with this content (`/mnt/rosetta` is the full path to the rosetta binary):
+```
+:rosetta:M::\x7fELF\x02\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x3e\x00:\xff\xff\xff\xff\xff\xfe\xfe\x00\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff\xff:/mnt/rosetta:F
+```
+and then running `systemctl restart systemd-binfmt`.
+
+This option is only available on machine with Apple CPUs, `vfkit` will fail with an error if it's used on Intel machines.
+
+See https://developer.apple.com/documentation/virtualization/running_intel_binaries_in_linux_vms_with_rosetta?language=objc for more details.
+
+
+#### Arguments
+- `mountTag`: tag which will be used to mount the rosetta share in the guest.
+- `install`: indicates to automatically install rosetta on systems where it's missing. By default, an error will be reported if `--device rosetta` is used when rosetta is not installed.
+
+#### Example
+
+This adds rosetta support to the guest:
+```
+--device rosetta,mountTag=rosetta-share
+```
+
+The share can then be mounted with `mount -t virtiofs rosetta-share /mnt`.
+
+
 ### GPU
 
 #### Description

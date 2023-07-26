@@ -56,10 +56,21 @@ var virtioDevTests = map[string]virtioDevTest{
 		newDev: func() (VirtioDevice, error) { return VirtioFsNew("/foo/bar", "myTag") },
 		expectedDev: &VirtioFs{
 			SharedDir: "/foo/bar",
-			MountTag:  "myTag",
+			DirectorySharingConfig: DirectorySharingConfig{
+				MountTag: "myTag",
+			},
 		},
 		expectedCmdLine:  []string{"--device", "virtio-fs,sharedDir=/foo/bar,mountTag=myTag"},
 		alternateCmdLine: []string{"--device", "virtio-fs,mountTag=myTag,sharedDir=/foo/bar"},
+	},
+	"NewRosettaShare": {
+		newDev: func() (VirtioDevice, error) { return RosettaShareNew("myTag") },
+		expectedDev: &RosettaShare{
+			DirectorySharingConfig: DirectorySharingConfig{
+				MountTag: "myTag",
+			},
+		},
+		expectedCmdLine: []string{"--device", "rosetta,mountTag=myTag"},
 	},
 	"NewVirtioVsock": {
 		newDev: func() (VirtioDevice, error) { return VirtioVsockNew(1234, "/foo/bar.unix", false) },
