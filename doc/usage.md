@@ -82,6 +82,11 @@ The disk image bootloader will be started by the EFI firmware, which will in tur
 - `variable-store`: path to a file which EFI can use to store its variables
 - `create`: indicate whether the `variable-store` file should be created or not if missing.
 
+#### Example
+
+`--bootloader efi,variable-store=/Users/virtuser/efi-variable-store,create`
+
+
 ### Deprecated options
 
 #### Description
@@ -122,7 +127,11 @@ See also [vz/CreateDiskImage](https://pkg.go.dev/github.com/Code-Hex/vz/v3#Creat
 - `deviceId`: `/dev/disk/by-id/` identifier to use for this device.
 
 #### Example
-`--device virtio-blk,path=/Users/virtuser/vfkit.img`
+
+This adds a virtio-blk device to the VM which will be backed by the raw image at `/Users/virtuser/vfkit.img`:
+```
+--device virtio-blk,path=/Users/virtuser/vfkit.img
+```
 
 
 ### USB Mass Storage
@@ -135,7 +144,11 @@ The `--device usb-mass-storage` option adds a USB mass storage device to the vir
 - `path`: the absolute path to the disk image file.
 
 #### Example
-`--device usb-mass-storage,path=/Users/virtuser/distro.iso`
+
+This adds a USB mass storage device to the VM which will be backed by the ISO image at `/Users/virtuser/distro.iso`:
+```
+--device usb-mass-storage,path=/Users/virtuser/distro.iso
+```
 
 
 ### Networking
@@ -153,7 +166,17 @@ The `--device virtio-net` option adds a network interface to the virtual machine
 `fd`, `nat`, `unixSocketPath` are mutually exclusive.
 
 #### Example
-`--device virtio-net,nat,mac=52:54:00:70:2b:71`
+
+This adds a virtio-net device to the VM with `52:54:00:70:2b:71` as its MAC address:
+```
+--device virtio-net,nat,mac=52:54:00:70:2b:71
+```
+
+This adds a virtio-net device to the VM, and redirects all the network traffic on the corresponding guest network interface to `/Users/virtuser/virtio-net.sock`:
+```
+--device virtio-net,unixSocketPath=/Users/virtuser/virtio-net.sock
+```
+This is useful in combination with usermode networking stacks such as [gvisor-tap-vsock](https://github.com/containers/gvisor-tap-vsock).
 
 
 ### Serial Port
@@ -168,7 +191,17 @@ The `logFilePath` and `stdio` arguments are mutually exclusive.
 - `stdio`: uses stdin/stdout for the serial console input/output.
 
 #### Example
-`--device virtio-serial,logFilePath=/Users/virtuser/vfkit.log`
+
+This adds a virtio-serial device to the VM, and will log everything which is written to this device to `/Users/virtuser/vfkit.log`:
+```
+--device virtio-serial,logFilePath=/Users/virtuser/vfkit.log
+```
+
+This adds a virtio-serial device to the VM, and the terminal `vfkit` is
+launched from will be used as an interactive serial console for that device:
+```
+--device virtio-serial,stdio
+```
 
 
 ### Random Number Generator
@@ -179,7 +212,11 @@ The `--device virtio-rng` option adds a random number generator device to the vi
 It will feed entropy from the host to the virtual machine, as VMs often do not have many entropy sources.
 
 #### Example
-`--device virtio-rng`
+
+This adds a virtio-rng device to the VM:
+```
+--device virtio-rng
+```
 
 
 ### virtio-vsock communication
@@ -187,7 +224,14 @@ It will feed entropy from the host to the virtual machine, as VMs often do not h
 #### Description
 
 The `--device virtio-vsock` option adds a virtio-vsock communication channel between the host and the guest
-See `man 4 vsock` for more details. The vsock port will be exposed as a unix socket on the host. 
+See `man 4 vsock` for more details. macOS does not have host support for
+`AF_VSOCK` sockets so the vsock port will be exposed as a unix socket on the
+host.
+
+`--device virtio-vsock` can be specified multiple times on the command line to
+allow communication over multiple vsock ports. There will only be a single
+virtio-vsock device added to the VM regardless of the number of `--device
+virtio-vsock` occurrences on the command line.
 
 #### Arguments
 - `port`: vsock port to use for the VM/host communication.
@@ -196,7 +240,21 @@ See `man 4 vsock` for more details. The vsock port will be exposed as a unix soc
 - `listen` : indicates that the host will be listening for vsock connections (default).
 
 #### Example
-`--device virtio-vsock,port=5,socketURL=/Users/virtuser/vfkit.sock`
+
+This allows virtio-vsock communication from the guest to the host over vsock port 5:
+```
+--device virtio-vsock,port=5,socketURL=/Users/virtuser/vfkit-5.sock
+```
+The socket can be created on the host with `nc -U -l /Users/virtuser/vfkit-5.sock`,
+and the guest can connect to it with `nc --vsock 2 5`.
+
+
+This allows virtio-vsock communication from the host to the guest over vsock port 6:
+```
+--device virtio-vsock,port=6,socketURL=/Users/virtuser/vfkit-6.sock,connect
+```
+The socket can be created on the guest with `nc --vsock --listen 3 6`,
+and the host can connect to it with `nc -U /Users/virtuser/vfkit-6.sock,connect`.
 
 
 ### File Sharing
@@ -212,7 +270,17 @@ The share can be mounted in the guest with `mount -t virtiofs vfkitTag /mnt`, wi
 - `mountTag`: tag which will be used to mount the shared directory in the guest.
 
 #### Example
-`--device virtio-fs,sharedDir=/Users/virtuser/vfkit/,mountTag=vfkit-share`
+
+This will share `/Users/virtuser/vfkit` with the guest:
+```
+--device virtio-fs,sharedDir=/Users/virtuser/vfkit/,mountTag=vfkit-share
+```
+
+The share can then be mounted in the guest with:
+```
+mount -t virtiofs vfkit-share /mount
+```
+
 
 ### GPU
 
@@ -225,7 +293,9 @@ The `--device virtio-gpu` option allows the user to add graphical devices to the
 - `height`: the vertical resolution of the graphical device's resolution. Defaults to 600
 
 #### Example
+
 `--device virtio-gpu,width=1920,height=1080`
+
 
 ### Input
 
