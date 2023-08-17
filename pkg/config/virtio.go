@@ -17,12 +17,12 @@ const (
 	VirtioInputKeyboardDevice = "keyboard"
 
 	// Options for VirtioGPUResolution
-	VirtioGPUResolutionHeight = "height"
 	VirtioGPUResolutionWidth  = "width"
+	VirtioGPUResolutionHeight = "height"
 
 	// Default VirtioGPU Resolution
-	defaultVirtioGPUResolutionHeight = 600
 	defaultVirtioGPUResolutionWidth  = 800
+	defaultVirtioGPUResolutionHeight = 600
 )
 
 // VirtioInput configures an input device, such as a keyboard or pointing device
@@ -32,8 +32,8 @@ type VirtioInput struct {
 }
 
 type VirtioGPUResolution struct {
-	Height int `json:"height"`
 	Width  int `json:"width"`
+	Height int `json:"height"`
 }
 
 // VirtioGPU configures a GPU device, such as the host computer's display
@@ -268,15 +268,15 @@ func VirtioGPUNew() (VirtioDevice, error) {
 	return &VirtioGPU{
 		UsesGUI: false,
 		VirtioGPUResolution: VirtioGPUResolution{
-			Height: defaultVirtioGPUResolutionHeight,
 			Width:  defaultVirtioGPUResolutionWidth,
+			Height: defaultVirtioGPUResolutionHeight,
 		},
 	}, nil
 }
 
 func (dev *VirtioGPU) validate() error {
 	if dev.Height < 1 || dev.Width < 1 {
-		return fmt.Errorf("Invalid dimensions for virtio-gpu device resolution: %dx%d", dev.Height, dev.Width)
+		return fmt.Errorf("Invalid dimensions for virtio-gpu device resolution: %dx%d", dev.Width, dev.Height)
 	}
 
 	return nil
@@ -287,7 +287,7 @@ func (dev *VirtioGPU) ToCmdLine() ([]string, error) {
 		return nil, err
 	}
 
-	return []string{"--device", fmt.Sprintf("virtio-gpu,height=%d,width=%d", dev.Height, dev.Width)}, nil
+	return []string{"--device", fmt.Sprintf("virtio-gpu,width=%d,height=%d", dev.Width, dev.Height)}, nil
 }
 
 func (dev *VirtioGPU) FromOptions(options []option) error {
