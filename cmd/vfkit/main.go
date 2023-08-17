@@ -200,7 +200,7 @@ func runVirtualMachine(vmConfig *config.VirtualMachine, vm *vz.VirtualMachine) e
 	for _, gpuDev := range vmConfig.VirtioGPUDevices() {
 		if gpuDev.UsesGUI {
 			runtime.LockOSThread()
-			err := vm.StartGraphicApplication(float64(gpuDev.Height), float64(gpuDev.Width))
+			err := vm.StartGraphicApplication(float64(gpuDev.Width), float64(gpuDev.Height))
 			runtime.UnlockOSThread()
 			if err != nil {
 				return err

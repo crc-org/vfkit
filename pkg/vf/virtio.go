@@ -95,7 +95,7 @@ func (dev *VirtioGPU) toVZ() (vz.GraphicsDeviceConfiguration, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize virtio graphic device: %w", err)
 	}
-	graphicsScanoutConfig, err := vz.NewVirtioGraphicsScanoutConfiguration(int64(dev.Height), int64(dev.Width))
+	graphicsScanoutConfig, err := vz.NewVirtioGraphicsScanoutConfiguration(int64(dev.Width), int64(dev.Height))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create graphics scanout: %w", err)
 	}

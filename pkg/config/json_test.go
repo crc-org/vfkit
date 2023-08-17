@@ -109,7 +109,7 @@ var jsonTests = map[string]jsonTest{
 
 			return vm
 		},
-		expectedJSON: `{"vcpus":3,"memoryBytes":4000000000,"bootloader":{"kind":"linuxBootloader","VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"},"devices":[{"kind":"virtioserial","LogFile":"/virtioserial","UsesStdio":false},{"kind":"virtioinput","inputType":"keyboard"},{"kind":"virtiogpu","usesGUI":false,"height":800,"width":600},{"kind":"virtionet","Nat":true,"MacAddress":"ABEiM0RV","Socket":null,"UnixSocketPath":""},{"kind":"virtiorng"},{"kind":"virtioblk","DevName":"virtio-blk","ImagePath":"/virtioblk","ReadOnly":false,"DeviceIdentifier":""},{"kind":"virtiosock","Port":1234,"SocketURL":"/virtiovsock","Listen":false},{"kind":"virtiofs","SharedDir":"/virtiofs","MountTag":"tag"},{"kind":"usbmassstorage","DevName":"usb-mass-storage","ImagePath":"/usbmassstorage","ReadOnly":false}]}`,
+		expectedJSON: `{"vcpus":3,"memoryBytes":4000000000,"bootloader":{"kind":"linuxBootloader","VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"},"devices":[{"kind":"virtioserial","LogFile":"/virtioserial","UsesStdio":false},{"kind":"virtioinput","inputType":"keyboard"},{"kind":"virtiogpu","usesGUI":false,"height":600,"width":800},{"kind":"virtionet","Nat":true,"MacAddress":"ABEiM0RV","Socket":null,"UnixSocketPath":""},{"kind":"virtiorng"},{"kind":"virtioblk","DevName":"virtio-blk","ImagePath":"/virtioblk","ReadOnly":false,"DeviceIdentifier":""},{"kind":"virtiosock","Port":1234,"SocketURL":"/virtiovsock","Listen":false},{"kind":"virtiofs","SharedDir":"/virtiofs","MountTag":"tag"},{"kind":"usbmassstorage","DevName":"usb-mass-storage","ImagePath":"/usbmassstorage","ReadOnly":false}]}`,
 	},
 }
 
