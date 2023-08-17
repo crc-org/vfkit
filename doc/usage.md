@@ -221,11 +221,11 @@ The share can be mounted in the guest with `mount -t virtiofs vfkitTag /mnt`, wi
 The `--device virtio-gpu` option allows the user to add graphical devices to the virtual machine.
 
 #### Arguments
-- `height`: the vertical resolution of the graphical device's resolution. Defaults to 800
-- `width`: the horizontal resolution of the graphical device's resolution. Defaults to 600
+- `height`: the vertical resolution of the graphical device's resolution. Defaults to 600
+- `width`: the horizontal resolution of the graphical device's resolution. Defaults to 800
 
 #### Example
-`--device virtio-gpu,height=1920,width=1080`
+`--device virtio-gpu,height=1080,width=1920`
 
 ### Input
 
@@ -284,5 +284,5 @@ In order to tell vfkit that you want to start a graphical application window, yo
 
 Proper use of this flag may look similar to the following section of a command: 
 ```bash
---device virtio-input,keyboard --device virtio-input,pointing --device virtio-gpu,height=1920,width=1000 --gui
+--device virtio-input,keyboard --device virtio-input,pointing --device virtio-gpu,height=1080,width=1920 --gui
 ```

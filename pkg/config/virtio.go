@@ -21,8 +21,8 @@ const (
 	VirtioGPUResolutionWidth  = "width"
 
 	// Default VirtioGPU Resolution
-	defaultVirtioGPUResolutionHeight = 800
-	defaultVirtioGPUResolutionWidth  = 600
+	defaultVirtioGPUResolutionHeight = 600
+	defaultVirtioGPUResolutionWidth  = 800
 )
 
 // VirtioInput configures an input device, such as a keyboard or pointing device
