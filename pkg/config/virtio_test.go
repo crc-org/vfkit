@@ -158,9 +158,9 @@ var virtioDevTests = map[string]virtioDevTest{
 		newDev: VirtioGPUNew,
 		expectedDev: &VirtioGPU{
 			false,
-			VirtioGPUResolution{600, 800},
+			VirtioGPUResolution{Width: 800, Height: 600},
 		},
-		expectedCmdLine: []string{"--device", "virtio-gpu,height=600,width=800"},
+		expectedCmdLine: []string{"--device", "virtio-gpu,width=800,height=600"},
 	},
 	"NewVirtioGPUDeviceWithDimensions": {
 		newDev: func() (VirtioDevice, error) {
@@ -168,14 +168,14 @@ var virtioDevTests = map[string]virtioDevTest{
 			if err != nil {
 				return nil, err
 			}
-			dev.(*VirtioGPU).VirtioGPUResolution = VirtioGPUResolution{1080 ,1920}
+			dev.(*VirtioGPU).VirtioGPUResolution = VirtioGPUResolution{Width: 1920, Height: 1080}
 			return dev, nil
 		},
 		expectedDev: &VirtioGPU{
 			false,
-			VirtioGPUResolution{1080, 1920},
+			VirtioGPUResolution{Width: 1920, Height: 1080},
 		},
-		expectedCmdLine: []string{"--device", "virtio-gpu,height=1080,width=1920"},
+		expectedCmdLine: []string{"--device", "virtio-gpu,width=1920,height=1080"},
 	},
 }
 
