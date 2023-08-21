@@ -165,7 +165,7 @@ func testJSON(t *testing.T, test *jsonTest) {
 	vm := test.newVM(t)
 	data, err := json.Marshal(vm)
 	require.NoError(t, err)
-	require.Equal(t, test.expectedJSON, string(data))
+	require.JSONEq(t, test.expectedJSON, string(data))
 
 	var unmarshalledVM VirtualMachine
 	err = json.Unmarshal([]byte(test.expectedJSON), &unmarshalledVM)
