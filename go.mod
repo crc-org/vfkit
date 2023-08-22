@@ -6,7 +6,6 @@ require (
 	github.com/Code-Hex/vz/v3 v3.0.6
 	github.com/docker/go-units v0.4.0
 	github.com/gin-gonic/gin v1.9.0
-	github.com/h2non/filetype v1.1.3
 	github.com/prashantgupta24/mac-sleep-notifier v1.0.1
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.7.0
