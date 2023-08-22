@@ -1,14 +1,34 @@
 package vf
 
 import (
+	"bytes"
 	"fmt"
 	"os"
+	"runtime"
 
 	"github.com/Code-Hex/vz/v3"
 	"github.com/crc-org/vfkit/pkg/config"
-	"github.com/h2non/filetype"
-	"github.com/h2non/filetype/matchers"
 )
+
+// from https://github.com/h2non/filetype/blob/cfcd7d097bc4990dc8fc86187307651ae79bf9d9/matchers/document.go#L159-L174
+func compareBytes(slice, subSlice []byte, startOffset int) bool {
+	sl := len(subSlice)
+
+	if startOffset+sl > len(slice) {
+		return false
+	}
+
+	s := slice[startOffset : startOffset+sl]
+	return bytes.Equal(s, subSlice)
+}
+
+// patterns and offsets are coming from https://github.com/file/file/blob/master/magic/Magdir/linux
+func isUncompressedArm64Kernel(buf []byte) bool {
+	pattern := []byte{0x41, 0x52, 0x4d, 0x64}
+	offset := 0x38
+
+	return compareBytes(buf, pattern, offset)
+}
 
 func isKernelUncompressed(filename string) (bool, error) {
 	file, err := os.Open(filename)
@@ -22,17 +42,7 @@ func isKernelUncompressed(filename string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	kind, err := filetype.Match(buf)
-	if err != nil {
-		return false, err
-	}
-	// uncompressed ARM64 kernels are matched as a MS executable, which is
-	// also an archive, so we need to special case it
-	if kind == matchers.TypeExe {
-		return true, nil
-	}
-
-	return false, nil
+	return isUncompressedArm64Kernel(buf), nil
 }
 
 func toVzLinuxBootloader(bootloader *config.LinuxBootloader) (vz.BootLoader, error) {
