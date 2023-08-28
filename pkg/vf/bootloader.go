@@ -36,12 +36,14 @@ func isKernelUncompressed(filename string) (bool, error) {
 }
 
 func toVzLinuxBootloader(bootloader *config.LinuxBootloader) (vz.BootLoader, error) {
-	uncompressed, err := isKernelUncompressed(bootloader.VmlinuzPath)
-	if err != nil {
-		return nil, err
-	}
-	if !uncompressed {
-		return nil, fmt.Errorf("kernel must be uncompressed, %s is a compressed file", bootloader.VmlinuzPath)
+	if runtime.GOARCH == "arm64" {
+		uncompressed, err := isKernelUncompressed(bootloader.VmlinuzPath)
+		if err != nil {
+			return nil, err
+		}
+		if !uncompressed {
+			return nil, fmt.Errorf("kernel must be uncompressed, %s is a compressed file", bootloader.VmlinuzPath)
+		}
 	}
 
 	return vz.NewLinuxBootLoader(
