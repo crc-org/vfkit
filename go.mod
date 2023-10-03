@@ -3,8 +3,8 @@ module github.com/crc-org/vfkit
 go 1.18
 
 require (
-	github.com/Code-Hex/vz/v3 v3.0.6
-	github.com/docker/go-units v0.4.0
+	github.com/Code-Hex/vz/v3 v3.0.7-0.20230903150905-3c9c884443c2
+	github.com/docker/go-units v0.5.0
 	github.com/gin-gonic/gin v1.9.0
 	github.com/prashantgupta24/mac-sleep-notifier v1.0.1
 	github.com/sirupsen/logrus v1.9.0
