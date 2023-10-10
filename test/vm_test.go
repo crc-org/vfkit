@@ -202,6 +202,9 @@ var pciidTests = map[string]pciidTest{
 			return config.VirtioFsNew("./", "vfkit-share-test")
 		},
 	},
+}
+
+var pciidMacOS13Tests = map[string]pciidTest{
 	"virtio-gpu": {
 		vendorID: 0x1af4, // Red Hat
 		deviceID: 0x1050,
@@ -225,6 +228,22 @@ var pciidTests = map[string]pciidTest{
 	},
 }
 
+func testPCIId(t *testing.T, test pciidTest, provider OsProvider) {
+	vm := NewTestVM(t, provider)
+	defer vm.Close(t)
+	require.NotNil(t, vm)
+
+	vm.AddSSH(t, "tcp")
+	dev, err := test.createDev(t)
+	require.NoError(t, err)
+	vm.AddDevice(t, dev)
+
+	vm.Start(t)
+	vm.WaitForSSH(t)
+	checkPCIDevice(t, vm, test.vendorID, test.deviceID)
+	vm.Stop(t)
+}
+
 func TestPCIIds(t *testing.T) {
 	puipuiProvider := NewPuipuiProvider()
 	log.Info("fetching os image")
@@ -234,20 +253,18 @@ func TestPCIIds(t *testing.T) {
 
 	for name, test := range pciidTests {
 		t.Run(name, func(t *testing.T) {
-			vm := NewTestVM(t, puipuiProvider)
-			defer vm.Close(t)
-			require.NotNil(t, vm)
-
-			vm.AddSSH(t, "tcp")
-			dev, err := test.createDev(t)
-			require.NoError(t, err)
-			vm.AddDevice(t, dev)
-
-			vm.Start(t)
-			vm.WaitForSSH(t)
-			checkPCIDevice(t, vm, test.vendorID, test.deviceID)
-			vm.Stop(t)
+			testPCIId(t, test, puipuiProvider)
 		})
+	}
+
+	if err := macOSAvailable(13); err == nil {
+		for name, test := range pciidMacOS13Tests {
+			t.Run(name, func(t *testing.T) {
+				testPCIId(t, test, puipuiProvider)
+			})
+		}
+	} else {
+		t.Log("Skipping macOS 13 tests")
 	}
 }
 
