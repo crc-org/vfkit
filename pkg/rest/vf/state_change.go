@@ -53,3 +53,23 @@ func (vm *VzVirtualMachine) HardStop() error {
 	logrus.Debug("force stopping machine")
 	return vm.VzVM.Stop()
 }
+
+func (vm *VzVirtualMachine) CanStart() bool {
+	return vm.VzVM.CanStart()
+}
+
+func (vm *VzVirtualMachine) CanPause() bool {
+	return vm.VzVM.CanPause()
+}
+
+func (vm *VzVirtualMachine) CanResume() bool {
+	return vm.VzVM.CanResume()
+}
+
+func (vm *VzVirtualMachine) CanStop() bool {
+	return vm.VzVM.CanRequestStop()
+}
+
+func (vm *VzVirtualMachine) CanHardStop() bool {
+	return vm.VzVM.CanStop()
+}

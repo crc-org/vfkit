@@ -351,17 +351,19 @@ None
 Used to obtain the state of the virtual machine that is being run by VFKit.
 
 GET `/vm/state`
-Response: {"state": "string"}
+Response: { "state": string, "canStart": bool, "canPause": bool, "canResume": bool, "canStop": bool, "canHardStop": bool }
+
+> `canHardStop` is only supported on macOS 12 and newer, false will always be returned on older versions.
 
 ### Change VM State
 
 Change the state of the virtual machine. Valid states are:
-* Hardstop
+* HardStop
 * Pause
 * Resume
 * Stop
 
-POST `/vm/state` {"new_state": "new value"}
+POST `/vm/state` { "state": "new value"}
 
 Response: http 200
 
