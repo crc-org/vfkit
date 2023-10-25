@@ -33,7 +33,14 @@ func (vm *VzVirtualMachine) Inspect(c *gin.Context) {
 // getVMState retrieves the current vm state
 func (vm *VzVirtualMachine) GetVMState(c *gin.Context) {
 	current := vm.GetState()
-	c.JSON(http.StatusOK, gin.H{"state": current.String()})
+	c.JSON(http.StatusOK, gin.H{
+		"state":       current.String(),
+		"canStart":    vm.CanStart(),
+		"canPause":    vm.CanPause(),
+		"canResume":   vm.CanResume(),
+		"canStop":     vm.CanStop(),
+		"canHardStop": vm.CanHardStop(),
+	})
 }
 
 // setVMState requests a state change on a virtual machine.  At this time only
