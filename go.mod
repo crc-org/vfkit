@@ -3,7 +3,7 @@ module github.com/crc-org/vfkit
 go 1.18
 
 require (
-	github.com/Code-Hex/vz/v3 v3.0.7-0.20230903150905-3c9c884443c2
+	github.com/Code-Hex/vz/v3 v3.1.0
 	github.com/docker/go-units v0.5.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/prashantgupta24/mac-sleep-notifier v1.0.1
@@ -11,7 +11,7 @@ require (
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.4
-	golang.org/x/sys v0.12.0
+	golang.org/x/sys v0.13.0
 	inet.af/tcpproxy v0.0.0-20221017015627-91f861402626
 )
 
@@ -40,7 +40,7 @@ require (
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	golang.org/x/arch v0.5.0 // indirect
 	golang.org/x/crypto v0.13.0 // indirect
-	golang.org/x/mod v0.9.0 // indirect
+	golang.org/x/mod v0.13.0 // indirect
 	golang.org/x/net v0.15.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
