@@ -119,8 +119,32 @@ Various devices can be added to the virtual machines. They are all paravirtualiz
 #### Description
 
 The `--device virtio-blk` option adds a disk to the virtual machine. The disk is backed by an image file on the host machine. This file is a raw image file.
-This means an empty 1GiB disk can be created with `dd if=/dev/zero of=vfkit.img bs=1G count=1`.
 See also [vz/CreateDiskImage](https://pkg.go.dev/github.com/Code-Hex/vz/v3#CreateDiskImage).
+
+
+#### Thin images
+
+Apple Virtualization Framework only support raw disk images and ISO images.
+There is no support for thin image formats such as [qcow2](https://en.wikipedia.org/wiki/Qcow).
+
+However, APFS, the default macOS filesystem has support for sparse files and copy-on-write files, so it offers the main features of thin image format.
+
+A sparse raw image can be created/expanded using the `truncate` command or
+using
+[`truncate(2)`](https://manpagez.com/man/2/truncate/).
+For example, an empty 1GiB disk can be created with `truncate --size 1G
+vfkit.img`. Such an image will only use disk space when content is written to
+it. It initially only uses a few bytes of actual disk space even if it's size
+is 1G.
+
+A copy-on-write image is a raw image file which references a backing file. Its
+initial content is the same as its backing file, and the data is shared with
+the backing file. This means the copy-on-write image does not use extra disk
+space when it's created. When this image is modified, the changes will only be
+made to the copy-on-write image, and not to the backing file. Only the
+modified data will use actual disk space.
+A copy-on-write image can be created using `cp -c` or [clonefile(2)](http://www.manpagez.com/man/2/clonefile/).
+
 
 #### Arguments
 - `path`: the absolute path to the disk image file.

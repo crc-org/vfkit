@@ -100,6 +100,7 @@ This allows to lookup the IP which was assigned to the virtual machine by search
 
 
 Once you have a virtual machine up and running, here are some additional features which can be useful:
+- [sparse/copy-on-write disk images](https://github.com/crc-org/vfkit/blob/main/doc/usage.md#thin-images)
 - [host/guest communication over virtio-vsock](https://github.com/crc-org/vfkit/blob/main/doc/usage.md#virtio-vsock-communication)
 - [host/guest file sharing with virtio-fs](https://github.com/crc-org/vfkit/blob/main/doc/usage.md#file-sharing)
 - [Rosetta support to run x86_64 binaries in virtual machines on Apple silicon Macs](https://github.com/crc-org/vfkit/blob/main/doc/usage.md#rosetta)
