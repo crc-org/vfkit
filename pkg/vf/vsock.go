@@ -25,7 +25,13 @@ func ConnectVsockSync(vm *vz.VirtualMachine, port uint) (net.Conn, error) {
 	}
 	vsockDevice := socketDevices[0]
 
-	return vsockDevice.Connect(uint32(port))
+	conn, err := vsockDevice.Connect(uint32(port))
+	if err != nil {
+		// we can't `return vsockDevice.Connect()` directly, see https://go.dev/doc/faq#nil_error
+		// checking the return value for nil won't work as expected if we don't do this
+		return nil, err
+	}
+	return conn, nil
 }
 
 // connectVsock proxies connections from a host unix socket to a vsock port
