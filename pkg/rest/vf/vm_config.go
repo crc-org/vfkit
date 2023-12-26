@@ -2,30 +2,80 @@ package rest
 
 import (
 	"net/http"
+	"sync"
 
 	"github.com/Code-Hex/vz/v3"
+	"github.com/crc-org/vfkit/pkg/config"
 	"github.com/crc-org/vfkit/pkg/rest/define"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
 
 type VzVirtualMachine struct {
-	VzVM   *vz.VirtualMachine
-	config *vz.VirtualMachineConfiguration
+	VzVM     *vz.VirtualMachine
+	config   *vz.VirtualMachineConfiguration
+	vmConfig *config.VirtualMachine
 }
 
-func NewVzVirtualMachine(vm *vz.VirtualMachine, config *vz.VirtualMachineConfiguration) *VzVirtualMachine {
-	return &VzVirtualMachine{config: config, VzVM: vm}
+func NewVzVirtualMachine(vm *vz.VirtualMachine, config *vz.VirtualMachineConfiguration, vmConfig *config.VirtualMachine) *VzVirtualMachine {
+	return &VzVirtualMachine{config: config, VzVM: vm, vmConfig: vmConfig}
+}
+
+var (
+	once            sync.Once
+	devicesResponse define.DevicesResponse
+)
+
+func devicesToResp(devices []config.VirtioDevice) define.DevicesResponse {
+	once.Do(func() {
+		for _, dev := range devices {
+			switch d := dev.(type) {
+			case *config.USBMassStorage:
+				devicesResponse.USBMassStorage = append(devicesResponse.USBMassStorage, *d)
+			case *config.VirtioBlk:
+				devicesResponse.Blk = append(devicesResponse.Blk, *d)
+			case *config.RosettaShare:
+				devicesResponse.Rosetta = *d
+			case *config.NVMExpressController:
+				devicesResponse.NVMe = append(devicesResponse.NVMe, *d)
+			case *config.VirtioFs:
+				devicesResponse.FS = append(devicesResponse.FS, *d)
+			case *config.VirtioNet:
+				n := define.VirtioNetResponse{
+					Nat:            d.Nat,
+					MacAddress:     d.MacAddress.String(),
+					UnixSocketPath: d.UnixSocketPath,
+				}
+
+				if d.Socket != nil {
+					n.Fd = int(d.Socket.Fd())
+				}
+
+				devicesResponse.Net = append(devicesResponse.Net, n)
+			case *config.VirtioRng:
+				devicesResponse.Rng = true
+			case *config.VirtioSerial:
+				devicesResponse.Serial = *d
+			case *config.VirtioVsock:
+				devicesResponse.Vsock = append(devicesResponse.Vsock, *d)
+			case *config.VirtioInput:
+				devicesResponse.Input = append(devicesResponse.Input, *d)
+			case *config.VirtioGPU:
+				devicesResponse.GPU = append(devicesResponse.GPU, *d)
+			}
+		}
+	})
+
+	return devicesResponse
 }
 
 // Inspect returns information about the virtual machine like hw resources
 // and devices
 func (vm *VzVirtualMachine) Inspect(c *gin.Context) {
 	ii := define.InspectResponse{
-		// TODO complete me
-		CPUs:   1,
-		Memory: 2048,
-		//Devices: vm.Devices,
+		CPUs:    vm.vmConfig.Vcpus,
+		Memory:  vm.vmConfig.MemoryBytes,
+		Devices: devicesToResp(vm.vmConfig.Devices),
 	}
 	c.JSON(http.StatusOK, ii)
 }

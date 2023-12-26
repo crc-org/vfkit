@@ -56,7 +56,7 @@ var jsonTests = map[string]jsonTest{
 			require.NoError(t, err)
 			return vm
 		},
-		expectedJSON: `{"vcpus":3,"memoryBytes":4000000000,"bootloader":{"kind":"linuxBootloader","VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"},"devices":[{"kind":"virtioblk","DevName":"virtio-blk","ImagePath":"/virtioblk1","ReadOnly":false,"DeviceIdentifier":""},{"kind":"virtioblk","DevName":"virtio-blk","ImagePath":"/virtioblk2","ReadOnly":false,"DeviceIdentifier":"virtio-blk2"}]}`,
+		expectedJSON: `{"vcpus":3,"memoryBytes":4000000000,"bootloader":{"kind":"linuxBootloader","VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"},"devices":[{"kind":"virtioblk","devName":"virtio-blk","imagePath":"/virtioblk1","readOnly":false,"deviceIdentifier":""},{"kind":"virtioblk","devName":"virtio-blk","imagePath":"/virtioblk2","readOnly":false,"deviceIdentifier":"virtio-blk2"}]}`,
 	},
 	"TestAllVirtioDevices": {
 		newVM: func(t *testing.T) *VirtualMachine {
@@ -110,7 +110,7 @@ var jsonTests = map[string]jsonTest{
 
 			return vm
 		},
-		expectedJSON: `{"vcpus":3,"memoryBytes":4000000000,"bootloader":{"kind":"linuxBootloader","VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"},"devices":[{"kind":"virtioserial","LogFile":"/virtioserial","UsesStdio":false},{"kind":"virtioinput","inputType":"keyboard"},{"kind":"virtiogpu","usesGUI":false,"width":800,"height":600},{"kind":"virtionet","Nat":true,"MacAddress":"ABEiM0RV","Socket":null,"UnixSocketPath":""},{"kind":"virtiorng"},{"kind":"virtioblk","DevName":"virtio-blk","ImagePath":"/virtioblk","ReadOnly":false,"DeviceIdentifier":""},{"kind":"virtiosock","Port":1234,"SocketURL":"/virtiovsock","Listen":false},{"kind":"virtiofs","MountTag":"tag","SharedDir":"/virtiofs"},{"kind":"usbmassstorage","DevName":"usb-mass-storage","ImagePath":"/usbmassstorage","ReadOnly":false},{"kind":"rosetta","MountTag":"vz-rosetta","InstallRosetta":false}]}`,
+		expectedJSON: `{"vcpus":3,"memoryBytes":4000000000,"bootloader":{"kind":"linuxBootloader","VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"},"devices":[{"kind":"virtioserial","logFile":"/virtioserial","usesStdio":false},{"kind":"virtioinput","inputType":"keyboard"},{"kind":"virtiogpu","usesGUI":false,"width":800,"height":600},{"kind":"virtionet","nat":true,"macAddress":"ABEiM0RV","socket":null,"unixSocketPath":""},{"kind":"virtiorng"},{"kind":"virtioblk","devName":"virtio-blk","imagePath":"/virtioblk","readOnly":false,"deviceIdentifier":""},{"kind":"virtiosock","port":1234,"socketURL":"/virtiovsock","listen":false},{"kind":"virtiofs","mountTag":"tag","sharedDir":"/virtiofs"},{"kind":"usbmassstorage","devName":"usb-mass-storage","imagePath":"/usbmassstorage","readOnly":false},{"kind":"rosetta","mountTag":"vz-rosetta","installRosetta":false}]}`,
 	},
 }
 
@@ -129,13 +129,13 @@ var invalidJSONTests = map[string]invalidJSONTest{
 		json: `{"vcpus":3,"memoryBytes":4000000000,"bootloader":{"VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"}}`,
 	},
 	"TestEmptyDeviceKind": {
-		json: `{"vcpus":3,"memoryBytes":4000000000,"bootloader":{"kind":"linuxBootloader","VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"},"devices":[{"kind":"","DevName":"virtio-blk","ImagePath":"/virtioblk1","ReadOnly":false,"DeviceIdentifier":""}]}`,
+		json: `{"vcpus":3,"memoryBytes":4000000000,"bootloader":{"kind":"linuxBootloader","VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"},"devices":[{"kind":"","devName":"virtio-blk","imagePath":"/virtioblk1","readOnly":false,"deviceIdentifier":""}]}`,
 	},
 	"TestInvalidDeviceKind": {
-		json: `{"vcpus":3,"memoryBytes":4000000000,"bootloader":{"kind":"linuxBootloader","VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"},"devices":[{"kind":"invalid","DevName":"virtio-blk","ImagePath":"/virtioblk1","ReadOnly":false,"DeviceIdentifier":""}]}`,
+		json: `{"vcpus":3,"memoryBytes":4000000000,"bootloader":{"kind":"linuxBootloader","VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"},"devices":[{"kind":"invalid","devName":"virtio-blk","imagePath":"/virtioblk1","readOnly":false,"deviceIdentifier":""}]}`,
 	},
 	"TestMissingDeviceKind": {
-		json: `{"vcpus":3,"memoryBytes":4000000000,"bootloader":{"kind":"linuxBootloader","VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"},"devices":[{"DevName":"virtio-blk","ImagePath":"/virtioblk1","ReadOnly":false,"DeviceIdentifier":""}]}`,
+		json: `{"vcpus":3,"memoryBytes":4000000000,"bootloader":{"kind":"linuxBootloader","VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"},"devices":[{"devName":"virtio-blk","imagePath":"/virtioblk1","readOnly":false,"deviceIdentifier":""}]}`,
 	},
 }
 
