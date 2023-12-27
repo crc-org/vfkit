@@ -20,7 +20,6 @@ limitations under the License.
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -91,9 +90,7 @@ func newVMConfiguration(opts *cmdline.Options) (*config.VirtualMachine, error) {
 	return vmConfig, nil
 }
 
-var errVMStateTimeout = fmt.Errorf("timeout waiting for VM state")
-
-func waitForVMState(vm *vz.VirtualMachine, state vz.VirtualMachineState) error {
+func waitForVMState(vm *vz.VirtualMachine, state vz.VirtualMachineState, timeout <-chan time.Time) error {
 	signalCh := make(chan os.Signal, 1)
 	signal.Notify(signalCh, syscall.SIGPIPE)
 
@@ -108,8 +105,8 @@ func waitForVMState(vm *vz.VirtualMachine, state vz.VirtualMachineState) error {
 			if newState == vz.VirtualMachineStateError {
 				return fmt.Errorf("hypervisor virtualization error")
 			}
-		case <-time.After(5 * time.Second):
-			return errVMStateTimeout
+		case <-timeout:
+			return fmt.Errorf("timeout waiting for VM state")
 		}
 	}
 }
@@ -145,13 +142,11 @@ func runVFKit(vmConfig *config.VirtualMachine, opts *cmdline.Options) error {
 }
 
 func runVirtualMachine(vmConfig *config.VirtualMachine, vm *vz.VirtualMachine) error {
-	err := vm.Start()
-	if err != nil {
+	if err := vm.Start(); err != nil {
 		return err
 	}
 
-	err = waitForVMState(vm, vz.VirtualMachineStateRunning)
-	if err != nil {
+	if err := waitForVMState(vm, vz.VirtualMachineStateRunning, time.After(5*time.Second)); err != nil {
 		return err
 	}
 	log.Infof("virtual machine is running")
@@ -182,18 +177,11 @@ func runVirtualMachine(vmConfig *config.VirtualMachine, vm *vz.VirtualMachine) e
 
 	errCh := make(chan error, 1)
 	go func() {
-		for {
-			err := waitForVMState(vm, vz.VirtualMachineStateStopped)
-			if err == nil {
-				log.Infof("VM is stopped")
-				errCh <- nil
-				return
-			}
-			if !errors.Is(err, errVMStateTimeout) {
-				errCh <- fmt.Errorf("virtualization error: %v", err)
-				return
-			}
-			// errVMStateTimeout -> keep looping
+		if err := waitForVMState(vm, vz.VirtualMachineStateStopped, nil); err != nil {
+			errCh <- fmt.Errorf("virtualization error: %v", err)
+		} else {
+			log.Infof("VM is stopped")
+			errCh <- nil
 		}
 	}()
 
