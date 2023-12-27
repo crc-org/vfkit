@@ -143,7 +143,12 @@ func (vm *VirtualMachine) VirtioVsockDevices() []*VirtioVsock {
 // AddDevice adds a dev to vm. This device can be created with one of the
 // VirtioXXXNew methods.
 func (vm *VirtualMachine) AddDevice(dev VirtioDevice) {
-	vm.Devices = append(vm.Devices, dev)
+	vm.AddDevices(dev)
+}
+
+// AddDevices adds a list of devices to vm.
+func (vm *VirtualMachine) AddDevices(dev ...VirtioDevice) {
+	vm.Devices = append(vm.Devices, dev...)
 }
 
 func (vm *VirtualMachine) AddTimeSyncFromCmdLine(cmdlineOpts string) error {

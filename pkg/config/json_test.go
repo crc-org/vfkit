@@ -79,14 +79,12 @@ var jsonTests = map[string]jsonTest{
 			dev = VirtioVsockNew(1234, "/virtiovsock", false)
 			vm.AddDevice(dev)
 			// virtio-fs
-			dev = VirtioFsNew("/virtiofs", "tag")
-			vm.AddDevice(dev)
+			fs := VirtioFsNew("/virtiofs", "tag")
 			// USB mass storage
-			dev = USBMassStorageNew("/usbmassstorage")
-			vm.AddDevice(dev)
+			usb := USBMassStorageNew("/usbmassstorage")
 			// rosetta
-			dev = RosettaShareNew("vz-rosetta")
-			vm.AddDevice(dev)
+			rosetta := RosettaShareNew("vz-rosetta")
+			vm.AddDevices(fs, usb, rosetta)
 
 			return vm
 		},
