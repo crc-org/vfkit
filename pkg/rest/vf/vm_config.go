@@ -18,7 +18,7 @@ func NewVzVirtualMachine(vm *vz.VirtualMachine, config *vz.VirtualMachineConfigu
 	return &VzVirtualMachine{config: config, VzVM: vm}
 }
 
-// inspect returns information about the virtual machine like hw resources
+// Inspect returns information about the virtual machine like hw resources
 // and devices
 func (vm *VzVirtualMachine) Inspect(c *gin.Context) {
 	ii := define.InspectResponse{
@@ -30,7 +30,7 @@ func (vm *VzVirtualMachine) Inspect(c *gin.Context) {
 	c.JSON(http.StatusOK, ii)
 }
 
-// getVMState retrieves the current vm state
+// GetVMState retrieves the current vm state
 func (vm *VzVirtualMachine) GetVMState(c *gin.Context) {
 	current := vm.GetState()
 	c.JSON(http.StatusOK, gin.H{
@@ -43,7 +43,7 @@ func (vm *VzVirtualMachine) GetVMState(c *gin.Context) {
 	})
 }
 
-// setVMState requests a state change on a virtual machine.  At this time only
+// SetVMState requests a state change on a virtual machine.  At this time only
 // the following states are valid:
 // Pause - pause a running machine
 // Resume - resume a paused machine

@@ -24,8 +24,7 @@ var jsonTests = map[string]jsonTest{
 	"TestTimeSync": {
 		newVM: func(t *testing.T) *VirtualMachine {
 			vm := newLinuxVM(t)
-			timesync, err := TimeSyncNew(1234)
-			require.NoError(t, err)
+			timesync := TimeSyncNew(1234)
 			vm.Timesync = timesync.(*TimeSync)
 			return vm
 		},
@@ -34,10 +33,8 @@ var jsonTests = map[string]jsonTest{
 	"TestVirtioRNG": {
 		newVM: func(t *testing.T) *VirtualMachine {
 			vm := newLinuxVM(t)
-			virtioRng, err := VirtioRngNew()
-			require.NoError(t, err)
-			err = vm.AddDevice(virtioRng)
-			require.NoError(t, err)
+			virtioRng := VirtioRngNew()
+			vm.AddDevice(virtioRng)
 			return vm
 		},
 		expectedJSON: `{"vcpus":3,"memoryBytes":4000000000,"bootloader":{"kind":"linuxBootloader","VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"},"devices":[{"kind":"virtiorng"}]}`,
@@ -45,15 +42,11 @@ var jsonTests = map[string]jsonTest{
 	"TestMultipleVirtioBlk": {
 		newVM: func(t *testing.T) *VirtualMachine {
 			vm := newLinuxVM(t)
-			virtioBlk, err := VirtioBlkNew("/virtioblk1")
-			require.NoError(t, err)
-			err = vm.AddDevice(virtioBlk)
-			require.NoError(t, err)
-			virtioBlk, err = VirtioBlkNew("/virtioblk2")
-			require.NoError(t, err)
+			virtioBlk := VirtioBlkNew("/virtioblk1")
+			vm.AddDevice(virtioBlk)
+			virtioBlk = VirtioBlkNew("/virtioblk2")
 			virtioBlk.SetDeviceIdentifier("virtio-blk2")
-			err = vm.AddDevice(virtioBlk)
-			require.NoError(t, err)
+			vm.AddDevice(virtioBlk)
 			return vm
 		},
 		expectedJSON: `{"vcpus":3,"memoryBytes":4000000000,"bootloader":{"kind":"linuxBootloader","VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"},"devices":[{"kind":"virtioblk","DevName":"virtio-blk","ImagePath":"/virtioblk1","ReadOnly":false,"DeviceIdentifier":""},{"kind":"virtioblk","DevName":"virtio-blk","ImagePath":"/virtioblk2","ReadOnly":false,"DeviceIdentifier":"virtio-blk2"}]}`,
@@ -62,55 +55,38 @@ var jsonTests = map[string]jsonTest{
 		newVM: func(t *testing.T) *VirtualMachine {
 			vm := newLinuxVM(t)
 			// virtio-serial
-			dev, err := VirtioSerialNew("/virtioserial")
-			require.NoError(t, err)
-			err = vm.AddDevice(dev)
-			require.NoError(t, err)
+			dev := VirtioSerialNew("/virtioserial")
+			vm.AddDevice(dev)
 			// virtio-input
-			dev, err = VirtioInputNew(VirtioInputKeyboardDevice)
+			dev, err := VirtioInputNew(VirtioInputKeyboardDevice)
 			require.NoError(t, err)
-			err = vm.AddDevice(dev)
-			require.NoError(t, err)
+			vm.AddDevice(dev)
 			// virtio-gpu
-			dev, err = VirtioGPUNew()
+			dev = VirtioGPUNew()
 			require.NoError(t, err)
-			err = vm.AddDevice(dev)
-			require.NoError(t, err)
+			vm.AddDevice(dev)
 			// virtio-net
 			dev, err = VirtioNetNew("00:11:22:33:44:55")
 			require.NoError(t, err)
-			err = vm.AddDevice(dev)
-			require.NoError(t, err)
+			vm.AddDevice(dev)
 			// virtio-rng
-			dev, err = VirtioRngNew()
-			require.NoError(t, err)
-			err = vm.AddDevice(dev)
-			require.NoError(t, err)
+			dev = VirtioRngNew()
+			vm.AddDevice(dev)
 			// virtio-blk
-			dev, err = VirtioBlkNew("/virtioblk")
-			require.NoError(t, err)
-			err = vm.AddDevice(dev)
-			require.NoError(t, err)
+			dev = VirtioBlkNew("/virtioblk")
+			vm.AddDevice(dev)
 			// virtio-vsock
-			dev, err = VirtioVsockNew(1234, "/virtiovsock", false)
-			require.NoError(t, err)
-			err = vm.AddDevice(dev)
-			require.NoError(t, err)
+			dev = VirtioVsockNew(1234, "/virtiovsock", false)
+			vm.AddDevice(dev)
 			// virtio-fs
-			dev, err = VirtioFsNew("/virtiofs", "tag")
-			require.NoError(t, err)
-			err = vm.AddDevice(dev)
-			require.NoError(t, err)
+			dev = VirtioFsNew("/virtiofs", "tag")
+			vm.AddDevice(dev)
 			// USB mass storage
-			dev, err = USBMassStorageNew("/usbmassstorage")
-			require.NoError(t, err)
-			err = vm.AddDevice(dev)
-			require.NoError(t, err)
+			dev = USBMassStorageNew("/usbmassstorage")
+			vm.AddDevice(dev)
 			// rosetta
-			dev, err = RosettaShareNew("vz-rosetta")
-			require.NoError(t, err)
-			err = vm.AddDevice(dev)
-			require.NoError(t, err)
+			dev = RosettaShareNew("vz-rosetta")
+			vm.AddDevice(dev)
 
 			return vm
 		},

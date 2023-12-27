@@ -16,7 +16,7 @@ type virtioDevTest struct {
 
 var virtioDevTests = map[string]virtioDevTest{
 	"NewVirtioBlk": {
-		newDev: func() (VirtioDevice, error) { return VirtioBlkNew("/foo/bar") },
+		newDev: func() (VirtioDevice, error) { return VirtioBlkNew("/foo/bar"), nil },
 		expectedDev: &VirtioBlk{
 			StorageConfig: StorageConfig{
 				DevName:   "virtio-blk",
@@ -28,10 +28,7 @@ var virtioDevTests = map[string]virtioDevTest{
 	},
 	"NewVirtioBlkWithDevId": {
 		newDev: func() (VirtioDevice, error) {
-			dev, err := VirtioBlkNew("/foo/bar")
-			if err != nil {
-				return nil, err
-			}
+			dev := VirtioBlkNew("/foo/bar")
 			dev.SetDeviceIdentifier("test")
 			return dev, nil
 		},
@@ -46,14 +43,14 @@ var virtioDevTests = map[string]virtioDevTest{
 		alternateCmdLine: []string{"--device", "virtio-blk,deviceId=test,path=/foo/bar"},
 	},
 	"NewVirtioFs": {
-		newDev: func() (VirtioDevice, error) { return VirtioFsNew("/foo/bar", "") },
+		newDev: func() (VirtioDevice, error) { return VirtioFsNew("/foo/bar", ""), nil },
 		expectedDev: &VirtioFs{
 			SharedDir: "/foo/bar",
 		},
 		expectedCmdLine: []string{"--device", "virtio-fs,sharedDir=/foo/bar"},
 	},
 	"NewVirtioFsWithTag": {
-		newDev: func() (VirtioDevice, error) { return VirtioFsNew("/foo/bar", "myTag") },
+		newDev: func() (VirtioDevice, error) { return VirtioFsNew("/foo/bar", "myTag"), nil },
 		expectedDev: &VirtioFs{
 			SharedDir: "/foo/bar",
 			DirectorySharingConfig: DirectorySharingConfig{
@@ -64,7 +61,7 @@ var virtioDevTests = map[string]virtioDevTest{
 		alternateCmdLine: []string{"--device", "virtio-fs,mountTag=myTag,sharedDir=/foo/bar"},
 	},
 	"NewRosettaShare": {
-		newDev: func() (VirtioDevice, error) { return RosettaShareNew("myTag") },
+		newDev: func() (VirtioDevice, error) { return RosettaShareNew("myTag"), nil },
 		expectedDev: &RosettaShare{
 			DirectorySharingConfig: DirectorySharingConfig{
 				MountTag: "myTag",
@@ -73,7 +70,7 @@ var virtioDevTests = map[string]virtioDevTest{
 		expectedCmdLine: []string{"--device", "rosetta,mountTag=myTag"},
 	},
 	"NewVirtioVsock": {
-		newDev: func() (VirtioDevice, error) { return VirtioVsockNew(1234, "/foo/bar.unix", false) },
+		newDev: func() (VirtioDevice, error) { return VirtioVsockNew(1234, "/foo/bar.unix", false), nil },
 		expectedDev: &VirtioVsock{
 			Port:      1234,
 			SocketURL: "/foo/bar.unix",
@@ -82,7 +79,7 @@ var virtioDevTests = map[string]virtioDevTest{
 		alternateCmdLine: []string{"--device", "virtio-vsock,socketURL=/foo/bar.unix,connect,port=1234"},
 	},
 	"NewVirtioVsockWithListen": {
-		newDev: func() (VirtioDevice, error) { return VirtioVsockNew(1234, "/foo/bar.unix", true) },
+		newDev: func() (VirtioDevice, error) { return VirtioVsockNew(1234, "/foo/bar.unix", true), nil },
 		expectedDev: &VirtioVsock{
 			Port:      1234,
 			SocketURL: "/foo/bar.unix",
@@ -92,19 +89,19 @@ var virtioDevTests = map[string]virtioDevTest{
 		alternateCmdLine: []string{"--device", "virtio-vsock,socketURL=/foo/bar.unix,listen,port=1234"},
 	},
 	"NewVirtioRng": {
-		newDev:          VirtioRngNew,
+		newDev:          func() (VirtioDevice, error) { return VirtioRngNew(), nil },
 		expectedDev:     &VirtioRng{},
 		expectedCmdLine: []string{"--device", "virtio-rng"},
 	},
 	"NewVirtioSerial": {
-		newDev: func() (VirtioDevice, error) { return VirtioSerialNew("/foo/bar.log") },
+		newDev: func() (VirtioDevice, error) { return VirtioSerialNew("/foo/bar.log"), nil },
 		expectedDev: &VirtioSerial{
 			LogFile: "/foo/bar.log",
 		},
 		expectedCmdLine: []string{"--device", "virtio-serial,logFilePath=/foo/bar.log"},
 	},
 	"NewVirtioSerialStdio": {
-		newDev: VirtioSerialNewStdio,
+		newDev: func() (VirtioDevice, error) { return VirtioSerialNewStdio(), nil },
 		expectedDev: &VirtioSerial{
 			UsesStdio: true,
 		},
@@ -142,7 +139,7 @@ var virtioDevTests = map[string]virtioDevTest{
 		alternateCmdLine: []string{"--device", "virtio-net,mac=00:11:22:33:44:55,nat"},
 	},
 	"NewUSBMassStorage": {
-		newDev: func() (VirtioDevice, error) { return USBMassStorageNew("/foo/bar") },
+		newDev: func() (VirtioDevice, error) { return USBMassStorageNew("/foo/bar"), nil },
 		expectedDev: &USBMassStorage{
 			StorageConfig: StorageConfig{
 				DevName:   "usb-mass-storage",
@@ -166,7 +163,7 @@ var virtioDevTests = map[string]virtioDevTest{
 		expectedCmdLine: []string{"--device", "virtio-input,keyboard"},
 	},
 	"NewVirtioGPUDevice": {
-		newDev: VirtioGPUNew,
+		newDev: func() (VirtioDevice, error) { return VirtioGPUNew(), nil },
 		expectedDev: &VirtioGPU{
 			false,
 			VirtioGPUResolution{Width: 800, Height: 600},
@@ -175,10 +172,7 @@ var virtioDevTests = map[string]virtioDevTest{
 	},
 	"NewVirtioGPUDeviceWithDimensions": {
 		newDev: func() (VirtioDevice, error) {
-			dev, err := VirtioGPUNew()
-			if err != nil {
-				return nil, err
-			}
+			dev := VirtioGPUNew()
 			dev.(*VirtioGPU).VirtioGPUResolution = VirtioGPUResolution{Width: 1920, Height: 1080}
 			return dev, nil
 		},

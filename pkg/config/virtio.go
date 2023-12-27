@@ -176,16 +176,16 @@ func deviceFromCmdLine(deviceOpts string) (VirtioDevice, error) {
 // VirtioSerialNew creates a new serial device for the virtual machine. The
 // output the virtual machine sent to the serial port will be written to the
 // file at logFilePath.
-func VirtioSerialNew(logFilePath string) (VirtioDevice, error) {
+func VirtioSerialNew(logFilePath string) VirtioDevice {
 	return &VirtioSerial{
 		LogFile: logFilePath,
-	}, nil
+	}
 }
 
-func VirtioSerialNewStdio() (VirtioDevice, error) {
+func VirtioSerialNewStdio() VirtioDevice {
 	return &VirtioSerial{
 		UsesStdio: true,
-	}, nil
+	}
 }
 
 func (dev *VirtioSerial) validate() error {
@@ -276,14 +276,14 @@ func (dev *VirtioInput) FromOptions(options []option) error {
 // VirtioGPUNew creates a new gpu device for the virtual machine.
 // The usesGUI parameter determines whether a graphical application window will
 // be displayed
-func VirtioGPUNew() (VirtioDevice, error) {
+func VirtioGPUNew() VirtioDevice {
 	return &VirtioGPU{
 		UsesGUI: false,
 		VirtioGPUResolution: VirtioGPUResolution{
 			Width:  defaultVirtioGPUResolutionWidth,
 			Height: defaultVirtioGPUResolutionHeight,
 		},
-	}, nil
+	}
 }
 
 func (dev *VirtioGPU) validate() error {
@@ -349,7 +349,7 @@ func VirtioNetNew(macAddress string) (*VirtioNet, error) {
 	}, nil
 }
 
-// Set the socket to use for the network communication
+// SetSocket Set the socket to use for the network communication
 //
 // This maps the virtual machine network interface to a connected datagram
 // socket. This means all network traffic on this interface will go through
@@ -437,8 +437,8 @@ func (dev *VirtioNet) FromOptions(options []option) error {
 
 // VirtioRngNew creates a new random number generator device to feed entropy
 // into the virtual machine.
-func VirtioRngNew() (VirtioDevice, error) {
-	return &VirtioRng{}, nil
+func VirtioRngNew() VirtioDevice {
+	return &VirtioRng{}
 }
 
 func (dev *VirtioRng) ToCmdLine() ([]string, error) {
@@ -463,11 +463,11 @@ func virtioBlkNewEmpty() *VirtioBlk {
 
 // VirtioBlkNew creates a new disk to use in the virtual machine. It will use
 // the file at imagePath as the disk image. This image must be in raw format.
-func VirtioBlkNew(imagePath string) (*VirtioBlk, error) {
+func VirtioBlkNew(imagePath string) *VirtioBlk {
 	virtioBlk := virtioBlkNewEmpty()
 	virtioBlk.ImagePath = imagePath
 
-	return virtioBlk, nil
+	return virtioBlk
 }
 
 func (dev *VirtioBlk) SetDeviceIdentifier(devID string) {
@@ -507,12 +507,12 @@ func (dev *VirtioBlk) ToCmdLine() ([]string, error) {
 // vsock port, and on the host it will use the unix socket at socketURL.
 // When listen is true, the host will be listening for connections over vsock.
 // When listen  is false, the guest will be listening for connections over vsock.
-func VirtioVsockNew(port uint, socketURL string, listen bool) (VirtioDevice, error) {
+func VirtioVsockNew(port uint, socketURL string, listen bool) VirtioDevice {
 	return &VirtioVsock{
 		Port:      port,
 		SocketURL: socketURL,
 		Listen:    listen,
-	}, nil
+	}
 }
 
 func (dev *VirtioVsock) ToCmdLine() ([]string, error) {
@@ -555,13 +555,13 @@ func (dev *VirtioVsock) FromOptions(options []option) error {
 // VirtioFsNew creates a new virtio-fs device for file sharing. It will share
 // the directory at sharedDir with the virtual machine. This directory can be
 // mounted in the VM using `mount -t virtiofs mountTag /some/dir`
-func VirtioFsNew(sharedDir string, mountTag string) (VirtioDevice, error) {
+func VirtioFsNew(sharedDir string, mountTag string) VirtioDevice {
 	return &VirtioFs{
 		DirectorySharingConfig: DirectorySharingConfig{
 			MountTag: mountTag,
 		},
 		SharedDir: sharedDir,
-	}, nil
+	}
 }
 
 func (dev *VirtioFs) ToCmdLine() ([]string, error) {
@@ -589,16 +589,16 @@ func (dev *VirtioFs) FromOptions(options []option) error {
 	return nil
 }
 
-// RosettaShare creates a new rosetta share for running x86_64 binaries on M1 machines.
+// RosettaShareNew creates a new rosetta share for running x86_64 binaries on M1 machines.
 // It will share a directory containing the linux rosetta binaries with the
 // virtual machine. This directory can be mounted in the VM using `mount -t
 // virtiofs mountTag /some/dir`
-func RosettaShareNew(mountTag string) (VirtioDevice, error) {
+func RosettaShareNew(mountTag string) VirtioDevice {
 	return &RosettaShare{
 		DirectorySharingConfig: DirectorySharingConfig{
 			MountTag: mountTag,
 		},
-	}, nil
+	}
 }
 
 func (dev *RosettaShare) ToCmdLine() ([]string, error) {
@@ -643,11 +643,11 @@ func usbMassStorageNewEmpty() *USBMassStorage {
 
 // USBMassStorageNew creates a new USB disk to use in the virtual machine. It will use
 // the file at imagePath as the disk image. This image must be in raw or ISO format.
-func USBMassStorageNew(imagePath string) (VMComponent, error) {
+func USBMassStorageNew(imagePath string) VMComponent {
 	usbMassStorage := usbMassStorageNewEmpty()
 	usbMassStorage.ImagePath = imagePath
 
-	return usbMassStorage, nil
+	return usbMassStorage
 }
 
 // StorageConfig configures a disk device.

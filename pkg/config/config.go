@@ -142,10 +142,8 @@ func (vm *VirtualMachine) VirtioVsockDevices() []*VirtioVsock {
 
 // AddDevice adds a dev to vm. This device can be created with one of the
 // VirtioXXXNew methods.
-func (vm *VirtualMachine) AddDevice(dev VirtioDevice) error {
+func (vm *VirtualMachine) AddDevice(dev VirtioDevice) {
 	vm.Devices = append(vm.Devices, dev)
-
-	return nil
 }
 
 func (vm *VirtualMachine) AddTimeSyncFromCmdLine(cmdlineOpts string) error {
@@ -165,10 +163,10 @@ func (vm *VirtualMachine) TimeSync() *TimeSync {
 	return vm.Timesync
 }
 
-func TimeSyncNew(vsockPort uint) (VMComponent, error) {
+func TimeSyncNew(vsockPort uint) VMComponent {
 	return &TimeSync{
 		VsockPort: vsockPort,
-	}, nil
+	}
 }
 
 func (ts *TimeSync) ToCmdLine() ([]string, error) {
