@@ -45,6 +45,16 @@ var virtioDevTests = map[string]virtioDevTest{
 		expectedCmdLine:  []string{"--device", "virtio-blk,path=/foo/bar,deviceId=test"},
 		alternateCmdLine: []string{"--device", "virtio-blk,deviceId=test,path=/foo/bar"},
 	},
+	"NewNVMe": {
+		newDev: func() (VirtioDevice, error) { return NVMExpressControllerNew("/foo/bar") },
+		expectedDev: &NVMExpressController{
+			StorageConfig: StorageConfig{
+				DevName:   "nvme",
+				ImagePath: "/foo/bar",
+			},
+		},
+		expectedCmdLine: []string{"--device", "nvme,path=/foo/bar"},
+	},
 	"NewVirtioFs": {
 		newDev: func() (VirtioDevice, error) { return VirtioFsNew("/foo/bar", "") },
 		expectedDev: &VirtioFs{

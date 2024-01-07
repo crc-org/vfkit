@@ -158,6 +158,23 @@ This adds a virtio-blk device to the VM which will be backed by the raw image at
 ```
 
 
+### NVM Express
+
+#### Description
+
+The `--device nvme` option adds a NVMe device to the virtual machine. The disk is backed by an image file on the host machine. This file is a raw image file.
+
+#### Arguments
+- `path`: the absolute path to the disk image file.
+
+#### Example
+
+This adds a NVMe device to the VM which will be backed by the disk image at `/Users/virtuser/image.img`:
+```
+--device nvme,path=/Users/virtuser/image.img
+```
+
+
 ### USB Mass Storage
 
 #### Description
