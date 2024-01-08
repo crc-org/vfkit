@@ -11,7 +11,8 @@ import (
 // VirtualMachine is the top-level type. It describes the virtual machine
 // configuration (bootloader, devices, ...).
 type VirtualMachine struct {
-	Vcpus       uint           `json:"vcpus"`
+	Vcpus uint `json:"vcpus"`
+	// MemoryBytes is in units of MiB (yes, surprisingly)
 	MemoryBytes uint64         `json:"memoryBytes"`
 	Bootloader  Bootloader     `json:"bootloader"`
 	Devices     []VirtioDevice `json:"devices,omitempty"`
