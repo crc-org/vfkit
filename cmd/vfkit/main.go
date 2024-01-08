@@ -151,7 +151,8 @@ func runVirtualMachine(vmConfig *config.VirtualMachine, vm *vz.VirtualMachine) e
 	}
 	log.Infof("virtual machine is running")
 
-	for _, vsock := range vmConfig.VirtioVsockDevices() {
+	vsockDevs := vmConfig.VirtioVsockDevices()
+	for _, vsock := range vsockDevs {
 		port := vsock.Port
 		socketURL := vsock.SocketURL
 		if socketURL == "" {
@@ -163,9 +164,12 @@ func runVirtualMachine(vmConfig *config.VirtualMachine, vm *vz.VirtualMachine) e
 			listenStr = " (listening)"
 		}
 		log.Infof("Exposing vsock port %d on %s%s", port, socketURL, listenStr)
-		if err := vf.ExposeVsock(vm, port, socketURL, vsock.Listen); err != nil {
+		closer, err := vf.ExposeVsock(vm, port, socketURL, vsock.Listen)
+		if err != nil {
 			log.Warnf("error exposing vsock port %d: %v", port, err)
+			continue
 		}
+		defer closer.Close()
 	}
 
 	if err := setupGuestTimeSync(vm, vmConfig.TimeSync()); err != nil {
