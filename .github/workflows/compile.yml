@@ -34,7 +34,7 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
       - name: Upload vfkit artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: vfkit Universal Binary (${{ matrix.os }})
           path: "./out/vfkit"
