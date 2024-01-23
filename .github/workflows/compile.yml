@@ -44,7 +44,8 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
       - name: Upload vfkit artifact
+        if: matrix.os == 'macOS-13'
         uses: actions/upload-artifact@v4
         with:
-          name: vfkit Universal Binary (${{ matrix.os }})
+          name: Unsigned vfkit Universal Binary
           path: "./out/vfkit"
