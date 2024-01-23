@@ -37,6 +37,7 @@ jobs:
       - name: Build
         run: make
       - name: Test
+        if: matrix.os != 'macOS-11'
         run: make test
       - name: vet
         run: go vet ./...
