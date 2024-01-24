@@ -3,6 +3,7 @@ package vf
 import (
 	"context"
 	"fmt"
+	"io"
 	"net"
 	"net/url"
 	"strconv"
@@ -11,7 +12,7 @@ import (
 	"inet.af/tcpproxy"
 )
 
-func ExposeVsock(vm *vz.VirtualMachine, port uint, vsockPath string, listen bool) error {
+func ExposeVsock(vm *vz.VirtualMachine, port uint, vsockPath string, listen bool) (io.Closer, error) {
 	if listen {
 		return listenVsock(vm, port, vsockPath)
 	}
@@ -36,7 +37,7 @@ func ConnectVsockSync(vm *vz.VirtualMachine, port uint) (net.Conn, error) {
 
 // connectVsock proxies connections from a host unix socket to a vsock port
 // This allows the host to initiate connections to the guest over vsock
-func connectVsock(vm *vz.VirtualMachine, port uint, vsockPath string) error {
+func connectVsock(vm *vz.VirtualMachine, port uint, vsockPath string) (io.Closer, error) {
 
 	var proxy tcpproxy.Proxy
 	// listen for connections on the host unix socket
@@ -70,12 +71,12 @@ func connectVsock(vm *vz.VirtualMachine, port uint, vsockPath string) error {
 			}
 		},
 	})
-	return proxy.Start()
+	return &proxy, proxy.Start()
 }
 
 // listenVsock proxies connections from a vsock port to a host unix socket.
 // This allows the guest to initiate connections to the host over vsock
-func listenVsock(vm *vz.VirtualMachine, port uint, vsockPath string) error {
+func listenVsock(vm *vz.VirtualMachine, port uint, vsockPath string) (io.Closer, error) {
 	var proxy tcpproxy.Proxy
 	// listen for connections on the vsock port
 	proxy.ListenFunc = func(_, laddr string) (net.Listener, error) {
@@ -116,6 +117,6 @@ func listenVsock(vm *vz.VirtualMachine, port uint, vsockPath string) error {
 			}
 		},
 	})
-	// FIXME: defer proxy.Close()
-	return proxy.Start()
+
+	return &proxy, proxy.Start()
 }
