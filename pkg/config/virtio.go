@@ -77,6 +77,11 @@ type RosettaShare struct {
 	InstallRosetta bool
 }
 
+// NVMExpressController configures a NVMe controller in the guest
+type NVMExpressController struct {
+	StorageConfig
+}
+
 // virtioRng configures a random number generator (RNG) device.
 type VirtioRng struct {
 }
@@ -143,6 +148,8 @@ func deviceFromCmdLine(deviceOpts string) (VirtioDevice, error) {
 	switch opts[0] {
 	case "rosetta":
 		dev = &RosettaShare{}
+	case "nvme":
+		dev = nvmExpressControllerNewEmpty()
 	case "virtio-blk":
 		dev = virtioBlkNewEmpty()
 	case "virtio-fs":
@@ -450,6 +457,23 @@ func (dev *VirtioRng) FromOptions(options []option) error {
 		return fmt.Errorf("unknown options for virtio-rng devices: %s", options)
 	}
 	return nil
+}
+
+func nvmExpressControllerNewEmpty() *NVMExpressController {
+	return &NVMExpressController{
+		StorageConfig: StorageConfig{
+			DevName: "nvme",
+		},
+	}
+}
+
+// NVMExpressControllerNew creates a new NVMExpress controller to use in the
+// virtual machine. It will use the file at imagePath as the disk image. This
+// image must be in raw format.
+func NVMExpressControllerNew(imagePath string) (*NVMExpressController, error) {
+	r := nvmExpressControllerNewEmpty()
+	r.ImagePath = imagePath
+	return r, nil
 }
 
 func virtioBlkNewEmpty() *VirtioBlk {

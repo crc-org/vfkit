@@ -14,6 +14,7 @@ import (
 )
 
 type RosettaShare config.RosettaShare
+type NVMExpressController config.NVMExpressController
 type VirtioBlk config.VirtioBlk
 type VirtioFs config.VirtioFs
 type VirtioRng config.VirtioRng
@@ -21,6 +22,31 @@ type VirtioSerial config.VirtioSerial
 type VirtioVsock config.VirtioVsock
 type VirtioInput config.VirtioInput
 type VirtioGPU config.VirtioGPU
+
+func (dev *NVMExpressController) toVz() (vz.StorageDeviceConfiguration, error) {
+	var storageConfig StorageConfig = StorageConfig(dev.StorageConfig)
+	attachment, err := storageConfig.toVz()
+	if err != nil {
+		return nil, err
+	}
+	devConfig, err := vz.NewNVMExpressControllerDeviceConfiguration(attachment)
+	if err != nil {
+		return nil, err
+	}
+
+	return devConfig, nil
+}
+
+func (dev *NVMExpressController) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfiguration) error {
+	storageDeviceConfig, err := dev.toVz()
+	if err != nil {
+		return err
+	}
+	log.Infof("Adding nvme device (imagePath: %s)", dev.ImagePath)
+	vmConfig.storageDevicesConfiguration = append(vmConfig.storageDevicesConfiguration, storageDeviceConfig)
+
+	return nil
+}
 
 func (dev *VirtioBlk) toVz() (vz.StorageDeviceConfiguration, error) {
 	var storageConfig StorageConfig = StorageConfig(dev.StorageConfig)
@@ -251,6 +277,8 @@ func AddToVirtualMachineConfig(dev config.VirtioDevice, vmConfig *vzVirtualMachi
 		return (*VirtioBlk)(d).AddToVirtualMachineConfig(vmConfig)
 	case *config.RosettaShare:
 		return (*RosettaShare)(d).AddToVirtualMachineConfig(vmConfig)
+	case *config.NVMExpressController:
+		return (*NVMExpressController)(d).AddToVirtualMachineConfig(vmConfig)
 	case *config.VirtioFs:
 		return (*VirtioFs)(d).AddToVirtualMachineConfig(vmConfig)
 	case *config.VirtioNet:
