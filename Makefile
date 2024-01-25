@@ -12,8 +12,8 @@ include tools/tools.mk
 build: out/vfkit
 
 test: build
-	@go test ./pkg/...
-	@go test -timeout 20m ./test
+	@go test -v ./pkg/...
+	@go test -v -timeout 20m ./test
 
 clean:
 	rm -rf out
