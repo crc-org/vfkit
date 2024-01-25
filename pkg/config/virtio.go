@@ -82,7 +82,7 @@ type NVMExpressController struct {
 	StorageConfig
 }
 
-// virtioRng configures a random number generator (RNG) device.
+// VirtioRng configures a random number generator (RNG) device.
 type VirtioRng struct {
 }
 
@@ -356,7 +356,7 @@ func VirtioNetNew(macAddress string) (*VirtioNet, error) {
 	}, nil
 }
 
-// Set the socket to use for the network communication
+// SetSocket Set the socket to use for the network communication
 //
 // This maps the virtual machine network interface to a connected datagram
 // socket. This means all network traffic on this interface will go through
@@ -613,7 +613,7 @@ func (dev *VirtioFs) FromOptions(options []option) error {
 	return nil
 }
 
-// RosettaShare creates a new rosetta share for running x86_64 binaries on M1 machines.
+// RosettaShareNew RosettaShare creates a new rosetta share for running x86_64 binaries on M1 machines.
 // It will share a directory containing the linux rosetta binaries with the
 // virtual machine. This directory can be mounted in the VM using `mount -t
 // virtiofs mountTag /some/dir`
