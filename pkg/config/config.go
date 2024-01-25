@@ -143,8 +143,12 @@ func (vm *VirtualMachine) VirtioVsockDevices() []*VirtioVsock {
 // AddDevice adds a dev to vm. This device can be created with one of the
 // VirtioXXXNew methods.
 func (vm *VirtualMachine) AddDevice(dev VirtioDevice) error {
-	vm.Devices = append(vm.Devices, dev)
+	return vm.AddDevices(dev)
+}
 
+// AddDevices adds a list of devices to vm.
+func (vm *VirtualMachine) AddDevices(dev ...VirtioDevice) error {
+	vm.Devices = append(vm.Devices, dev...)
 	return nil
 }
 
