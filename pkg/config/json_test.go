@@ -97,19 +97,15 @@ var jsonTests = map[string]jsonTest{
 			err = vm.AddDevice(dev)
 			require.NoError(t, err)
 			// virtio-fs
-			dev, err = VirtioFsNew("/virtiofs", "tag")
-			require.NoError(t, err)
-			err = vm.AddDevice(dev)
+			fs, err := VirtioFsNew("/virtiofs", "tag")
 			require.NoError(t, err)
 			// USB mass storage
-			dev, err = USBMassStorageNew("/usbmassstorage")
-			require.NoError(t, err)
-			err = vm.AddDevice(dev)
+			usb, err := USBMassStorageNew("/usbmassstorage")
 			require.NoError(t, err)
 			// rosetta
-			dev, err = RosettaShareNew("vz-rosetta")
+			rosetta, err := RosettaShareNew("vz-rosetta")
 			require.NoError(t, err)
-			err = vm.AddDevice(dev)
+			err = vm.AddDevices(fs, usb, rosetta)
 			require.NoError(t, err)
 
 			return vm
