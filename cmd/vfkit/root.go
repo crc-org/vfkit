@@ -9,8 +9,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const vfkitVersion = "0.5.1"
-
 var opts = &cmdline.Options{}
 
 var rootCmd = &cobra.Command{
@@ -32,7 +30,7 @@ var rootCmd = &cobra.Command{
 		}
 		return runVFKit(vmConfig, opts)
 	},
-	Version: vfkitVersion,
+	Version: cmdline.Version(),
 }
 
 func init() {

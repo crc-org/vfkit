@@ -21,6 +21,15 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: >-
+          WORKAROUND: Fetch tags that points to the revisions
+          checked-out(actions/checkout#1467)
+        run: |-
+          git fetch --tags --force
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
