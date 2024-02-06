@@ -37,13 +37,15 @@ jobs:
       - name: Build
         run: make
       - name: Test
+        if: matrix.os != 'macOS-11'
         run: make test
       - name: vet
         run: go vet ./...
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
       - name: Upload vfkit artifact
+        if: matrix.os == 'macOS-13'
         uses: actions/upload-artifact@v4
         with:
-          name: vfkit Universal Binary (${{ matrix.os }})
+          name: Unsigned vfkit Universal Binary
           path: "./out/vfkit"

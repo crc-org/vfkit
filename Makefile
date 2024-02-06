@@ -11,8 +11,9 @@ include tools/tools.mk
 
 build: out/vfkit
 
-test:
-	go test ./pkg/...
+test: build
+	@go test -v ./pkg/...
+	@go test -v -timeout 20m ./test
 
 clean:
 	rm -rf out
@@ -20,7 +21,7 @@ clean:
 out/vfkit-amd64 out/vfkit-arm64: out/vfkit-%: force-build
 	@mkdir -p $(@D)
 	CGO_ENABLED=1 CGO_CFLAGS=$(CGO_CFLAGS) GOOS=darwin GOARCH=$* go build -ldflags "$(VERSION_LDFLAGS)" -o $@ ./cmd/vfkit
-	codesign --entitlements vf.entitlements -s - $@
+	codesign -f --entitlements vf.entitlements -s - $@
 
 out/vfkit: out/vfkit-amd64 out/vfkit-arm64
 	cd $(@D) && lipo -create $(^F) -output $(@F)
