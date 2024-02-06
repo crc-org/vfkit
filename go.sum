@@ -23,8 +23,8 @@ github.com/chenzhuoyu/iasm v0.9.0/go.mod h1:Xjy2NpN3h7aUqeqM+woSuuvxmIe6+DDsiNLI
 github.com/chenzhuoyu/iasm v0.9.1 h1:tUHQJXo3NhBqw6s33wkGn9SP3bvrWLdlVIJ3hQBL7P0=
 github.com/chenzhuoyu/iasm v0.9.1/go.mod h1:Xjy2NpN3h7aUqeqM+woSuuvxmIe6+DDsiNLIrkAmYog=
 github.com/cpuguy83/go-md2man/v2 v2.0.3/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
-github.com/crc-org/crc/v2 v2.31.0 h1:tQpdfNR4OJnVENeyuvfT9+7Wcc9vjPitq/zWelFr0Xw=
-github.com/crc-org/crc/v2 v2.31.0/go.mod h1:Q2XJM3KkR/Gu+tBjeN77pk5P8DWYKdbxCSf+9l9MYcs=
+github.com/crc-org/crc/v2 v2.32.0 h1:I/62j5KrID8ua1vgAUPOVTtzhcsCsHWdqqiIRHySLfQ=
+github.com/crc-org/crc/v2 v2.32.0/go.mod h1:Q2XJM3KkR/Gu+tBjeN77pk5P8DWYKdbxCSf+9l9MYcs=
 github.com/crc-org/machine v0.0.0-20221028075518-f9b43442196b h1:VPbW5D21B1WToPvEA/EGwhi4e3lXevmRff9M1lUTc5g=
 github.com/crc-org/machine v0.0.0-20221028075518-f9b43442196b/go.mod h1:9bEsvgLE3LIPfvGATt9Mo73gG1CKKS6A/++VqOONKqc=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
