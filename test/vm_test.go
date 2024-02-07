@@ -228,6 +228,20 @@ var pciidMacOS13Tests = map[string]pciidTest{
 	},
 }
 
+var pciidMacOS14Tests = map[string]pciidTest{
+	"nvm-express": {
+		vendorID: 0x106b, // Apple
+		deviceID: 0x1a09,
+		createDev: func(t *testing.T) (config.VirtioDevice, error) {
+			diskimg := filepath.Join(t.TempDir(), "nvmexpress.img")
+			f, err := os.Create(diskimg)
+			require.NoError(t, err)
+			require.NoError(t, f.Close())
+			return config.NVMExpressControllerNew(diskimg)
+		},
+	},
+}
+
 func testPCIId(t *testing.T, test pciidTest, provider OsProvider) {
 	vm := NewTestVM(t, provider)
 	defer vm.Close(t)
@@ -265,6 +279,16 @@ func TestPCIIds(t *testing.T) {
 		}
 	} else {
 		t.Log("Skipping macOS 13 tests")
+	}
+
+	if err := macOSAvailable(14); err == nil {
+		for name, test := range pciidMacOS14Tests {
+			t.Run(name, func(t *testing.T) {
+				testPCIId(t, test, puipuiProvider)
+			})
+		}
+	} else {
+		t.Log("Skipping macOS 14 tests")
 	}
 }
 
