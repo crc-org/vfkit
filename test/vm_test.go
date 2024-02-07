@@ -242,6 +242,11 @@ var pciidMacOS14Tests = map[string]pciidTest{
 	},
 }
 
+var pciidVersionedTests = map[int]map[string]pciidTest{
+	13: pciidMacOS13Tests,
+	14: pciidMacOS14Tests,
+}
+
 func testPCIId(t *testing.T, test pciidTest, provider OsProvider) {
 	vm := NewTestVM(t, provider)
 	defer vm.Close(t)
@@ -271,24 +276,16 @@ func TestPCIIds(t *testing.T) {
 		})
 	}
 
-	if err := macOSAvailable(13); err == nil {
-		for name, test := range pciidMacOS13Tests {
-			t.Run(name, func(t *testing.T) {
-				testPCIId(t, test, puipuiProvider)
-			})
+	for macosVersion, tests := range pciidVersionedTests {
+		if err := macOSAvailable(float64(macosVersion)); err == nil {
+			for name, test := range tests {
+				t.Run(name, func(t *testing.T) {
+					testPCIId(t, test, puipuiProvider)
+				})
+			}
+		} else {
+			t.Logf("Skipping macOS %d tests", macosVersion)
 		}
-	} else {
-		t.Log("Skipping macOS 13 tests")
-	}
-
-	if err := macOSAvailable(14); err == nil {
-		for name, test := range pciidMacOS14Tests {
-			t.Run(name, func(t *testing.T) {
-				testPCIId(t, test, puipuiProvider)
-			})
-		}
-	} else {
-		t.Log("Skipping macOS 14 tests")
 	}
 }
 
