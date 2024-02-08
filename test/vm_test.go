@@ -16,6 +16,29 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestFailedVfkitStart(t *testing.T) {
+	puipuiProvider := NewPuipuiProvider()
+	log.Info("fetching os image")
+	err := puipuiProvider.Fetch(t.TempDir())
+	require.NoError(t, err)
+
+	vm := NewTestVM(t, puipuiProvider)
+	defer vm.Close(t)
+	require.NotNil(t, vm)
+
+	vm.AddSSH(t, "vsock")
+
+	dev, err := config.NVMExpressControllerNew("/a/b")
+	require.NoError(t, err)
+	vm.AddDevice(t, dev)
+
+	vm.Start(t)
+
+	log.Infof("waiting for SSH")
+	_, err = retrySSHDial(vm.vfkitCmd.errCh, "unix", vm.vsockPath, vm.provider.SSHConfig())
+	require.Error(t, err)
+}
+
 func testSSHAccess(t *testing.T, vm *testVM, network string) {
 	log.Infof("testing SSH access over %s", network)
 	vm.AddSSH(t, network)

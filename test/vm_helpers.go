@@ -17,7 +17,7 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-func retryIPFromMAC(macAddress string) (string, error) {
+func retryIPFromMAC(errCh chan error, macAddress string) (string, error) {
 	var (
 		err error
 		ip  string
@@ -25,6 +25,8 @@ func retryIPFromMAC(macAddress string) (string, error) {
 
 	for {
 		select {
+		case err := <-errCh:
+			return "", err
 		case <-time.After(1 * time.Second):
 			ip, err = vfkithelpers.GetIPAddressByMACAddress(macAddress)
 			if err == nil {
@@ -37,13 +39,15 @@ func retryIPFromMAC(macAddress string) (string, error) {
 	}
 }
 
-func retrySSHDial(scheme string, address string, sshConfig *ssh.ClientConfig) (*ssh.Client, error) {
+func retrySSHDial(errCh chan error, scheme string, address string, sshConfig *ssh.ClientConfig) (*ssh.Client, error) {
 	var (
 		sshClient *ssh.Client
 		err       error
 	)
 	for {
 		select {
+		case err := <-errCh:
+			return nil, err
 		case <-time.After(1 * time.Second):
 			log.Debugf("trying ssh dial")
 			sshClient, err = ssh.Dial(scheme, address, sshConfig)
@@ -60,6 +64,7 @@ func retrySSHDial(scheme string, address string, sshConfig *ssh.ClientConfig) (*
 
 type vfkitRunner struct {
 	*exec.Cmd
+	errCh              chan error
 	gracefullyShutdown bool
 }
 
@@ -75,15 +80,25 @@ func startVfkit(t *testing.T, vm *config.VirtualMachine) *vfkitRunner {
 
 	err = vfkitCmd.Start()
 	require.NoError(t, err)
+	errCh := make(chan error)
+	go func() {
+		err := vfkitCmd.Wait()
+		if err != nil {
+			log.Infof("vfkitCmd.Wait() returned %v", err)
+		}
+		errCh <- err
+		close(errCh)
+	}()
 
 	return &vfkitRunner{
 		vfkitCmd,
+		errCh,
 		false,
 	}
 }
 
 func (cmd *vfkitRunner) Wait(t *testing.T) {
-	err := cmd.Cmd.Wait()
+	err := <-cmd.errCh
 	require.NoError(t, err)
 	cmd.gracefullyShutdown = true
 }
@@ -196,12 +211,12 @@ func (vm *testVM) WaitForSSH(t *testing.T) {
 	)
 	switch vm.sshNetwork {
 	case "tcp":
-		ip, err := retryIPFromMAC(vm.macAddress)
+		ip, err := retryIPFromMAC(vm.vfkitCmd.errCh, vm.macAddress)
 		require.NoError(t, err)
-		sshClient, err = retrySSHDial("tcp", net.JoinHostPort(ip, strconv.Itoa(vm.port)), vm.provider.SSHConfig())
+		sshClient, err = retrySSHDial(vm.vfkitCmd.errCh, "tcp", net.JoinHostPort(ip, strconv.Itoa(vm.port)), vm.provider.SSHConfig())
 		require.NoError(t, err)
 	case "vsock":
-		sshClient, err = retrySSHDial("unix", vm.vsockPath, vm.provider.SSHConfig())
+		sshClient, err = retrySSHDial(vm.vfkitCmd.errCh, "unix", vm.vsockPath, vm.provider.SSHConfig())
 		require.NoError(t, err)
 	default:
 		t.FailNow()
