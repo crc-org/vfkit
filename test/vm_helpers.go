@@ -23,34 +23,39 @@ func retryIPFromMAC(macAddress string) (string, error) {
 		ip  string
 	)
 
-	for i := 0; i < 100; i++ {
-		ip, err = vfkithelpers.GetIPAddressByMACAddress(macAddress)
-		if err == nil {
-			break
+	for {
+		select {
+		case <-time.After(1 * time.Second):
+			ip, err = vfkithelpers.GetIPAddressByMACAddress(macAddress)
+			if err == nil {
+				log.Infof("found IP address %s for MAC %s", ip, macAddress)
+				return ip, nil
+			}
+		case <-time.After(10 * time.Second):
+			return "", fmt.Errorf("timeout getting IP from MAC: %w", err)
 		}
-
-		time.Sleep(time.Second)
 	}
-	if err != nil {
-		return "", err
-	}
-	log.Infof("found IP address %s for MAC %s", ip, macAddress)
-
-	return ip, nil
 }
 
 func retrySSHDial(scheme string, address string, sshConfig *ssh.ClientConfig) (*ssh.Client, error) {
-	for i := 0; i < 10; i++ {
-		log.Debugf("ssh dial try #%d", i)
-		sshClient, err := ssh.Dial(scheme, address, sshConfig)
-		if err == nil {
-			log.Infof("established SSH connection to %s over %s", address, scheme)
-			return sshClient, nil
+	var (
+		sshClient *ssh.Client
+		err       error
+	)
+	for {
+		select {
+		case <-time.After(1 * time.Second):
+			log.Debugf("trying ssh dial")
+			sshClient, err = ssh.Dial(scheme, address, sshConfig)
+			if err == nil {
+				log.Infof("established SSH connection to %s over %s", address, scheme)
+				return sshClient, nil
+			}
+			log.Debugf("ssh failed: %v", err)
+		case <-time.After(10 * time.Second):
+			return nil, fmt.Errorf("timeout waiting for SSH: %w", err)
 		}
-		log.Debugf("ssh failed: %v", err)
-		time.Sleep(time.Second)
 	}
-	return nil, fmt.Errorf("timeout waiting for SSH")
 }
 
 type vfkitRunner struct {
