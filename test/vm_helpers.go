@@ -17,7 +17,7 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-func sshOverTCP(macAddress string, sshPort int, sshConfig *ssh.ClientConfig) (*ssh.Client, error) {
+func retryIPFromMAC(macAddress string) (string, error) {
 	var (
 		err error
 		ip  string
@@ -32,36 +32,25 @@ func sshOverTCP(macAddress string, sshPort int, sshConfig *ssh.ClientConfig) (*s
 		time.Sleep(time.Second)
 	}
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	log.Infof("found IP address %s for MAC %s", ip, macAddress)
 
-	var sshClient *ssh.Client
-	for i := 0; i < 10; i++ {
-		sshClient, err = ssh.Dial("tcp", net.JoinHostPort(ip, strconv.Itoa(sshPort)), sshConfig)
-		if err == nil {
-			break
-		}
-		time.Sleep(time.Second)
-	}
-	log.Infof("established SSH connection to %s:%d over TCP", ip, sshPort)
-	return sshClient, err
+	return ip, nil
 }
 
-func sshOverVsock(unixSocket string, sshConfig *ssh.ClientConfig) (*ssh.Client, error) {
-	var (
-		sshClient *ssh.Client
-		err       error
-	)
-	for i := 0; i < 100; i++ {
-		sshClient, err = ssh.Dial("unix", unixSocket, sshConfig)
+func retrySSHDial(scheme string, address string, sshConfig *ssh.ClientConfig) (*ssh.Client, error) {
+	for i := 0; i < 10; i++ {
+		log.Debugf("ssh dial try #%d", i)
+		sshClient, err := ssh.Dial(scheme, address, sshConfig)
 		if err == nil {
-			break
+			log.Infof("established SSH connection to %s over %s", address, scheme)
+			return sshClient, nil
 		}
+		log.Debugf("ssh failed: %v", err)
 		time.Sleep(time.Second)
 	}
-	log.Infof("established SSH connection over Unix socket %s", unixSocket)
-	return sshClient, err
+	return nil, fmt.Errorf("timeout waiting for SSH")
 }
 
 type vfkitRunner struct {
@@ -202,10 +191,12 @@ func (vm *testVM) WaitForSSH(t *testing.T) {
 	)
 	switch vm.sshNetwork {
 	case "tcp":
-		sshClient, err = sshOverTCP(vm.macAddress, vm.port, vm.provider.SSHConfig())
+		ip, err := retryIPFromMAC(vm.macAddress)
+		require.NoError(t, err)
+		sshClient, err = retrySSHDial("tcp", net.JoinHostPort(ip, strconv.Itoa(vm.port)), vm.provider.SSHConfig())
 		require.NoError(t, err)
 	case "vsock":
-		sshClient, err = sshOverVsock(vm.vsockPath, vm.provider.SSHConfig())
+		sshClient, err = retrySSHDial("unix", vm.vsockPath, vm.provider.SSHConfig())
 		require.NoError(t, err)
 	default:
 		t.FailNow()
