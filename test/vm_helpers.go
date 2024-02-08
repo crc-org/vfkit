@@ -3,9 +3,11 @@ package test
 import (
 	"fmt"
 	"net"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -71,12 +73,19 @@ type vfkitRunner struct {
 func startVfkit(t *testing.T, vm *config.VirtualMachine) *vfkitRunner {
 	const vfkitRelativePath = "../out/vfkit"
 
+	logFilePath := filepath.Join(t.TempDir(), fmt.Sprintf("%s.log", strings.ReplaceAll(t.Name(), "/", "")))
+	logFile, err := os.Create(logFilePath)
+	require.NoError(t, err)
+	log.Infof("vfkit log file: %s", logFilePath)
+
 	binaryPath, err := exec.LookPath(vfkitRelativePath)
 	require.NoError(t, err)
 
 	log.Infof("starting %s", binaryPath)
 	vfkitCmd, err := vm.Cmd(binaryPath)
 	require.NoError(t, err)
+	vfkitCmd.Stdout = logFile
+	vfkitCmd.Stderr = logFile
 
 	err = vfkitCmd.Start()
 	require.NoError(t, err)
