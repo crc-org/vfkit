@@ -15,11 +15,11 @@ type jsonTest struct {
 var jsonTests = map[string]jsonTest{
 	"TestLinuxVM": {
 		newVM:        newLinuxVM,
-		expectedJSON: `{"vcpus":3,"memoryBytes":4000000000,"bootloader":{"kind":"linuxBootloader","VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"}}`,
+		expectedJSON: `{"vcpus":3,"memoryBytes":4194304000,"bootloader":{"kind":"linuxBootloader","VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"}}`,
 	},
 	"TestUEFIVM": {
 		newVM:        newUEFIVM,
-		expectedJSON: `{"vcpus":3,"memoryBytes":4000000000,"bootloader":{"kind":"efiBootloader","EFIVariableStorePath":"/variable-store","CreateVariableStore":false}}`,
+		expectedJSON: `{"vcpus":3,"memoryBytes":4194304000,"bootloader":{"kind":"efiBootloader","EFIVariableStorePath":"/variable-store","CreateVariableStore":false}}`,
 	},
 	"TestTimeSync": {
 		newVM: func(t *testing.T) *VirtualMachine {
@@ -29,7 +29,7 @@ var jsonTests = map[string]jsonTest{
 			vm.Timesync = timesync.(*TimeSync)
 			return vm
 		},
-		expectedJSON: `{"vcpus":3,"memoryBytes":4000000000,"bootloader":{"kind":"linuxBootloader","VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"},"timesync":{"VsockPort":1234}}`,
+		expectedJSON: `{"vcpus":3,"memoryBytes":4194304000,"bootloader":{"kind":"linuxBootloader","VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"},"timesync":{"VsockPort":1234}}`,
 	},
 	"TestVirtioRNG": {
 		newVM: func(t *testing.T) *VirtualMachine {
@@ -40,7 +40,7 @@ var jsonTests = map[string]jsonTest{
 			require.NoError(t, err)
 			return vm
 		},
-		expectedJSON: `{"vcpus":3,"memoryBytes":4000000000,"bootloader":{"kind":"linuxBootloader","VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"},"devices":[{"kind":"virtiorng"}]}`,
+		expectedJSON: `{"vcpus":3,"memoryBytes":4194304000,"bootloader":{"kind":"linuxBootloader","VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"},"devices":[{"kind":"virtiorng"}]}`,
 	},
 	"TestMultipleVirtioBlk": {
 		newVM: func(t *testing.T) *VirtualMachine {
@@ -56,7 +56,7 @@ var jsonTests = map[string]jsonTest{
 			require.NoError(t, err)
 			return vm
 		},
-		expectedJSON: `{"vcpus":3,"memoryBytes":4000000000,"bootloader":{"kind":"linuxBootloader","VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"},"devices":[{"kind":"virtioblk","DevName":"virtio-blk","ImagePath":"/virtioblk1","ReadOnly":false,"DeviceIdentifier":""},{"kind":"virtioblk","DevName":"virtio-blk","ImagePath":"/virtioblk2","ReadOnly":false,"DeviceIdentifier":"virtio-blk2"}]}`,
+		expectedJSON: `{"vcpus":3,"memoryBytes":4194304000,"bootloader":{"kind":"linuxBootloader","VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"},"devices":[{"kind":"virtioblk","DevName":"virtio-blk","ImagePath":"/virtioblk1","ReadOnly":false,"DeviceIdentifier":""},{"kind":"virtioblk","DevName":"virtio-blk","ImagePath":"/virtioblk2","ReadOnly":false,"DeviceIdentifier":"virtio-blk2"}]}`,
 	},
 	"TestAllVirtioDevices": {
 		newVM: func(t *testing.T) *VirtualMachine {
@@ -110,7 +110,7 @@ var jsonTests = map[string]jsonTest{
 
 			return vm
 		},
-		expectedJSON: `{"vcpus":3,"memoryBytes":4000000000,"bootloader":{"kind":"linuxBootloader","VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"},"devices":[{"kind":"virtioserial","LogFile":"/virtioserial","UsesStdio":false},{"kind":"virtioinput","inputType":"keyboard"},{"kind":"virtiogpu","usesGUI":false,"width":800,"height":600},{"kind":"virtionet","Nat":true,"MacAddress":"ABEiM0RV","Socket":null,"UnixSocketPath":""},{"kind":"virtiorng"},{"kind":"virtioblk","DevName":"virtio-blk","ImagePath":"/virtioblk","ReadOnly":false,"DeviceIdentifier":""},{"kind":"virtiosock","Port":1234,"SocketURL":"/virtiovsock","Listen":false},{"kind":"virtiofs","MountTag":"tag","SharedDir":"/virtiofs"},{"kind":"usbmassstorage","DevName":"usb-mass-storage","ImagePath":"/usbmassstorage","ReadOnly":false},{"kind":"rosetta","MountTag":"vz-rosetta","InstallRosetta":false}]}`,
+		expectedJSON: `{"vcpus":3,"memoryBytes":4194304000,"bootloader":{"kind":"linuxBootloader","VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"},"devices":[{"kind":"virtioserial","LogFile":"/virtioserial","UsesStdio":false},{"kind":"virtioinput","inputType":"keyboard"},{"kind":"virtiogpu","usesGUI":false,"width":800,"height":600},{"kind":"virtionet","Nat":true,"MacAddress":"ABEiM0RV","Socket":null,"UnixSocketPath":""},{"kind":"virtiorng"},{"kind":"virtioblk","DevName":"virtio-blk","ImagePath":"/virtioblk","ReadOnly":false,"DeviceIdentifier":""},{"kind":"virtiosock","Port":1234,"SocketURL":"/virtiovsock","Listen":false},{"kind":"virtiofs","MountTag":"tag","SharedDir":"/virtiofs"},{"kind":"usbmassstorage","DevName":"usb-mass-storage","ImagePath":"/usbmassstorage","ReadOnly":false},{"kind":"rosetta","MountTag":"vz-rosetta","InstallRosetta":false}]}`,
 	},
 }
 
@@ -120,22 +120,22 @@ type invalidJSONTest struct {
 
 var invalidJSONTests = map[string]invalidJSONTest{
 	"TestEmptyBootloaderKind": {
-		json: `{"vcpus":3,"memoryBytes":4000000000,"bootloader":{"kind":"empty",VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"}}`,
+		json: `{"vcpus":3,"memoryBytes":4194304000,"bootloader":{"kind":"empty",VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"}}`,
 	},
 	"TestInvalidBootloaderKind": {
-		json: `{"vcpus":3,"memoryBytes":4000000000,"bootloader":{"kind":"invalid",VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"}}`,
+		json: `{"vcpus":3,"memoryBytes":4194304000,"bootloader":{"kind":"invalid",VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"}}`,
 	},
 	"TestMissingBootloaderKind": {
-		json: `{"vcpus":3,"memoryBytes":4000000000,"bootloader":{"VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"}}`,
+		json: `{"vcpus":3,"memoryBytes":4194304000,"bootloader":{"VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"}}`,
 	},
 	"TestEmptyDeviceKind": {
-		json: `{"vcpus":3,"memoryBytes":4000000000,"bootloader":{"kind":"linuxBootloader","VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"},"devices":[{"kind":"","DevName":"virtio-blk","ImagePath":"/virtioblk1","ReadOnly":false,"DeviceIdentifier":""}]}`,
+		json: `{"vcpus":3,"memoryBytes":4194304000,"bootloader":{"kind":"linuxBootloader","VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"},"devices":[{"kind":"","DevName":"virtio-blk","ImagePath":"/virtioblk1","ReadOnly":false,"DeviceIdentifier":""}]}`,
 	},
 	"TestInvalidDeviceKind": {
-		json: `{"vcpus":3,"memoryBytes":4000000000,"bootloader":{"kind":"linuxBootloader","VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"},"devices":[{"kind":"invalid","DevName":"virtio-blk","ImagePath":"/virtioblk1","ReadOnly":false,"DeviceIdentifier":""}]}`,
+		json: `{"vcpus":3,"memoryBytes":4194304000,"bootloader":{"kind":"linuxBootloader","VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"},"devices":[{"kind":"invalid","DevName":"virtio-blk","ImagePath":"/virtioblk1","ReadOnly":false,"DeviceIdentifier":""}]}`,
 	},
 	"TestMissingDeviceKind": {
-		json: `{"vcpus":3,"memoryBytes":4000000000,"bootloader":{"kind":"linuxBootloader","VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"},"devices":[{"DevName":"virtio-blk","ImagePath":"/virtioblk1","ReadOnly":false,"DeviceIdentifier":""}]}`,
+		json: `{"vcpus":3,"memoryBytes":4194304000,"bootloader":{"kind":"linuxBootloader","VmlinuzPath":"/vmlinuz","KernelCmdLine":"/initrd","InitrdPath":"console=hvc0"},"devices":[{"DevName":"virtio-blk","ImagePath":"/virtioblk1","ReadOnly":false,"DeviceIdentifier":""}]}`,
 	},
 }
 
@@ -153,7 +153,6 @@ func TestJSON(t *testing.T) {
 				testInvalidJSON(t, &test)
 			})
 		}
-
 	})
 }
 
@@ -178,14 +177,14 @@ func testInvalidJSON(t *testing.T, test *invalidJSONTest) {
 
 func newLinuxVM(*testing.T) *VirtualMachine {
 	bootloader := NewLinuxBootloader("/vmlinuz", "/initrd", "console=hvc0")
-	vm := NewVirtualMachine(3, 4_000_000_000, bootloader)
+	vm := NewVirtualMachine(3, 4_000, bootloader)
 
 	return vm
 }
 
 func newUEFIVM(_ *testing.T) *VirtualMachine {
 	bootloader := NewEFIBootloader("/variable-store", false)
-	vm := NewVirtualMachine(3, 4_000_000_000, bootloader)
+	vm := NewVirtualMachine(3, 4_000, bootloader)
 
 	return vm
 }

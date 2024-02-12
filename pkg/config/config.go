@@ -6,6 +6,8 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+
+	"github.com/docker/go-units"
 )
 
 // VirtualMachine is the top-level type. It describes the virtual machine
@@ -32,12 +34,13 @@ type VMComponent interface {
 }
 
 // NewVirtualMachine creates a new VirtualMachine instance. The virtual machine
-// will use vcpus virtual CPUs and it will be allocated memoryBytes bytes of
-// RAM. bootloader specifies which kernel/initrd/kernel args it will be using.
-func NewVirtualMachine(vcpus uint, memoryBytes uint64, bootloader Bootloader) *VirtualMachine {
+// will use vcpus virtual CPUs and it will be allocated memoryMiB mibibytes
+// (1024*1024 bytes) of RAM. bootloader specifies how the virtual machine will
+// be booted (UEFI or with the specified kernel/initrd/commandline)
+func NewVirtualMachine(vcpus uint, memoryMiB uint64, bootloader Bootloader) *VirtualMachine {
 	return &VirtualMachine{
 		Vcpus:       vcpus,
-		MemoryBytes: memoryBytes,
+		MemoryBytes: memoryMiB * units.MiB,
 		Bootloader:  bootloader,
 	}
 }
@@ -54,7 +57,9 @@ func (vm *VirtualMachine) ToCmdLine() ([]string, error) {
 		args = append(args, "--cpus", strconv.FormatUint(uint64(vm.Vcpus), 10))
 	}
 	if vm.MemoryBytes != 0 {
-		args = append(args, "--memory", strconv.FormatUint(vm.MemoryBytes, 10))
+		// vfkit --memory expects a size in mibibytes, round MemoryBytes up to the nearest mibiByte multiple
+		memoryMiB := (vm.MemoryBytes + units.MiB - 1) / units.MiB
+		args = append(args, "--memory", strconv.FormatUint(memoryMiB, 10))
 	}
 
 	if vm.Bootloader == nil {
