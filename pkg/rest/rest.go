@@ -5,11 +5,20 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"syscall"
 
 	"github.com/crc-org/vfkit/pkg/cmdline"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
+
+// see `man unix`:
+// UNIX-domain addresses are variable-length filesystem pathnames of at most 104 characters.
+func maxSocketPathLen() int {
+	var sockaddr syscall.RawSockaddrUnix
+	// sockaddr.Path must end with '\0', it's not relevant for go strings
+	return len(sockaddr.Path) - 1
+}
 
 type Endpoint struct {
 	Host   string
@@ -122,6 +131,9 @@ func parseRestfulURI(inputURI string) (*url.URL, error) {
 	}
 	if scheme == Unix && len(restURI.Host) > 0 {
 		return nil, errors.New("invalid unix uri: host is forbidden")
+	}
+	if scheme == Unix && len(restURI.Path) > maxSocketPathLen() {
+		return nil, fmt.Errorf("invalid unix uri: socket path length exceeds macOS limits")
 	}
 	return restURI, err
 }

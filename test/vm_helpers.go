@@ -83,7 +83,7 @@ func startVfkit(t *testing.T, vm *config.VirtualMachine) *vfkitRunner {
 	binaryPath, err := exec.LookPath(vfkitRelativePath)
 	require.NoError(t, err)
 
-	restSocketPath := filepath.Join(t.TempDir(), "rest-unix.sock")
+	restSocketPath := filepath.Join(t.TempDir(), "rest.sock")
 	restEndpoint, err := rest.NewEndpoint(fmt.Sprintf("unix://%s", restSocketPath))
 
 	require.NoError(t, err)

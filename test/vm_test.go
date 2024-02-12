@@ -237,7 +237,7 @@ var pciidMacOS13Tests = map[string]pciidTest{
 			return config.VirtioGPUNew()
 		},
 	},
-	"virtio-input/pointing-device": {
+	"virtio-input/trackpad": {
 		vendorID: 0x106b, // Apple
 		deviceID: 0x1a06,
 		createDev: func(_ *testing.T) (config.VirtioDevice, error) {
