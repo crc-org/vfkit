@@ -16,7 +16,7 @@ var rootCmd = &cobra.Command{
 	Short: "vfkit is a simple hypervisor using Apple's virtualization framework",
 	Long: `A hypervisor written in Go using Apple's virtualization framework to run linux virtual machines.
                 Complete documentation is available at https://github.com/crc-org/vfkit`,
-	RunE: func(cmd *cobra.Command, args []string) error {
+	RunE: func(_ *cobra.Command, _ []string) error {
 		if len(opts.LogLevel) > 0 {
 			ll, err := getLogLevel()
 			if err != nil {

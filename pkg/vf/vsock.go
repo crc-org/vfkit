@@ -58,7 +58,7 @@ func connectVsock(vm *vz.VirtualMachine, port uint, vsockPath string) (io.Closer
 	proxy.AddRoute(fmt.Sprintf("unix://:%s", vsockPath), &tcpproxy.DialProxy{
 		Addr: fmt.Sprintf("vsock:%d", port),
 		// when there's a connection to the unix socket listener, connect to the specified vsock port
-		DialContext: func(ctx context.Context, network, addr string) (conn net.Conn, e error) {
+		DialContext: func(_ context.Context, _, addr string) (conn net.Conn, e error) {
 			parsed, err := url.Parse(addr)
 			if err != nil {
 				return nil, err
@@ -103,7 +103,7 @@ func listenVsock(vm *vz.VirtualMachine, port uint, vsockPath string) (io.Closer,
 	proxy.AddRoute(fmt.Sprintf("vsock://:%d", port), &tcpproxy.DialProxy{
 		Addr: fmt.Sprintf("unix:%s", vsockPath),
 		// when there's a connection to the vsock listener, connect to the provided unix socket
-		DialContext: func(ctx context.Context, network, addr string) (conn net.Conn, e error) {
+		DialContext: func(ctx context.Context, _, addr string) (conn net.Conn, e error) {
 			parsed, err := url.Parse(addr)
 			if err != nil {
 				return nil, err

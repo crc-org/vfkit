@@ -177,7 +177,7 @@ var pciidTests = map[string]pciidTest{
 	"virtio-net": {
 		vendorID: 0x1af4, // Red Hat
 		deviceID: 0x1041,
-		createDev: func(t *testing.T) (config.VirtioDevice, error) {
+		createDev: func(_ *testing.T) (config.VirtioDevice, error) {
 			return config.VirtioNetNew("")
 		},
 	},
@@ -191,14 +191,14 @@ var pciidTests = map[string]pciidTest{
 	"virtio-rng": {
 		vendorID: 0x1af4, // Red Hat
 		deviceID: 0x1044,
-		createDev: func(t *testing.T) (config.VirtioDevice, error) {
+		createDev: func(_ *testing.T) (config.VirtioDevice, error) {
 			return config.VirtioRngNew()
 		},
 	},
 	"virtio-fs": {
 		vendorID: 0x1af4, // Red Hat
 		deviceID: 0x105a,
-		createDev: func(t *testing.T) (config.VirtioDevice, error) {
+		createDev: func(_ *testing.T) (config.VirtioDevice, error) {
 			return config.VirtioFsNew("./", "vfkit-share-test")
 		},
 	},
@@ -208,21 +208,21 @@ var pciidMacOS13Tests = map[string]pciidTest{
 	"virtio-gpu": {
 		vendorID: 0x1af4, // Red Hat
 		deviceID: 0x1050,
-		createDev: func(t *testing.T) (config.VirtioDevice, error) {
+		createDev: func(_ *testing.T) (config.VirtioDevice, error) {
 			return config.VirtioGPUNew()
 		},
 	},
 	"virtio-input/pointing-device": {
 		vendorID: 0x106b, // Apple
 		deviceID: 0x1a06,
-		createDev: func(t *testing.T) (config.VirtioDevice, error) {
+		createDev: func(_ *testing.T) (config.VirtioDevice, error) {
 			return config.VirtioInputNew("pointing")
 		},
 	},
 	"virtio-input/keyboard": {
 		vendorID: 0x106b, // Apple
 		deviceID: 0x1a06,
-		createDev: func(t *testing.T) (config.VirtioDevice, error) {
+		createDev: func(_ *testing.T) (config.VirtioDevice, error) {
 			return config.VirtioInputNew("keyboard")
 		},
 	},
