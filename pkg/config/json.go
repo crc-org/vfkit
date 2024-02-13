@@ -173,7 +173,7 @@ func (vm *VirtualMachine) UnmarshalJSON(b []byte) error {
 		case "vcpus":
 			err = json.Unmarshal(*rawMsg, &vm.Vcpus)
 		case "memoryBytes":
-			err = json.Unmarshal(*rawMsg, &vm.MemoryBytes)
+			err = json.Unmarshal(*rawMsg, &vm.Memory)
 		case "bootloader":
 			var bootloader Bootloader
 			bootloader, err = unmarshalBootloader(*rawMsg)

@@ -7,17 +7,17 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/docker/go-units"
+	"github.com/containers/common/pkg/strongunits"
 )
 
 // VirtualMachine is the top-level type. It describes the virtual machine
 // configuration (bootloader, devices, ...).
 type VirtualMachine struct {
-	Vcpus       uint           `json:"vcpus"`
-	MemoryBytes uint64         `json:"memoryBytes"`
-	Bootloader  Bootloader     `json:"bootloader"`
-	Devices     []VirtioDevice `json:"devices,omitempty"`
-	Timesync    *TimeSync      `json:"timesync,omitempty"`
+	Vcpus      uint           `json:"vcpus"`
+	Memory     strongunits.B  `json:"memoryBytes"`
+	Bootloader Bootloader     `json:"bootloader"`
+	Devices    []VirtioDevice `json:"devices,omitempty"`
+	Timesync   *TimeSync      `json:"timesync,omitempty"`
 }
 
 // TimeSync enables synchronization of the host time to the linux guest after the host was suspended.
@@ -39,10 +39,17 @@ type VMComponent interface {
 // be booted (UEFI or with the specified kernel/initrd/commandline)
 func NewVirtualMachine(vcpus uint, memoryMiB uint64, bootloader Bootloader) *VirtualMachine {
 	return &VirtualMachine{
-		Vcpus:       vcpus,
-		MemoryBytes: memoryMiB * units.MiB,
-		Bootloader:  bootloader,
+		Vcpus:      vcpus,
+		Memory:     strongunits.MiB(memoryMiB).ToBytes(),
+		Bootloader: bootloader,
 	}
+}
+
+// round value up to the nearest mibibyte multiple
+func roundToMiB(value strongunits.StorageUnits) strongunits.MiB {
+	mib := uint64(strongunits.MiB(1).ToBytes())
+	valueB := strongunits.B(uint64(value.ToBytes()) + mib - 1)
+	return strongunits.ToMib(valueB)
 }
 
 // ToCmdLine generates a list of arguments for use with the [os/exec] package.
@@ -56,10 +63,8 @@ func (vm *VirtualMachine) ToCmdLine() ([]string, error) {
 	if vm.Vcpus != 0 {
 		args = append(args, "--cpus", strconv.FormatUint(uint64(vm.Vcpus), 10))
 	}
-	if vm.MemoryBytes != 0 {
-		// vfkit --memory expects a size in mibibytes, round MemoryBytes up to the nearest mibiByte multiple
-		memoryMiB := (vm.MemoryBytes + units.MiB - 1) / units.MiB
-		args = append(args, "--memory", strconv.FormatUint(memoryMiB, 10))
+	if uint64(vm.Memory.ToBytes()) != 0 {
+		args = append(args, "--memory", strconv.FormatUint(uint64(roundToMiB(vm.Memory)), 10))
 	}
 
 	if vm.Bootloader == nil {
