@@ -18,16 +18,16 @@ type Bootloader interface {
 // LinuxBootloader determines which kernel/initrd/kernel args to use when starting
 // the virtual machine.
 type LinuxBootloader struct {
-	VmlinuzPath   string
-	KernelCmdLine string
-	InitrdPath    string
+	VmlinuzPath   string `json:"vmlinuzPath"`
+	KernelCmdLine string `json:"kernelCmdLine"`
+	InitrdPath    string `json:"initrdPath"`
 }
 
 // EFIBootloader allows to set a few options related to EFI variable storage
 type EFIBootloader struct {
-	EFIVariableStorePath string
+	EFIVariableStorePath string `json:"efiVariableStorePath"`
 	// TODO: virtualization framework allow both create and overwrite
-	CreateVariableStore bool
+	CreateVariableStore bool `json:"createVariableStore"`
 }
 
 // NewLinuxBootloader creates a new bootloader to start a VM with the file at

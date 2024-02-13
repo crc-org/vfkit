@@ -47,34 +47,34 @@ type VirtioGPU struct {
 type VirtioVsock struct {
 	// Port is the virtio-vsock port used for this device, see `man vsock` for more
 	// details.
-	Port uint
+	Port uint `json:"port"`
 	// SocketURL is the path to a unix socket on the host to use for the virtio-vsock communication with the guest.
-	SocketURL string
+	SocketURL string `json:"socketURL"`
 	// If true, vsock connections will have to be done from guest to host. If false, vsock connections will only be possible
 	// from host to guest
-	Listen bool
+	Listen bool `json:"listen,omitempty"`
 }
 
 // VirtioBlk configures a disk device.
 type VirtioBlk struct {
 	StorageConfig
-	DeviceIdentifier string
+	DeviceIdentifier string `json:"deviceIdentifier,omitempty"`
 }
 
 type DirectorySharingConfig struct {
-	MountTag string
+	MountTag string `json:"mountTag"`
 }
 
 // VirtioFs configures directory sharing between the guest and the host.
 type VirtioFs struct {
 	DirectorySharingConfig
-	SharedDir string
+	SharedDir string `json:"sharedDir"`
 }
 
 // RosettaShare configures rosetta support in the guest to run Intel binaries on Apple CPUs
 type RosettaShare struct {
 	DirectorySharingConfig
-	InstallRosetta bool
+	InstallRosetta bool `json:"installRosetta"`
 }
 
 // NVMExpressController configures a NVMe controller in the guest
@@ -91,19 +91,19 @@ type VirtioRng struct {
 
 // VirtioNet configures the virtual machine networking.
 type VirtioNet struct {
-	Nat        bool
-	MacAddress net.HardwareAddr
+	Nat        bool             `json:"nat"`
+	MacAddress net.HardwareAddr `json:"macAddress,omitempty"`
 	// file parameter is holding a connected datagram socket.
 	// see https://github.com/Code-Hex/vz/blob/7f648b6fb9205d6f11792263d79876e3042c33ec/network.go#L113-L155
-	Socket *os.File
+	Socket *os.File `json:"socket,omitempty"`
 
-	UnixSocketPath string
+	UnixSocketPath string `json:"unixSocketPath,omitempty"`
 }
 
 // VirtioSerial configures the virtual machine serial ports.
 type VirtioSerial struct {
-	LogFile   string
-	UsesStdio bool
+	LogFile   string `json:"logFile,omitempty"`
+	UsesStdio bool   `json:"usesStdio,omitempty"`
 }
 
 // TODO: Add VirtioBalloon
@@ -676,9 +676,9 @@ func USBMassStorageNew(imagePath string) (VMComponent, error) {
 
 // StorageConfig configures a disk device.
 type StorageConfig struct {
-	DevName   string
-	ImagePath string
-	ReadOnly  bool
+	DevName   string `json:"devName"`
+	ImagePath string `json:"imagePath"`
+	ReadOnly  bool   `json:"readOnly,omitempty"`
 }
 
 func (config *StorageConfig) ToCmdLine() ([]string, error) {

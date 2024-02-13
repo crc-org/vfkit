@@ -23,7 +23,7 @@ type VirtualMachine struct {
 // TimeSync enables synchronization of the host time to the linux guest after the host was suspended.
 // This requires qemu-guest-agent to be running in the guest, and to be listening on a vsock socket
 type TimeSync struct {
-	VsockPort uint
+	VsockPort uint `json:"vsockPort"`
 }
 
 // The VMComponent interface represents a VM element (device, bootloader, ...)
