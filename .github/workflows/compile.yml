@@ -42,7 +42,7 @@ jobs:
       - name: vet
         run: go vet ./...
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v3
+        uses: golangci/golangci-lint-action@v4
       - name: Upload vfkit artifact
         if: matrix.os == 'macOS-13'
         uses: actions/upload-artifact@v4
