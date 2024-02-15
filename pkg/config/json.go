@@ -241,7 +241,7 @@ func (bootloader *LinuxBootloader) MarshalJSON() ([]byte, error) {
 
 type virtioNetForMarshalling struct {
 	VirtioNet
-	MacAddress string `json:"macAddress"`
+	MacAddress string `json:"macAddress,omitempty"`
 }
 
 func (dev *VirtioNet) MarshalJSON() ([]byte, error) {

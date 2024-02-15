@@ -87,6 +87,10 @@ func NewServer(inspector VirtualMachineInspector, stateHandler VirtualMachineSta
 	if err != nil {
 		return nil, err
 	}
+	err = r.SetTrustedProxies(nil)
+	if err != nil {
+		return nil, err
+	}
 	s := VFKitService{
 		router:   r,
 		Endpoint: ep,
