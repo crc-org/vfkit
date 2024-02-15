@@ -81,6 +81,7 @@ func (v *VFKitService) Start() {
 
 // NewServer creates a new restful service
 func NewServer(inspector VirtualMachineInspector, stateHandler VirtualMachineStateHandler, endpoint string) (*VFKitService, error) {
+	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 	ep, err := NewEndpoint(endpoint)
 	if err != nil {
