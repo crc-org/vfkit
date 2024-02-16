@@ -92,7 +92,7 @@ type VirtioRng struct {
 // VirtioNet configures the virtual machine networking.
 type VirtioNet struct {
 	Nat        bool             `json:"nat"`
-	MacAddress net.HardwareAddr `json:"macAddress,omitempty"`
+	MacAddress net.HardwareAddr `json:"-"` // custom marshaller in json.go
 	// file parameter is holding a connected datagram socket.
 	// see https://github.com/Code-Hex/vz/blob/7f648b6fb9205d6f11792263d79876e3042c33ec/network.go#L113-L155
 	Socket *os.File `json:"socket,omitempty"`
