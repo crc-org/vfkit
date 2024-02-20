@@ -3,9 +3,11 @@ package test
 import (
 	"fmt"
 	"net"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -17,60 +19,64 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-func sshOverTCP(macAddress string, sshPort int, sshConfig *ssh.ClientConfig) (*ssh.Client, error) {
+func retryIPFromMAC(errCh chan error, macAddress string) (string, error) {
 	var (
 		err error
 		ip  string
 	)
 
-	for i := 0; i < 100; i++ {
-		ip, err = vfkithelpers.GetIPAddressByMACAddress(macAddress)
-		if err == nil {
-			break
+	for {
+		select {
+		case err := <-errCh:
+			return "", err
+		case <-time.After(1 * time.Second):
+			ip, err = vfkithelpers.GetIPAddressByMACAddress(macAddress)
+			if err == nil {
+				log.Infof("found IP address %s for MAC %s", ip, macAddress)
+				return ip, nil
+			}
+		case <-time.After(10 * time.Second):
+			return "", fmt.Errorf("timeout getting IP from MAC: %w", err)
 		}
-
-		time.Sleep(time.Second)
 	}
-	if err != nil {
-		return nil, err
-	}
-	log.Infof("found IP address %s for MAC %s", ip, macAddress)
-
-	var sshClient *ssh.Client
-	for i := 0; i < 10; i++ {
-		sshClient, err = ssh.Dial("tcp", net.JoinHostPort(ip, strconv.Itoa(sshPort)), sshConfig)
-		if err == nil {
-			break
-		}
-		time.Sleep(time.Second)
-	}
-	log.Infof("established SSH connection to %s:%d over TCP", ip, sshPort)
-	return sshClient, err
 }
 
-func sshOverVsock(unixSocket string, sshConfig *ssh.ClientConfig) (*ssh.Client, error) {
+func retrySSHDial(errCh chan error, scheme string, address string, sshConfig *ssh.ClientConfig) (*ssh.Client, error) {
 	var (
 		sshClient *ssh.Client
 		err       error
 	)
-	for i := 0; i < 100; i++ {
-		sshClient, err = ssh.Dial("unix", unixSocket, sshConfig)
-		if err == nil {
-			break
+	for {
+		select {
+		case err := <-errCh:
+			return nil, err
+		case <-time.After(1 * time.Second):
+			log.Debugf("trying ssh dial")
+			sshClient, err = ssh.Dial(scheme, address, sshConfig)
+			if err == nil {
+				log.Infof("established SSH connection to %s over %s", address, scheme)
+				return sshClient, nil
+			}
+			log.Debugf("ssh failed: %v", err)
+		case <-time.After(10 * time.Second):
+			return nil, fmt.Errorf("timeout waiting for SSH: %w", err)
 		}
-		time.Sleep(time.Second)
 	}
-	log.Infof("established SSH connection over Unix socket %s", unixSocket)
-	return sshClient, err
 }
 
 type vfkitRunner struct {
 	*exec.Cmd
+	errCh              chan error
 	gracefullyShutdown bool
 }
 
 func startVfkit(t *testing.T, vm *config.VirtualMachine) *vfkitRunner {
 	const vfkitRelativePath = "../out/vfkit"
+
+	logFilePath := filepath.Join(t.TempDir(), fmt.Sprintf("%s.log", strings.ReplaceAll(t.Name(), "/", "")))
+	logFile, err := os.Create(logFilePath)
+	require.NoError(t, err)
+	log.Infof("vfkit log file: %s", logFilePath)
 
 	binaryPath, err := exec.LookPath(vfkitRelativePath)
 	require.NoError(t, err)
@@ -78,18 +84,30 @@ func startVfkit(t *testing.T, vm *config.VirtualMachine) *vfkitRunner {
 	log.Infof("starting %s", binaryPath)
 	vfkitCmd, err := vm.Cmd(binaryPath)
 	require.NoError(t, err)
+	vfkitCmd.Stdout = logFile
+	vfkitCmd.Stderr = logFile
 
 	err = vfkitCmd.Start()
 	require.NoError(t, err)
+	errCh := make(chan error)
+	go func() {
+		err := vfkitCmd.Wait()
+		if err != nil {
+			log.Infof("vfkitCmd.Wait() returned %v", err)
+		}
+		errCh <- err
+		close(errCh)
+	}()
 
 	return &vfkitRunner{
 		vfkitCmd,
+		errCh,
 		false,
 	}
 }
 
 func (cmd *vfkitRunner) Wait(t *testing.T) {
-	err := cmd.Cmd.Wait()
+	err := <-cmd.errCh
 	require.NoError(t, err)
 	cmd.gracefullyShutdown = true
 }
@@ -202,10 +220,12 @@ func (vm *testVM) WaitForSSH(t *testing.T) {
 	)
 	switch vm.sshNetwork {
 	case "tcp":
-		sshClient, err = sshOverTCP(vm.macAddress, vm.port, vm.provider.SSHConfig())
+		ip, err := retryIPFromMAC(vm.vfkitCmd.errCh, vm.macAddress)
+		require.NoError(t, err)
+		sshClient, err = retrySSHDial(vm.vfkitCmd.errCh, "tcp", net.JoinHostPort(ip, strconv.Itoa(vm.port)), vm.provider.SSHConfig())
 		require.NoError(t, err)
 	case "vsock":
-		sshClient, err = sshOverVsock(vm.vsockPath, vm.provider.SSHConfig())
+		sshClient, err = retrySSHDial(vm.vfkitCmd.errCh, "unix", vm.vsockPath, vm.provider.SSHConfig())
 		require.NoError(t, err)
 	default:
 		t.FailNow()

@@ -16,6 +16,29 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestFailedVfkitStart(t *testing.T) {
+	puipuiProvider := NewPuipuiProvider()
+	log.Info("fetching os image")
+	err := puipuiProvider.Fetch(t.TempDir())
+	require.NoError(t, err)
+
+	vm := NewTestVM(t, puipuiProvider)
+	defer vm.Close(t)
+	require.NotNil(t, vm)
+
+	vm.AddSSH(t, "vsock")
+
+	dev, err := config.NVMExpressControllerNew("/a/b")
+	require.NoError(t, err)
+	vm.AddDevice(t, dev)
+
+	vm.Start(t)
+
+	log.Infof("waiting for SSH")
+	_, err = retrySSHDial(vm.vfkitCmd.errCh, "unix", vm.vsockPath, vm.provider.SSHConfig())
+	require.Error(t, err)
+}
+
 func testSSHAccess(t *testing.T, vm *testVM, network string) {
 	log.Infof("testing SSH access over %s", network)
 	vm.AddSSH(t, network)
@@ -228,6 +251,25 @@ var pciidMacOS13Tests = map[string]pciidTest{
 	},
 }
 
+var pciidMacOS14Tests = map[string]pciidTest{
+	"nvm-express": {
+		vendorID: 0x106b, // Apple
+		deviceID: 0x1a09,
+		createDev: func(t *testing.T) (config.VirtioDevice, error) {
+			diskimg := filepath.Join(t.TempDir(), "nvmexpress.img")
+			f, err := os.Create(diskimg)
+			require.NoError(t, err)
+			require.NoError(t, f.Close())
+			return config.NVMExpressControllerNew(diskimg)
+		},
+	},
+}
+
+var pciidVersionedTests = map[int]map[string]pciidTest{
+	13: pciidMacOS13Tests,
+	14: pciidMacOS14Tests,
+}
+
 func testPCIId(t *testing.T, test pciidTest, provider OsProvider) {
 	vm := NewTestVM(t, provider)
 	defer vm.Close(t)
@@ -257,14 +299,16 @@ func TestPCIIds(t *testing.T) {
 		})
 	}
 
-	if err := macOSAvailable(13); err == nil {
-		for name, test := range pciidMacOS13Tests {
-			t.Run(name, func(t *testing.T) {
-				testPCIId(t, test, puipuiProvider)
-			})
+	for macosVersion, tests := range pciidVersionedTests {
+		if err := macOSAvailable(float64(macosVersion)); err == nil {
+			for name, test := range tests {
+				t.Run(name, func(t *testing.T) {
+					testPCIId(t, test, puipuiProvider)
+				})
+			}
+		} else {
+			t.Logf("Skipping macOS %d tests", macosVersion)
 		}
-	} else {
-		t.Log("Skipping macOS 13 tests")
 	}
 }
 
