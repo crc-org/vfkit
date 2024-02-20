@@ -117,7 +117,7 @@ func (dev *VirtioInput) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConf
 	return nil
 }
 
-func (dev *VirtioGPU) toVZ() (vz.GraphicsDeviceConfiguration, error) {
+func (dev *VirtioGPU) toVz() (vz.GraphicsDeviceConfiguration, error) {
 	gpuDeviceConfig, err := vz.NewVirtioGraphicsDeviceConfiguration()
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize virtio graphic device: %w", err)
@@ -134,7 +134,7 @@ func (dev *VirtioGPU) toVZ() (vz.GraphicsDeviceConfiguration, error) {
 }
 
 func (dev *VirtioGPU) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfiguration) error {
-	gpuDeviceConfig, err := dev.toVZ()
+	gpuDeviceConfig, err := dev.toVz()
 	if err != nil {
 		return err
 	}
