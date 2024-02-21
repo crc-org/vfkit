@@ -26,7 +26,7 @@ func newVzVirtualMachineConfiguration(vm *config.VirtualMachine) (*vzVirtualMach
 		return nil, err
 	}
 
-	vzVMConfig, err := vz.NewVirtualMachineConfiguration(vzBootloader, vm.Vcpus, vm.MemoryBytes)
+	vzVMConfig, err := vz.NewVirtualMachineConfiguration(vzBootloader, vm.Vcpus, uint64(vm.Memory.ToBytes()))
 	if err != nil {
 		return nil, err
 	}

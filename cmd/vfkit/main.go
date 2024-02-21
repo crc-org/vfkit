@@ -33,7 +33,6 @@ import (
 	"github.com/crc-org/vfkit/pkg/rest"
 	restvf "github.com/crc-org/vfkit/pkg/rest/vf"
 	"github.com/crc-org/vfkit/pkg/vf"
-	"github.com/docker/go-units"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -71,7 +70,7 @@ func newVMConfiguration(opts *cmdline.Options) (*config.VirtualMachine, error) {
 
 	vmConfig := config.NewVirtualMachine(
 		opts.Vcpus,
-		uint64(opts.MemoryMiB*units.MiB),
+		uint64(opts.MemoryMiB),
 		bootloader,
 	)
 	log.Info("virtual machine parameters:")
@@ -131,7 +130,7 @@ func runVFKit(vmConfig *config.VirtualMachine, opts *cmdline.Options) error {
 
 	// Do not enable the rests server if user sets scheme to None
 	if opts.RestfulURI != cmdline.DefaultRestfulURI {
-		restVM := restvf.NewVzVirtualMachine(vm, vzVMConfig)
+		restVM := restvf.NewVzVirtualMachine(vm, vzVMConfig, vmConfig)
 		srv, err := rest.NewServer(restVM, restVM, opts.RestfulURI)
 		if err != nil {
 			return err

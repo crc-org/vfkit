@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 )
 
 // The technique for json (de)serialization was explained here:
@@ -88,6 +89,27 @@ func unmarshalDevices(rawMsg json.RawMessage) ([]VirtioDevice, error) {
 	return devices, nil
 }
 
+// VirtioNet needs a custom unmarshaller as net.HardwareAddress is not
+// serialized/unserialized in its expected format, instead of
+// '00:11:22:33:44:55', it's serialized as base64-encoded raw bytes such as
+// 'ABEiM0RV'. This custom (un)marshalling code will use the desired format.
+func unmarshalVirtioNet(rawMsg json.RawMessage) (*VirtioNet, error) {
+	var dev virtioNetForMarshalling
+
+	err := json.Unmarshal(rawMsg, &dev)
+	if err != nil {
+		return nil, err
+	}
+	if dev.MacAddress != "" {
+		macAddr, err := net.ParseMAC(dev.MacAddress)
+		if err != nil {
+			return nil, err
+		}
+		dev.VirtioNet.MacAddress = macAddr
+	}
+	return &dev.VirtioNet, nil
+}
+
 func unmarshalDevice(rawMsg json.RawMessage) (VirtioDevice, error) {
 	var (
 		kind jsonKind
@@ -99,9 +121,7 @@ func unmarshalDevice(rawMsg json.RawMessage) (VirtioDevice, error) {
 	}
 	switch kind.Kind {
 	case vfNet:
-		var newDevice VirtioNet
-		err = json.Unmarshal(rawMsg, &newDevice)
-		dev = &newDevice
+		dev, err = unmarshalVirtioNet(rawMsg)
 	case vfVsock:
 		var newDevice VirtioVsock
 		err = json.Unmarshal(rawMsg, &newDevice)
@@ -173,7 +193,7 @@ func (vm *VirtualMachine) UnmarshalJSON(b []byte) error {
 		case "vcpus":
 			err = json.Unmarshal(*rawMsg, &vm.Vcpus)
 		case "memoryBytes":
-			err = json.Unmarshal(*rawMsg, &vm.MemoryBytes)
+			err = json.Unmarshal(*rawMsg, &vm.Memory)
 		case "bootloader":
 			var bootloader Bootloader
 			bootloader, err = unmarshalBootloader(*rawMsg)
@@ -219,14 +239,22 @@ func (bootloader *LinuxBootloader) MarshalJSON() ([]byte, error) {
 	})
 }
 
+type virtioNetForMarshalling struct {
+	VirtioNet
+	MacAddress string `json:"macAddress,omitempty"`
+}
+
 func (dev *VirtioNet) MarshalJSON() ([]byte, error) {
 	type devWithKind struct {
 		jsonKind
-		VirtioNet
+		virtioNetForMarshalling
 	}
 	return json.Marshal(devWithKind{
-		jsonKind:  kind(vfNet),
-		VirtioNet: *dev,
+		jsonKind: kind(vfNet),
+		virtioNetForMarshalling: virtioNetForMarshalling{
+			VirtioNet:  *dev,
+			MacAddress: dev.MacAddress.String(),
+		},
 	})
 }
 

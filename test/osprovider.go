@@ -143,12 +143,12 @@ func (puipui *PuiPuiProvider) Fetch(destDir string) error {
 	return nil
 }
 
-const puipuiMemoryBytes = 1 * 1024 // MiB
+const puipuiMemoryMiB = 1 * 1024
 const puipuiCPUs = 2
 
 func (puipui *PuiPuiProvider) ToVirtualMachine() (*config.VirtualMachine, error) {
 	bootloader := config.NewLinuxBootloader(puipui.vmlinuz, puipui.kernelArgs, puipui.initramfs)
-	vm := config.NewVirtualMachine(puipuiCPUs, puipuiMemoryBytes, bootloader)
+	vm := config.NewVirtualMachine(puipuiCPUs, puipuiMemoryMiB, bootloader)
 
 	return vm, nil
 }

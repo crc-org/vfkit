@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/crc-org/vfkit/pkg/config"
+	"github.com/crc-org/vfkit/pkg/rest"
 
 	vfkithelpers "github.com/crc-org/crc/v2/pkg/drivers/vfkit"
 	log "github.com/sirupsen/logrus"
@@ -68,6 +69,7 @@ type vfkitRunner struct {
 	*exec.Cmd
 	errCh              chan error
 	gracefullyShutdown bool
+	restSocketPath     string
 }
 
 func startVfkit(t *testing.T, vm *config.VirtualMachine) *vfkitRunner {
@@ -81,11 +83,19 @@ func startVfkit(t *testing.T, vm *config.VirtualMachine) *vfkitRunner {
 	binaryPath, err := exec.LookPath(vfkitRelativePath)
 	require.NoError(t, err)
 
+	restSocketPath := filepath.Join(t.TempDir(), "rest.sock")
+	restEndpoint, err := rest.NewEndpoint(fmt.Sprintf("unix://%s", restSocketPath))
+
+	require.NoError(t, err)
+	restArgs, err := restEndpoint.ToCmdLine()
+	require.NoError(t, err)
+
 	log.Infof("starting %s", binaryPath)
 	vfkitCmd, err := vm.Cmd(binaryPath)
 	require.NoError(t, err)
 	vfkitCmd.Stdout = logFile
 	vfkitCmd.Stderr = logFile
+	vfkitCmd.Args = append(vfkitCmd.Args, restArgs...)
 
 	err = vfkitCmd.Start()
 	require.NoError(t, err)
@@ -103,6 +113,7 @@ func startVfkit(t *testing.T, vm *config.VirtualMachine) *vfkitRunner {
 		vfkitCmd,
 		errCh,
 		false,
+		restSocketPath,
 	}
 }
 
@@ -126,11 +137,12 @@ type testVM struct {
 	provider OsProvider
 	config   *config.VirtualMachine
 
-	sshNetwork string
-	macAddress string // for SSH over TCP
-	port       int
-	vsockPath  string // for SSH over vsock
-	sshClient  *ssh.Client
+	sshNetwork     string
+	macAddress     string // for SSH over TCP
+	port           int
+	vsockPath      string // for SSH over vsock
+	sshClient      *ssh.Client
+	restSocketPath string
 
 	vfkitCmd *vfkitRunner
 }
@@ -199,6 +211,7 @@ func (vm *testVM) AddDevice(t *testing.T, dev config.VirtioDevice) {
 
 func (vm *testVM) Start(t *testing.T) {
 	vm.vfkitCmd = startVfkit(t, vm.config)
+	vm.restSocketPath = vm.vfkitCmd.restSocketPath
 }
 
 func (vm *testVM) Stop(t *testing.T) {

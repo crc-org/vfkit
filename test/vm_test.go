@@ -1,9 +1,11 @@
 package test
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net"
+	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -235,7 +237,7 @@ var pciidMacOS13Tests = map[string]pciidTest{
 			return config.VirtioGPUNew()
 		},
 	},
-	"virtio-input/pointing-device": {
+	"virtio-input/trackpad": {
 		vendorID: 0x106b, // Apple
 		deviceID: 0x1a06,
 		createDev: func(_ *testing.T) (config.VirtioDevice, error) {
@@ -270,6 +272,24 @@ var pciidVersionedTests = map[int]map[string]pciidTest{
 	14: pciidMacOS14Tests,
 }
 
+func checkRestDevices(t *testing.T, vm *testVM) {
+	tr := &http.Transport{
+		Dial: func(_, _ string) (conn net.Conn, err error) {
+			return net.Dial("unix", vm.restSocketPath)
+		},
+	}
+	client := &http.Client{Transport: tr}
+	resp, err := client.Get("http://vfkit/vm/inspect")
+	require.NoError(t, err)
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	var unmarshalledVM config.VirtualMachine
+	err = json.Unmarshal(body, &unmarshalledVM)
+	require.NoError(t, err)
+	require.Equal(t, vm.config, &unmarshalledVM)
+}
+
 func testPCIId(t *testing.T, test pciidTest, provider OsProvider) {
 	vm := NewTestVM(t, provider)
 	defer vm.Close(t)
@@ -283,6 +303,8 @@ func testPCIId(t *testing.T, test pciidTest, provider OsProvider) {
 	vm.Start(t)
 	vm.WaitForSSH(t)
 	checkPCIDevice(t, vm, test.vendorID, test.deviceID)
+	checkRestDevices(t, vm)
+
 	vm.Stop(t)
 }
 

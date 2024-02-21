@@ -6,22 +6,24 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+
+	"github.com/containers/common/pkg/strongunits"
 )
 
 // VirtualMachine is the top-level type. It describes the virtual machine
 // configuration (bootloader, devices, ...).
 type VirtualMachine struct {
-	Vcpus       uint           `json:"vcpus"`
-	MemoryBytes uint64         `json:"memoryBytes"`
-	Bootloader  Bootloader     `json:"bootloader"`
-	Devices     []VirtioDevice `json:"devices,omitempty"`
-	Timesync    *TimeSync      `json:"timesync,omitempty"`
+	Vcpus      uint           `json:"vcpus"`
+	Memory     strongunits.B  `json:"memoryBytes"`
+	Bootloader Bootloader     `json:"bootloader"`
+	Devices    []VirtioDevice `json:"devices,omitempty"`
+	Timesync   *TimeSync      `json:"timesync,omitempty"`
 }
 
 // TimeSync enables synchronization of the host time to the linux guest after the host was suspended.
 // This requires qemu-guest-agent to be running in the guest, and to be listening on a vsock socket
 type TimeSync struct {
-	VsockPort uint
+	VsockPort uint `json:"vsockPort"`
 }
 
 // The VMComponent interface represents a VM element (device, bootloader, ...)
@@ -32,14 +34,22 @@ type VMComponent interface {
 }
 
 // NewVirtualMachine creates a new VirtualMachine instance. The virtual machine
-// will use vcpus virtual CPUs and it will be allocated memoryBytes bytes of
-// RAM. bootloader specifies which kernel/initrd/kernel args it will be using.
-func NewVirtualMachine(vcpus uint, memoryBytes uint64, bootloader Bootloader) *VirtualMachine {
+// will use vcpus virtual CPUs and it will be allocated memoryMiB mibibytes
+// (1024*1024 bytes) of RAM. bootloader specifies how the virtual machine will
+// be booted (UEFI or with the specified kernel/initrd/commandline)
+func NewVirtualMachine(vcpus uint, memoryMiB uint64, bootloader Bootloader) *VirtualMachine {
 	return &VirtualMachine{
-		Vcpus:       vcpus,
-		MemoryBytes: memoryBytes,
-		Bootloader:  bootloader,
+		Vcpus:      vcpus,
+		Memory:     strongunits.MiB(memoryMiB).ToBytes(),
+		Bootloader: bootloader,
 	}
+}
+
+// round value up to the nearest mibibyte multiple
+func roundToMiB(value strongunits.StorageUnits) strongunits.MiB {
+	mib := uint64(strongunits.MiB(1).ToBytes())
+	valueB := strongunits.B(uint64(value.ToBytes()) + mib - 1)
+	return strongunits.ToMib(valueB)
 }
 
 // ToCmdLine generates a list of arguments for use with the [os/exec] package.
@@ -53,8 +63,8 @@ func (vm *VirtualMachine) ToCmdLine() ([]string, error) {
 	if vm.Vcpus != 0 {
 		args = append(args, "--cpus", strconv.FormatUint(uint64(vm.Vcpus), 10))
 	}
-	if vm.MemoryBytes != 0 {
-		args = append(args, "--memory", strconv.FormatUint(vm.MemoryBytes, 10))
+	if uint64(vm.Memory.ToBytes()) != 0 {
+		args = append(args, "--memory", strconv.FormatUint(uint64(roundToMiB(vm.Memory)), 10))
 	}
 
 	if vm.Bootloader == nil {

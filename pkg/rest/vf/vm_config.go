@@ -4,30 +4,26 @@ import (
 	"net/http"
 
 	"github.com/Code-Hex/vz/v3"
+	"github.com/crc-org/vfkit/pkg/config"
 	"github.com/crc-org/vfkit/pkg/rest/define"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
 
 type VzVirtualMachine struct {
-	VzVM   *vz.VirtualMachine
-	config *vz.VirtualMachineConfiguration
+	VzVM     *vz.VirtualMachine
+	config   *vz.VirtualMachineConfiguration
+	vmConfig *config.VirtualMachine
 }
 
-func NewVzVirtualMachine(vm *vz.VirtualMachine, config *vz.VirtualMachineConfiguration) *VzVirtualMachine {
-	return &VzVirtualMachine{config: config, VzVM: vm}
+func NewVzVirtualMachine(vm *vz.VirtualMachine, config *vz.VirtualMachineConfiguration, vmConfig *config.VirtualMachine) *VzVirtualMachine {
+	return &VzVirtualMachine{config: config, VzVM: vm, vmConfig: vmConfig}
 }
 
 // Inspect returns information about the virtual machine like hw resources
 // and devices
 func (vm *VzVirtualMachine) Inspect(c *gin.Context) {
-	ii := define.InspectResponse{
-		// TODO complete me
-		CPUs:   1,
-		Memory: 2048,
-		//Devices: vm.Devices,
-	}
-	c.JSON(http.StatusOK, ii)
+	c.JSON(http.StatusOK, vm.vmConfig)
 }
 
 // GetVMState retrieves the current vm state
