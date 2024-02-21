@@ -7,6 +7,48 @@ import (
 	"github.com/crc-org/vfkit/pkg/config"
 )
 
+type VirtualMachine struct {
+	*vz.VirtualMachine
+	vfConfig *VirtualMachineConfiguration
+}
+
+func NewVirtualMachine(vmConfig config.VirtualMachine) (*VirtualMachine, error) {
+	vfConfig, err := NewVirtualMachineConfiguration(&vmConfig)
+	if err != nil {
+		return nil, err
+	}
+	return &VirtualMachine{
+		vfConfig: vfConfig,
+	}, nil
+}
+
+func (vm *VirtualMachine) Start() error {
+	if vm.VirtualMachine == nil {
+		if err := vm.toVz(); err != nil {
+			return err
+		}
+	}
+	return vm.VirtualMachine.Start()
+}
+
+func (vm *VirtualMachine) toVz() error {
+	vzVMConfig, err := vm.vfConfig.toVz()
+	if err != nil {
+		return err
+	}
+	vzVM, err := vz.NewVirtualMachine(vzVMConfig)
+	if err != nil {
+		return err
+	}
+	vm.VirtualMachine = vzVM
+
+	return nil
+}
+
+func (vm *VirtualMachine) Config() *config.VirtualMachine {
+	return vm.vfConfig.config
+}
+
 type VirtualMachineConfiguration struct {
 	*vz.VirtualMachineConfiguration                             // wrapper for Objective-C type
 	config                               *config.VirtualMachine // go-friendly virtual machine configuration definition
@@ -38,7 +80,7 @@ func NewVirtualMachineConfiguration(vmConfig *config.VirtualMachine) (*VirtualMa
 	}, nil
 }
 
-func (cfg *VirtualMachineConfiguration) ToVz() (*vz.VirtualMachineConfiguration, error) {
+func (cfg *VirtualMachineConfiguration) toVz() (*vz.VirtualMachineConfiguration, error) {
 	for _, dev := range cfg.config.Devices {
 		if err := AddToVirtualMachineConfig(cfg, dev); err != nil {
 			return nil, err

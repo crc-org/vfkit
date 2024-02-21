@@ -8,18 +8,17 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/Code-Hex/vz/v3"
 	"inet.af/tcpproxy"
 )
 
-func ExposeVsock(vm *vz.VirtualMachine, port uint, vsockPath string, listen bool) (io.Closer, error) {
+func ExposeVsock(vm *VirtualMachine, port uint, vsockPath string, listen bool) (io.Closer, error) {
 	if listen {
 		return listenVsock(vm, port, vsockPath)
 	}
 	return connectVsock(vm, port, vsockPath)
 }
 
-func ConnectVsockSync(vm *vz.VirtualMachine, port uint) (net.Conn, error) {
+func ConnectVsockSync(vm *VirtualMachine, port uint) (net.Conn, error) {
 	socketDevices := vm.SocketDevices()
 	if len(socketDevices) != 1 {
 		return nil, fmt.Errorf("VM has too many/not enough virtio-vsock devices (%d)", len(socketDevices))
@@ -37,8 +36,7 @@ func ConnectVsockSync(vm *vz.VirtualMachine, port uint) (net.Conn, error) {
 
 // connectVsock proxies connections from a host unix socket to a vsock port
 // This allows the host to initiate connections to the guest over vsock
-func connectVsock(vm *vz.VirtualMachine, port uint, vsockPath string) (io.Closer, error) {
-
+func connectVsock(vm *VirtualMachine, port uint, vsockPath string) (io.Closer, error) {
 	var proxy tcpproxy.Proxy
 	// listen for connections on the host unix socket
 	proxy.ListenFunc = func(_, laddr string) (net.Listener, error) {
@@ -76,7 +74,7 @@ func connectVsock(vm *vz.VirtualMachine, port uint, vsockPath string) (io.Closer
 
 // listenVsock proxies connections from a vsock port to a host unix socket.
 // This allows the guest to initiate connections to the host over vsock
-func listenVsock(vm *vz.VirtualMachine, port uint, vsockPath string) (io.Closer, error) {
+func listenVsock(vm *VirtualMachine, port uint, vsockPath string) (io.Closer, error) {
 	var proxy tcpproxy.Proxy
 	// listen for connections on the vsock port
 	proxy.ListenFunc = func(_, laddr string) (net.Listener, error) {

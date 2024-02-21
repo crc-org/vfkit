@@ -6,7 +6,6 @@ import (
 	"net"
 	"time"
 
-	"github.com/Code-Hex/vz/v3"
 	"github.com/crc-org/vfkit/pkg/config"
 	"github.com/crc-org/vfkit/pkg/vf"
 	sleepnotifier "github.com/prashantgupta24/mac-sleep-notifier/notifier"
@@ -34,7 +33,7 @@ func syncGuestTime(conn net.Conn) error {
 	return nil
 }
 
-func watchWakeupNotifications(vm *vz.VirtualMachine, vsockPort uint) {
+func watchWakeupNotifications(vm *vf.VirtualMachine, vsockPort uint) {
 	var vsockConn net.Conn
 	defer func() {
 		if vsockConn != nil {
@@ -60,10 +59,9 @@ func watchWakeupNotifications(vm *vz.VirtualMachine, vsockPort uint) {
 			}
 		}
 	}
-
 }
 
-func setupGuestTimeSync(vm *vz.VirtualMachine, timesync *config.TimeSync) error {
+func setupGuestTimeSync(vm *vf.VirtualMachine, timesync *config.TimeSync) error {
 	if timesync == nil {
 		return nil
 	}
