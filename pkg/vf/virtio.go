@@ -37,7 +37,7 @@ func (dev *NVMExpressController) toVz() (vz.StorageDeviceConfiguration, error) {
 	return devConfig, nil
 }
 
-func (dev *NVMExpressController) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfiguration) error {
+func (dev *NVMExpressController) AddToVirtualMachineConfig(vmConfig *VirtualMachineConfiguration) error {
 	storageDeviceConfig, err := dev.toVz()
 	if err != nil {
 		return err
@@ -69,7 +69,7 @@ func (dev *VirtioBlk) toVz() (vz.StorageDeviceConfiguration, error) {
 	return devConfig, nil
 }
 
-func (dev *VirtioBlk) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfiguration) error {
+func (dev *VirtioBlk) AddToVirtualMachineConfig(vmConfig *VirtualMachineConfiguration) error {
 	storageDeviceConfig, err := dev.toVz()
 	if err != nil {
 		return err
@@ -99,7 +99,7 @@ func (dev *VirtioInput) toVz() (interface{}, error) {
 	return inputConfig, nil
 }
 
-func (dev *VirtioInput) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfiguration) error {
+func (dev *VirtioInput) AddToVirtualMachineConfig(vmConfig *VirtualMachineConfiguration) error {
 	inputDeviceConfig, err := dev.toVz()
 	if err != nil {
 		return err
@@ -133,7 +133,7 @@ func (dev *VirtioGPU) toVz() (vz.GraphicsDeviceConfiguration, error) {
 	return gpuDeviceConfig, nil
 }
 
-func (dev *VirtioGPU) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfiguration) error {
+func (dev *VirtioGPU) AddToVirtualMachineConfig(vmConfig *VirtualMachineConfiguration) error {
 	gpuDeviceConfig, err := dev.toVz()
 	if err != nil {
 		return err
@@ -174,7 +174,7 @@ func (dev *VirtioFs) toVz() (vz.DirectorySharingDeviceConfiguration, error) {
 	return fileSystemDeviceConfig, nil
 }
 
-func (dev *VirtioFs) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfiguration) error {
+func (dev *VirtioFs) AddToVirtualMachineConfig(vmConfig *VirtualMachineConfiguration) error {
 	fileSystemDeviceConfig, err := dev.toVz()
 	if err != nil {
 		return err
@@ -188,7 +188,7 @@ func (dev *VirtioRng) toVz() (*vz.VirtioEntropyDeviceConfiguration, error) {
 	return vz.NewVirtioEntropyDeviceConfiguration()
 }
 
-func (dev *VirtioRng) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfiguration) error {
+func (dev *VirtioRng) AddToVirtualMachineConfig(vmConfig *VirtualMachineConfiguration) error {
 	log.Infof("Adding virtio-rng device")
 	entropyConfig, err := dev.toVz()
 	if err != nil {
@@ -235,9 +235,9 @@ func (dev *VirtioSerial) toVz() (*vz.VirtioConsoleDeviceSerialPortConfiguration,
 	}
 
 	return vz.NewVirtioConsoleDeviceSerialPortConfiguration(serialPortAttachment)
-
 }
-func (dev *VirtioSerial) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfiguration) error {
+
+func (dev *VirtioSerial) AddToVirtualMachineConfig(vmConfig *VirtualMachineConfiguration) error {
 	if dev.LogFile != "" {
 		log.Infof("Adding virtio-serial device (logFile: %s)", dev.LogFile)
 	}
@@ -254,7 +254,7 @@ func (dev *VirtioSerial) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineCon
 	return nil
 }
 
-func (dev *VirtioVsock) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfiguration) error {
+func (dev *VirtioVsock) AddToVirtualMachineConfig(vmConfig *VirtualMachineConfiguration) error {
 	if len(vmConfig.socketDevicesConfiguration) != 0 {
 		log.Debugf("virtio-vsock device already present, not adding a second one")
 		return nil
@@ -269,7 +269,7 @@ func (dev *VirtioVsock) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConf
 	return nil
 }
 
-func AddToVirtualMachineConfig(dev config.VirtioDevice, vmConfig *vzVirtualMachineConfiguration) error {
+func AddToVirtualMachineConfig(vmConfig *VirtualMachineConfiguration, dev config.VirtioDevice) error {
 	switch d := dev.(type) {
 	case *config.USBMassStorage:
 		return (*USBMassStorage)(d).AddToVirtualMachineConfig(vmConfig)
@@ -317,7 +317,7 @@ func (dev *USBMassStorage) toVz() (vz.StorageDeviceConfiguration, error) {
 	return vz.NewUSBMassStorageDeviceConfiguration(attachment)
 }
 
-func (dev *USBMassStorage) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfiguration) error {
+func (dev *USBMassStorage) AddToVirtualMachineConfig(vmConfig *VirtualMachineConfiguration) error {
 	storageDeviceConfig, err := dev.toVz()
 	if err != nil {
 		return err

@@ -113,14 +113,20 @@ func waitForVMState(vm *vz.VirtualMachine, state vz.VirtualMachineState, timeout
 func runVFKit(vmConfig *config.VirtualMachine, opts *cmdline.Options) error {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
-	vzVMConfig, err := vf.ToVzVirtualMachineConfig(vmConfig)
-	if err != nil {
-		return err
-	}
 
 	gpuDevs := vmConfig.VirtioGPUDevices()
 	if opts.UseGUI && len(gpuDevs) > 0 {
 		gpuDevs[0].UsesGUI = true
+	}
+
+	vfVMConfig, err := vf.NewVirtualMachineConfiguration(vmConfig)
+	if err != nil {
+		return err
+	}
+
+	vzVMConfig, err := vfVMConfig.ToVz()
+	if err != nil {
+		return err
 	}
 
 	vm, err := vz.NewVirtualMachine(vzVMConfig)

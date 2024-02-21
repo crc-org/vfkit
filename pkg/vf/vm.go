@@ -7,8 +7,9 @@ import (
 	"github.com/crc-org/vfkit/pkg/config"
 )
 
-type vzVirtualMachineConfiguration struct {
-	*vz.VirtualMachineConfiguration
+type VirtualMachineConfiguration struct {
+	*vz.VirtualMachineConfiguration                             // wrapper for Objective-C type
+	config                               *config.VirtualMachine // go-friendly virtual machine configuration definition
 	storageDevicesConfiguration          []vz.StorageDeviceConfiguration
 	directorySharingDevicesConfiguration []vz.DirectorySharingDeviceConfiguration
 	keyboardConfiguration                []vz.KeyboardConfiguration
@@ -20,57 +21,53 @@ type vzVirtualMachineConfiguration struct {
 	socketDevicesConfiguration           []vz.SocketDeviceConfiguration
 }
 
-func newVzVirtualMachineConfiguration(vm *config.VirtualMachine) (*vzVirtualMachineConfiguration, error) {
-	vzBootloader, err := toVzBootloader(vm.Bootloader)
+func NewVirtualMachineConfiguration(vmConfig *config.VirtualMachine) (*VirtualMachineConfiguration, error) {
+	vzBootloader, err := toVzBootloader(vmConfig.Bootloader)
 	if err != nil {
 		return nil, err
 	}
 
-	vzVMConfig, err := vz.NewVirtualMachineConfiguration(vzBootloader, vm.Vcpus, uint64(vm.Memory.ToBytes()))
+	vzVMConfig, err := vz.NewVirtualMachineConfiguration(vzBootloader, vmConfig.Vcpus, uint64(vmConfig.Memory.ToBytes()))
 	if err != nil {
 		return nil, err
 	}
 
-	return &vzVirtualMachineConfiguration{
+	return &VirtualMachineConfiguration{
 		VirtualMachineConfiguration: vzVMConfig,
+		config:                      vmConfig,
 	}, nil
 }
 
-func ToVzVirtualMachineConfig(vm *config.VirtualMachine) (*vz.VirtualMachineConfiguration, error) {
-	vzVMConfig, err := newVzVirtualMachineConfiguration(vm)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, dev := range vm.Devices {
-		if err := AddToVirtualMachineConfig(dev, vzVMConfig); err != nil {
+func (cfg *VirtualMachineConfiguration) ToVz() (*vz.VirtualMachineConfiguration, error) {
+	for _, dev := range cfg.config.Devices {
+		if err := AddToVirtualMachineConfig(cfg, dev); err != nil {
 			return nil, err
 		}
 	}
-	vzVMConfig.SetStorageDevicesVirtualMachineConfiguration(vzVMConfig.storageDevicesConfiguration)
-	vzVMConfig.SetDirectorySharingDevicesVirtualMachineConfiguration(vzVMConfig.directorySharingDevicesConfiguration)
-	vzVMConfig.SetPointingDevicesVirtualMachineConfiguration(vzVMConfig.pointingDevicesConfiguration)
-	vzVMConfig.SetKeyboardsVirtualMachineConfiguration(vzVMConfig.keyboardConfiguration)
-	vzVMConfig.SetGraphicsDevicesVirtualMachineConfiguration(vzVMConfig.graphicsDevicesConfiguration)
-	vzVMConfig.SetNetworkDevicesVirtualMachineConfiguration(vzVMConfig.networkDevicesConfiguration)
-	vzVMConfig.SetEntropyDevicesVirtualMachineConfiguration(vzVMConfig.entropyDevicesConfiguration)
-	vzVMConfig.SetSerialPortsVirtualMachineConfiguration(vzVMConfig.serialPortsConfiguration)
-	// len(vzVMConfig.socketDevicesConfiguration should be 0 or 1
+	cfg.SetStorageDevicesVirtualMachineConfiguration(cfg.storageDevicesConfiguration)
+	cfg.SetDirectorySharingDevicesVirtualMachineConfiguration(cfg.directorySharingDevicesConfiguration)
+	cfg.SetPointingDevicesVirtualMachineConfiguration(cfg.pointingDevicesConfiguration)
+	cfg.SetKeyboardsVirtualMachineConfiguration(cfg.keyboardConfiguration)
+	cfg.SetGraphicsDevicesVirtualMachineConfiguration(cfg.graphicsDevicesConfiguration)
+	cfg.SetNetworkDevicesVirtualMachineConfiguration(cfg.networkDevicesConfiguration)
+	cfg.SetEntropyDevicesVirtualMachineConfiguration(cfg.entropyDevicesConfiguration)
+	cfg.SetSerialPortsVirtualMachineConfiguration(cfg.serialPortsConfiguration)
+	// len(cfg.socketDevicesConfiguration should be 0 or 1
 	// https://developer.apple.com/documentation/virtualization/vzvirtiosocketdeviceconfiguration?language=objc
-	vzVMConfig.SetSocketDevicesVirtualMachineConfiguration(vzVMConfig.socketDevicesConfiguration)
+	cfg.SetSocketDevicesVirtualMachineConfiguration(cfg.socketDevicesConfiguration)
 
-	if vm.Timesync != nil && vm.Timesync.VsockPort != 0 {
+	if cfg.config.Timesync != nil && cfg.config.Timesync.VsockPort != 0 {
 		// automatically add the vsock device we'll need for communication over VsockPort
 		vsockDev := VirtioVsock{
-			Port:   vm.Timesync.VsockPort,
+			Port:   cfg.config.Timesync.VsockPort,
 			Listen: false,
 		}
-		if err := vsockDev.AddToVirtualMachineConfig(vzVMConfig); err != nil {
+		if err := vsockDev.AddToVirtualMachineConfig(cfg); err != nil {
 			return nil, err
 		}
 	}
 
-	valid, err := vzVMConfig.Validate()
+	valid, err := cfg.Validate()
 	if err != nil {
 		return nil, err
 	}
@@ -78,5 +75,5 @@ func ToVzVirtualMachineConfig(vm *config.VirtualMachine) (*vz.VirtualMachineConf
 		return nil, fmt.Errorf("Invalid virtual machine configuration")
 	}
 
-	return vzVMConfig.VirtualMachineConfiguration, nil
+	return cfg.VirtualMachineConfiguration, nil
 }
