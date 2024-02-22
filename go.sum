@@ -22,8 +22,6 @@ github.com/chenzhuoyu/base64x v0.0.0-20230717121745-296ad89f973d/go.mod h1:8EPpV
 github.com/chenzhuoyu/iasm v0.9.0/go.mod h1:Xjy2NpN3h7aUqeqM+woSuuvxmIe6+DDsiNLIrkAmYog=
 github.com/chenzhuoyu/iasm v0.9.1 h1:tUHQJXo3NhBqw6s33wkGn9SP3bvrWLdlVIJ3hQBL7P0=
 github.com/chenzhuoyu/iasm v0.9.1/go.mod h1:Xjy2NpN3h7aUqeqM+woSuuvxmIe6+DDsiNLIrkAmYog=
-github.com/containers/common v0.57.1-0.20240210120841-91e0fac33e22 h1:HH3JAenyz6ysup3ADvVPuX0TqLcg6IleuoMi15B5MXM=
-github.com/containers/common v0.57.1-0.20240210120841-91e0fac33e22/go.mod h1:Al9edwL72aYyVOfIE+DB635ltve3S98TrQgg/Tv5PLE=
 github.com/cpuguy83/go-md2man/v2 v2.0.3/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
 github.com/crc-org/crc/v2 v2.32.0 h1:I/62j5KrID8ua1vgAUPOVTtzhcsCsHWdqqiIRHySLfQ=
 github.com/crc-org/crc/v2 v2.32.0/go.mod h1:Q2XJM3KkR/Gu+tBjeN77pk5P8DWYKdbxCSf+9l9MYcs=
