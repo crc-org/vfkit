@@ -2,10 +2,64 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
+
+func contains(strings []string, val string) bool {
+	for _, str := range strings {
+		if val == str {
+			return true
+		}
+	}
+
+	return false
+}
+
+// This sets all the fields of the `obj` struct to non-empty values.
+// This will be used to test JSON serialization as extensively as possible to
+// avoid breaking backwards compatibility.
+// `skipFields` can be used if there are some fields containing "magic" values
+// which should not be overwritten with an arbitrary string, or if there are
+// some fields with a type which `fillStruct` does not handle yet, and which
+// are not interesting for serialization.
+func fillStruct(t *testing.T, obj interface{}, skipFields []string) {
+	val := reflect.ValueOf(obj).Elem()
+
+	for _, e := range reflect.VisibleFields(val.Type()) {
+		field := val.Type().FieldByIndex(e.Index)
+		fieldVal := val.FieldByIndex(e.Index)
+		typeName := val.Type().Name()
+
+		if contains(skipFields, field.Name) {
+			continue
+		}
+		switch fieldVal.Kind() {
+		case reflect.Int, reflect.Int64:
+			fieldVal.SetInt(2)
+		case reflect.Uint, reflect.Uint64:
+			fieldVal.SetUint(3)
+		case reflect.Bool:
+			fieldVal.SetBool(true)
+		case reflect.String:
+			fieldVal.SetString(field.Name)
+		case reflect.Struct:
+			// ignore the embedded struct, reflect.VisibleFields iterates over its fields
+		case reflect.Slice:
+			elemKind := fieldVal.Type().Elem().Kind()
+			if elemKind != reflect.Uint8 {
+				// SetBytes will panic on non-uint8 slices
+				t.Fatalf("unsupported slice element kind '%s' for %s", elemKind, typeName)
+			}
+			fieldVal.SetBytes([]byte{0x00, 0x11, 0x22, 0x33, 0x44, 0x55})
+		default:
+			t.Fatalf("unknown field kind '%s' for %s", fieldVal.Kind(), typeName)
+		}
+	}
+}
 
 type jsonTest struct {
 	newVM        func(*testing.T) *VirtualMachine
@@ -139,6 +193,118 @@ var invalidJSONTests = map[string]invalidJSONTest{
 	},
 }
 
+// These tests are there to ensure we don't change the JSON serializations of these objects by mistake.
+// Adding new fields is fine, removing/renaming fields is not.
+// This uses the `fillStruct` helper to set as many fields as possible to non-empty values.
+// New types must be manually added to the tests.
+var jsonStabilityTests = map[string]jsonStabilityTest{
+	"VirtualMachine": {
+		newObjectFunc: func(t *testing.T) any {
+			vm := newLinuxVM(t)
+			vm.Timesync = &TimeSync{VsockPort: 1234}
+			vm.Devices = []VirtioDevice{&VirtioRng{}}
+
+			return vm
+		},
+		skipFields:   []string{"Bootloader", "Devices", "Timesync"},
+		expectedJSON: `{"vcpus":3,"memoryBytes":3,"bootloader":{"kind":"linuxBootloader","vmlinuzPath":"/vmlinuz","kernelCmdLine":"console=hvc0","initrdPath":"/initrd"},"devices":[{"kind":"virtiorng"}],"timesync":{"vsockPort":1234}}`,
+	},
+	"RosettaShare": {
+		obj:          &RosettaShare{},
+		expectedJSON: `{"kind":"rosetta","mountTag":"MountTag","installRosetta":true}`,
+	},
+	"VirtioFs": {
+		obj:          &VirtioFs{},
+		expectedJSON: `{"kind":"virtiofs","mountTag":"MountTag","sharedDir":"SharedDir"}`,
+	},
+	"VirtioGPU": {
+		obj:          &VirtioGPU{},
+		expectedJSON: `{"kind":"virtiogpu","usesGUI":true,"width":2,"height":2}`,
+	},
+	"VirtioNet": {
+		obj:          &VirtioNet{},
+		skipFields:   []string{"Socket"},
+		expectedJSON: `{"kind":"virtionet","nat":true,"unixSocketPath":"UnixSocketPath","macAddress":"00:11:22:33:44:55"}`,
+	},
+	"VirtioRNG": {
+		obj:          &VirtioRng{},
+		expectedJSON: `{"kind":"virtiorng"}`,
+	},
+	"VirtioSerial": {
+		obj:          &VirtioSerial{},
+		expectedJSON: `{"kind":"virtioserial","logFile":"LogFile","usesStdio":true}`,
+	},
+	"VirtioVsock": {
+		obj:          &VirtioVsock{},
+		expectedJSON: `{"kind":"virtiosock","port":3,"socketURL":"SocketURL","listen":true}`,
+	},
+	"VirtioInput/keyboard": {
+		newObjectFunc: func(t *testing.T) any {
+			input, err := VirtioInputNew(VirtioInputKeyboardDevice)
+			require.NoError(t, err)
+			return input
+		},
+		skipFields:   []string{"InputType"},
+		expectedJSON: `{"kind":"virtioinput","inputType":"keyboard"}`,
+	},
+	"VirtioInput/pointingDevice": {
+		newObjectFunc: func(t *testing.T) any {
+			input, err := VirtioInputNew(VirtioInputPointingDevice)
+			require.NoError(t, err)
+			return input
+		},
+		skipFields:   []string{"InputType"},
+		expectedJSON: `{"kind":"virtioinput","inputType":"pointing"}`,
+	},
+	"VirtioBlk": {
+		newObjectFunc: func(t *testing.T) any {
+			blk, err := VirtioBlkNew("")
+			require.NoError(t, err)
+			return blk
+		},
+
+		skipFields:   []string{"DevName"},
+		expectedJSON: `{"kind":"virtioblk","devName":"virtio-blk","imagePath":"ImagePath","readOnly":true,"deviceIdentifier":"DeviceIdentifier"}`,
+	},
+	"USBMassStorage": {
+		newObjectFunc: func(t *testing.T) any {
+			usb, err := USBMassStorageNew("")
+			require.NoError(t, err)
+			return usb
+		},
+		skipFields:   []string{"DevName"},
+		expectedJSON: `{"kind":"usbmassstorage","devName":"usb-mass-storage","imagePath":"ImagePath","readOnly":true}`,
+	},
+	"NVMExpressController": {
+		newObjectFunc: func(t *testing.T) any {
+			nvme, err := NVMExpressControllerNew("")
+			require.NoError(t, err)
+			return nvme
+		},
+		skipFields:   []string{"DevName"},
+		expectedJSON: `{"kind":"nvme","devName":"nvme","imagePath":"ImagePath","readOnly":true}`,
+	},
+	"LinuxBootloader": {
+		obj:          &LinuxBootloader{},
+		expectedJSON: `{"kind":"linuxBootloader","vmlinuzPath":"VmlinuzPath","kernelCmdLine":"KernelCmdLine","initrdPath":"InitrdPath"}`,
+	},
+	"EFIBootloader": {
+		obj:          &EFIBootloader{},
+		expectedJSON: `{"kind":"efiBootloader","efiVariableStorePath":"EFIVariableStorePath","createVariableStore":true}`,
+	},
+	"TimeSync": {
+		obj:          &TimeSync{},
+		expectedJSON: `{"vsockPort":3}`,
+	},
+}
+
+type jsonStabilityTest struct {
+	obj           any
+	newObjectFunc func(*testing.T) any
+	skipFields    []string
+	expectedJSON  string
+}
+
 func TestJSON(t *testing.T) {
 	t.Run("json", func(t *testing.T) {
 		for name := range jsonTests {
@@ -151,6 +317,12 @@ func TestJSON(t *testing.T) {
 			t.Run(name, func(t *testing.T) {
 				test := invalidJSONTests[name]
 				testInvalidJSON(t, &test)
+			})
+		}
+		for name := range jsonStabilityTests {
+			t.Run(fmt.Sprintf("Stability/%s", name), func(t *testing.T) {
+				test := jsonStabilityTests[name]
+				testJSONStability(t, &test)
 			})
 		}
 	})
@@ -173,6 +345,18 @@ func testInvalidJSON(t *testing.T, test *invalidJSONTest) {
 	var vm VirtualMachine
 	err := json.Unmarshal([]byte(test.json), &vm)
 	require.Error(t, err)
+}
+
+func testJSONStability(t *testing.T, test *jsonStabilityTest) {
+	obj := test.obj
+	if obj == nil {
+		obj = test.newObjectFunc(t)
+	}
+	fillStruct(t, obj, test.skipFields)
+	data, err := json.Marshal(obj)
+	require.NoError(t, err)
+	fmt.Println(string(data))
+	require.JSONEq(t, test.expectedJSON, string(data))
 }
 
 func newLinuxVM(*testing.T) *VirtualMachine {
