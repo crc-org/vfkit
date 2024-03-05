@@ -11,13 +11,13 @@ import (
 )
 
 type VzVirtualMachine struct {
-	VzVM     *vz.VirtualMachine
+	*vz.VirtualMachine
 	config   *vz.VirtualMachineConfiguration
 	vmConfig *config.VirtualMachine
 }
 
 func NewVzVirtualMachine(vm *vz.VirtualMachine, config *vz.VirtualMachineConfiguration, vmConfig *config.VirtualMachine) *VzVirtualMachine {
-	return &VzVirtualMachine{config: config, VzVM: vm, vmConfig: vmConfig}
+	return &VzVirtualMachine{config: config, VirtualMachine: vm, vmConfig: vmConfig}
 }
 
 // Inspect returns information about the virtual machine like hw resources
@@ -28,14 +28,14 @@ func (vm *VzVirtualMachine) Inspect(c *gin.Context) {
 
 // GetVMState retrieves the current vm state
 func (vm *VzVirtualMachine) GetVMState(c *gin.Context) {
-	current := vm.GetState()
+	current := vm.State()
 	c.JSON(http.StatusOK, gin.H{
 		"state":       current.String(),
 		"canStart":    vm.CanStart(),
 		"canPause":    vm.CanPause(),
 		"canResume":   vm.CanResume(),
-		"canStop":     vm.CanStop(),
-		"canHardStop": vm.CanHardStop(),
+		"canStop":     vm.CanRequestStop(),
+		"canHardStop": vm.CanStop(),
 	})
 }
 
