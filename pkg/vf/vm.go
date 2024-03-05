@@ -21,7 +21,7 @@ type vzVirtualMachineConfiguration struct {
 }
 
 func newVzVirtualMachineConfiguration(vm *config.VirtualMachine) (*vzVirtualMachineConfiguration, error) {
-	vzBootloader, err := ToVzBootloader(vm.Bootloader)
+	vzBootloader, err := toVzBootloader(vm.Bootloader)
 	if err != nil {
 		return nil, err
 	}
