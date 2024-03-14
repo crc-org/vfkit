@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"os/signal"
 	"path/filepath"
 	"syscall"
 
 	"github.com/crc-org/vfkit/pkg/config"
 
 	"github.com/Code-Hex/vz/v3"
+	"github.com/onsi/gocleanup"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -89,7 +89,7 @@ func (dev *VirtioNet) connectUnixPath() error {
 	dev.Socket = fd
 	dev.localAddr = &localAddr
 	dev.UnixSocketPath = ""
-	registerExitHandler(func() { _ = dev.Shutdown() })
+	gocleanup.Register(func() { _ = dev.Shutdown() })
 	return nil
 }
 
@@ -159,16 +159,4 @@ func (dev *VirtioNet) Shutdown() error {
 	}
 
 	return nil
-}
-
-func registerExitHandler(handler func()) {
-	sigChan := make(chan os.Signal, 2)
-	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
-	go func() {
-		for sig := range sigChan {
-			log.Printf("captured %v, calling exit handlers and exiting..", sig)
-			handler()
-			os.Exit(1)
-		}
-	}()
 }
