@@ -89,7 +89,7 @@ func newVMConfiguration(opts *cmdline.Options) (*config.VirtualMachine, error) {
 	return vmConfig, nil
 }
 
-func waitForVMState(vm *vz.VirtualMachine, state vz.VirtualMachineState, timeout <-chan time.Time) error {
+func waitForVMState(vm *vf.VirtualMachine, state vz.VirtualMachineState, timeout <-chan time.Time) error {
 	signalCh := make(chan os.Signal, 1)
 	signal.Notify(signalCh, syscall.SIGPIPE)
 
@@ -113,34 +113,30 @@ func waitForVMState(vm *vz.VirtualMachine, state vz.VirtualMachineState, timeout
 func runVFKit(vmConfig *config.VirtualMachine, opts *cmdline.Options) error {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
-	vzVMConfig, err := vf.ToVzVirtualMachineConfig(vmConfig)
-	if err != nil {
-		return err
-	}
 
 	gpuDevs := vmConfig.VirtioGPUDevices()
 	if opts.UseGUI && len(gpuDevs) > 0 {
 		gpuDevs[0].UsesGUI = true
 	}
 
-	vm, err := vz.NewVirtualMachine(vzVMConfig)
+	vfVM, err := vf.NewVirtualMachine(*vmConfig)
 	if err != nil {
 		return err
 	}
 
 	// Do not enable the rests server if user sets scheme to None
 	if opts.RestfulURI != cmdline.DefaultRestfulURI {
-		restVM := restvf.NewVzVirtualMachine(vm, vzVMConfig, vmConfig)
+		restVM := restvf.NewVzVirtualMachine(vfVM)
 		srv, err := rest.NewServer(restVM, restVM, opts.RestfulURI)
 		if err != nil {
 			return err
 		}
 		srv.Start()
 	}
-	return runVirtualMachine(vmConfig, vm)
+	return runVirtualMachine(vmConfig, vfVM)
 }
 
-func runVirtualMachine(vmConfig *config.VirtualMachine, vm *vz.VirtualMachine) error {
+func runVirtualMachine(vmConfig *config.VirtualMachine, vm *vf.VirtualMachine) error {
 	if err := vm.Start(); err != nil {
 		return err
 	}

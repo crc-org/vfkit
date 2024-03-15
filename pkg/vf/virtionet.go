@@ -125,7 +125,7 @@ func (dev *VirtioNet) toVz() (*vz.VirtioNetworkDeviceConfiguration, error) {
 	return networkConfig, nil
 }
 
-func (dev *VirtioNet) AddToVirtualMachineConfig(vmConfig *vzVirtualMachineConfiguration) error {
+func (dev *VirtioNet) AddToVirtualMachineConfig(vmConfig *VirtualMachineConfiguration) error {
 	log.Infof("Adding virtio-net device (nat: %t macAddress: [%s])", dev.Nat, dev.MacAddress)
 	if dev.Socket != nil {
 		log.Infof("Using fd %d", dev.Socket.Fd())
