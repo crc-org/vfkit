@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"syscall"
 
 	"github.com/crc-org/vfkit/pkg/config"
 	"github.com/onsi/gocleanup"
@@ -248,21 +247,19 @@ func unixFd(fd uintptr) int {
 // https://developer.apple.com/documentation/virtualization/running_linux_in_a_virtual_machine#3880009
 func setRawMode(f *os.File) error {
 	// Get settings for terminal
-	attr, _ := unix.IoctlGetTermios(unixFd(f.Fd()), unix.TIOCGETA)
+	var attr unix.Termios
+	err := termios.Tcgetattr(f.Fd(), &attr)
+	if err != nil {
+		return err
+	}
 
 	// Put stdin into raw mode, disabling local echo, input canonicalization,
 	// and CR-NL mapping.
-	attr.Iflag &^= syscall.ICRNL
-	attr.Lflag &^= syscall.ICANON | syscall.ECHO
-
-	// Set minimum characters when reading = 1 char
-	attr.Cc[syscall.VMIN] = 1
-
-	// set timeout when reading as non-canonical mode
-	attr.Cc[syscall.VTIME] = 0
+	attr.Iflag &^= unix.ICRNL
+	attr.Lflag &^= unix.ICANON | unix.ECHO
 
 	// reflects the changed settings
-	return unix.IoctlSetTermios(unixFd(f.Fd()), unix.TIOCSETA, attr)
+	return termios.Tcsetattr(f.Fd(), termios.TCSANOW, &attr)
 }
 
 func (dev *VirtioSerial) toVz() (*vz.VirtioConsoleDeviceSerialPortConfiguration, error) {
