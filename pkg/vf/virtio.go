@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"syscall"
 
 	"github.com/crc-org/vfkit/pkg/config"
 	"github.com/onsi/gocleanup"
@@ -203,22 +202,18 @@ func (dev *VirtioRng) AddToVirtualMachineConfig(vmConfig *VirtualMachineConfigur
 
 // https://developer.apple.com/documentation/virtualization/running_linux_in_a_virtual_machine?language=objc#:~:text=Configure%20the%20Serial%20Port%20Device%20for%20Standard%20In%20and%20Out
 func setRawMode(f *os.File) error {
-	// Get settings for terminal
-	attr, _ := unix.IoctlGetTermios(int(f.Fd()), unix.TIOCGETA)
+	var attr unix.Termios
+	err := termios.Tcgetattr(f.Fd(), &attr)
+	if err != nil {
+		return err
+	}
 
 	// Put stdin into raw mode, disabling local echo, input canonicalization,
 	// and CR-NL mapping.
-	attr.Iflag &^= syscall.ICRNL
-	attr.Lflag &^= syscall.ICANON | syscall.ECHO
+	attr.Iflag &^= unix.ICRNL
+	attr.Lflag &^= unix.ICANON | unix.ECHO
 
-	// Set minimum characters when reading = 1 char
-	attr.Cc[syscall.VMIN] = 1
-
-	// set timeout when reading as non-canonical mode
-	attr.Cc[syscall.VTIME] = 0
-
-	// reflects the changed settings
-	return unix.IoctlSetTermios(int(f.Fd()), unix.TIOCSETA, attr)
+	return termios.Tcsetattr(f.Fd(), termios.TCSANOW, &attr)
 }
 
 func (dev *VirtioSerial) toVz() (*vz.VirtioConsoleDeviceSerialPortConfiguration, error) {
