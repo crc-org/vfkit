@@ -120,6 +120,13 @@ var virtioDevTests = map[string]virtioDevTest{
 		},
 		expectedCmdLine: []string{"--device", "virtio-serial,stdio"},
 	},
+	"NewVirtioSerialPty": {
+		newDev: VirtioSerialNewPty,
+		expectedDev: &VirtioSerial{
+			UsesPty: true,
+		},
+		expectedCmdLine: []string{"--device", "virtio-serial,pty"},
+	},
 	"NewVirtioNet": {
 		newDev: func() (VirtioDevice, error) { return VirtioNetNew("") },
 		expectedDev: &VirtioNet{

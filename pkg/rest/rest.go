@@ -4,11 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"os"
 	"strings"
 	"syscall"
 
 	"github.com/crc-org/vfkit/pkg/cmdline"
 	"github.com/gin-gonic/gin"
+	"github.com/onsi/gocleanup"
 	"github.com/sirupsen/logrus"
 )
 
@@ -73,6 +75,7 @@ func (v *VFKitService) Start() {
 		case TCP:
 			err = v.router.Run(v.Host)
 		case Unix:
+			gocleanup.Register(func() { os.Remove(v.Path) })
 			err = v.router.RunUnix(v.Path)
 		}
 		logrus.Fatal(err)

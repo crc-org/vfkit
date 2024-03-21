@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/crc-org/vfkit/pkg/cmdline"
+	"github.com/onsi/gocleanup"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -57,10 +58,11 @@ func getLogLevel() (logrus.Level, error) {
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		gocleanup.Exit(1)
 	}
 }
 
 func main() {
 	Execute()
+	gocleanup.Exit(0)
 }
