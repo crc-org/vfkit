@@ -6,7 +6,7 @@ require (
 	github.com/Code-Hex/vz/v3 v3.1.0
 	github.com/cavaliergopher/grab/v3 v3.0.1
 	github.com/containers/common v0.58.2
-	github.com/crc-org/crc/v2 v2.34.0
+	github.com/crc-org/crc/v2 v2.34.1
 	github.com/gin-gonic/gin v1.9.1
 	github.com/onsi/gocleanup v0.0.0-20140331211545-c1a5478700b5
 	github.com/pkg/term v1.1.0
