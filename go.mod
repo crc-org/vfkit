@@ -15,7 +15,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/crypto v0.22.0
 	golang.org/x/mod v0.17.0
-	golang.org/x/sys v0.19.0
+	golang.org/x/sys v0.20.0
 	inet.af/tcpproxy v0.0.0-20231102063150-2862066fc2a9
 )
 
