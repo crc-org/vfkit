@@ -15,9 +15,9 @@ Set the log-level for VFKit.  Supported values are `debug`, `info`, and `error`.
 
 - `--restful-URI`
 
-The URI (address) of the restful service.  The default is `tcp://localhost:8081`.  Valid schemes are
+The URI (address) of the RESTful service.  The default is `tcp://localhost:8081`.  Valid schemes are
 `tcp`, `none`, or `unix`.  In the case of unix, the "host" portion would be a path to where the unix domain
-socket will be stored. A scheme of `none` disables the restful service.
+socket will be stored. A scheme of `none` disables the RESTful service.
 
 ### Virtual Machine Resources
 
@@ -132,7 +132,7 @@ However, APFS, the default macOS filesystem has support for sparse files and cop
 A sparse raw image can be created/expanded using the `truncate` command or
 using
 [`truncate(2)`](https://manpagez.com/man/2/truncate/).
-For example, an empty 1GiB disk can be created with `truncate --size 1G
+For example, an empty 1GiB disk can be created with `truncate -s 1G
 vfkit.img`. Such an image will only use disk space when content is written to
 it. It initially only uses a few bytes of actual disk space even if it's size
 is 1G.
@@ -398,11 +398,11 @@ None
 `--device virtio-input,pointing`
 
 
-## Restful Service
+## RESTful Service
 
 ### Get VM state
 
-Used to obtain the state of the virtual machine that is being run by VFKit.
+Used to obtain the state of the virtual machine that is being run by vfkit.
 
 GET `/vm/state`
 Response: { "state": string, "canStart": bool, "canPause": bool, "canResume": bool, "canStop": bool, "canHardStop": bool }
@@ -440,7 +440,7 @@ In order to tell vfkit that you want to start a graphical application window, yo
 
 ### Usage
 
-Proper use of this flag may look similar to the following section of a command: 
+Proper use of this flag may look similar to the following section of a command:
 ```bash
 --device virtio-input,keyboard --device virtio-input,pointing --device virtio-gpu,width=1920,height=1080 --gui
 ```
