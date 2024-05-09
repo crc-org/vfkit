@@ -15,9 +15,9 @@ UEFI boot and graphical user interface support are only available on macOS 13 or
 You can get vfkit either by downloading it from [its release page](https://github.com/crc-org/vfkit/releases), or get it from [brew](https://brew.sh/):
 ```
 # Only the first time
-$ brew tap cfergeau/crc
+brew tap cfergeau/crc
 
-$ brew install vfkit
+brew install vfkit
 ```
 
 
@@ -32,14 +32,14 @@ VirtualBox images cannot be used by vfkit.
 For example, Fedora images can be downloaded with:
 ```
 # For Apple silicon Macs
-$ curl -L -O https://download.fedoraproject.org/pub/fedora/linux/releases/38/Cloud/aarch64/images/Fedora-Cloud-Base-38-1.6.aarch64.raw.xz
-$ xz -d ./Fedora-Cloud-Base-38-1.6.aarch64.raw.xz
-$ mv Fedora-Cloud-Base-38-1.6.aarch64.raw vfkit-test-image.raw
+curl -L -O https://download.fedoraproject.org/pub/fedora/linux/releases/38/Cloud/aarch64/images/Fedora-Cloud-Base-38-1.6.aarch64.raw.xz
+xz -d ./Fedora-Cloud-Base-38-1.6.aarch64.raw.xz
+mv Fedora-Cloud-Base-38-1.6.aarch64.raw vfkit-test-image.raw
 
 # For Intel Macs
-$ curl -L https://download.fedoraproject.org/pub/fedora/linux/releases/38/Cloud/x86_64/images/Fedora-Cloud-Base-38-1.6.x86_64.raw.xz
-$ xz -d ./Fedora-Cloud-Base-38-1.6.x86_64.raw.xz
-$ mv Fedora-Cloud-Base-38-1.6.x86_64.raw vfkit-test-image.raw
+curl -L https://download.fedoraproject.org/pub/fedora/linux/releases/38/Cloud/x86_64/images/Fedora-Cloud-Base-38-1.6.x86_64.raw.xz
+xz -d ./Fedora-Cloud-Base-38-1.6.x86_64.raw.xz
+mv Fedora-Cloud-Base-38-1.6.x86_64.raw vfkit-test-image.raw
 ```
 
 
@@ -49,7 +49,7 @@ $ mv Fedora-Cloud-Base-38-1.6.x86_64.raw vfkit-test-image.raw
 Now that we have a disk image, we can start a virtual machine with 2 virtual CPUs and 2GiB of RAM:
 
 ```
-$ vfkit \
+vfkit \
     --cpus 2 --memory 2048 \
     --bootloader efi,variable-store=efi-variable-store,create \
     --device virtio-blk,path=vfkit-test-image.raw

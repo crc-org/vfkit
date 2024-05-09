@@ -1,13 +1,13 @@
-# Missing API
+# Missing APIs
 
-This document contains a non-exhaustive list of API which are not used/supported by `vfkit`, but which would be useful to have.
+This document contains a non-exhaustive list of APIs not currently used/supported by `vfkit`, but could be useful to have.
 
-## non-vz API
+## non-vz APIs
 
 - start vfkit process (integrating with https://pkg.go.dev/os/exec )
 - get VM IP address [https://github.com/code-ready/crc/blob/0d76300c1a618598c209bab32a8deb4ca6c2d8c6/pkg/drivers/vfkit/network_darwin.go#L54-L59]
 
-## [vz](https://pkg.go.dev/github.com/Code-Hex/vz/v2) API
+## [vz](https://pkg.go.dev/github.com/Code-Hex/vz/v3) APIs
 ```
     func vz.CreateDiskImage(pathname string, size int64) error
     func vz.VirtualMachineConfigurationMaximumAllowedCPUCount() uint
@@ -37,4 +37,3 @@ This document contains a non-exhaustive list of API which are not used/supported
     type VirtualMachineConfiguration
         func (v *VirtualMachineConfiguration) vz.SetMemoryBalloonDevicesVirtualMachineConfiguration(cs []MemoryBalloonDeviceConfiguration)
 ```
-
