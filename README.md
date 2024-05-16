@@ -1,11 +1,11 @@
-vfkit - Simple command line tool to start VMs through virtualization framework
+vfkit - Simple command line tool to start VMs through the macOS Virtualization framework
 ====
 
 ### Introduction
 
-vfkit offers a command-line interface to start virtual machines using virtualization framework.
+vfkit offers a command-line interface to start virtual machines using the [macOS Virtualization framework](https://developer.apple.com/documentation/virtualization).
 It also provides a `github.com/crc-org/vfkit/pkg/config` go package.
-This package provides a native go API to generate the vfkit command line.
+This package provides a native Go API to generate the vfkit command line.
 
 
 ### Installation

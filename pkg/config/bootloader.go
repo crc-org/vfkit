@@ -52,7 +52,7 @@ func (bootloader *LinuxBootloader) FromOptions(options []option) error {
 		case "initrd":
 			bootloader.InitrdPath = option.value
 		default:
-			return fmt.Errorf("unknown option for linux bootloaders: %s", option.key)
+			return fmt.Errorf("unknown option for Linux bootloaders: %s", option.key)
 		}
 	}
 	return nil
