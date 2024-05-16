@@ -1,6 +1,6 @@
 # Missing APIs
 
-This document contains a non-exhaustive list of APIs not currently used/supported by `vfkit`, but could be useful to have.
+This document is a non-exhaustive list of unimplemented APIs, which may be worth adding to `vfkit`.
 
 ## non-vz APIs
 
