@@ -67,6 +67,21 @@ It allows to specify which kernel and initrd should be used when starting the VM
 
 The kernel command line must be enclosed in `"`, and depending on your shell, they might need to be escaped (`\"`)
 
+### macOS bootloader
+
+#### Description
+
+`--bootloader macos` is required to run macOS VMs. You must use an arm64/Apple silicon device running macOS 12 or later. Due to hardcoded limitations in the Apple Virtualization framework, it's not possible to run more than two macOS VMs at a time. Since macOS guests can't run headlessly, you'll need to enable a GUI, even if you only plan to interact with the VM over SSH.
+
+#### Arguments
+
+- `machineIdentifierPath`: absolute path to a binary property list containing a unique ECID identifier for the VM
+- `hardwareModelPath`: absolute path to a binary property list defining OS version support
+- `auxImagePath`: absolute path to the auxiliary storage file with NVRAM contents and the iBoot bootloader
+
+#### Example
+
+`--bootloader macos,machineIdentifierPath=/Users/virtuser/VM.bundle/MachineIdentifier,hardwareModelPath=/Users/virtuser/VM.bundle/HardwareModel,auxImagePath=/Users/virtuser/VM.bundle/AuxiliaryStorage`
 
 ### EFI bootloader
 
@@ -329,11 +344,15 @@ This will share `/Users/virtuser/vfkit` with the guest:
 --device virtio-fs,sharedDir=/Users/virtuser/vfkit/,mountTag=vfkit-share
 ```
 
-The share can then be mounted in the guest with:
+The share can then be mounted in Linux guests with:
 ```
 mount -t virtiofs vfkit-share /mount
 ```
 
+and on macOS with:
+```
+mkdir /tmp/tag && mount_virtiofs vfkit-share /tmp/tag
+```
 
 ### Rosetta
 
