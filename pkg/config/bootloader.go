@@ -32,9 +32,9 @@ type EFIBootloader struct {
 
 // MacOSBootloader provides necessary objects for booting macOS guests
 type MacOSBootloader struct {
-	machineIdentifierPath string `json:"machineIdentifierPath"`
-	hardwareModelPath     string `json:"hardwareModelPath"`
-	auxImagePath          string `json:"auxImagePath"`
+	MachineIdentifierPath string `json:"machineIdentifierPath"`
+	HardwareModelPath     string `json:"hardwareModelPath"`
+	AuxImagePath          string `json:"auxImagePath"`
 }
 
 // NewLinuxBootloader creates a new bootloader to start a VM with the file at
@@ -131,11 +131,11 @@ func (bootloader *MacOSBootloader) FromOptions(options []option) error {
 	for _, option := range options {
 		switch option.key {
 		case "machineIdentifierPath":
-			bootloader.machineIdentifierPath = option.value
+			bootloader.MachineIdentifierPath = option.value
 		case "hardwareModelPath":
-			bootloader.hardwareModelPath = option.value
+			bootloader.HardwareModelPath = option.value
 		case "auxImagePath":
-			bootloader.auxImagePath = option.value
+			bootloader.AuxImagePath = option.value
 		default:
 			return fmt.Errorf("unknown option for macOS bootloaders: %s", option.key)
 		}

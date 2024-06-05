@@ -21,7 +21,7 @@ func NewVirtualMachine(vmConfig config.VirtualMachine) (*VirtualMachine, error) 
 	}
 
 	if macosBootloader, ok := vmConfig.Bootloader.(*config.MacOSBootloader); ok {
-		platformConfig, err := NewMacPlatformConfiguration(macosBootloader.machineIdentifierPath, macosBootloader.hardwareModelPath, macosBootloader.auxImagePath)
+		platformConfig, err := NewMacPlatformConfiguration(macosBootloader.MachineIdentifierPath, macosBootloader.HardwareModelPath, macosBootloader.AuxImagePath)
 
 		PlatformType = "macos"
 
