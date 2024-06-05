@@ -39,48 +39,6 @@ func NewVirtualMachine(vmConfig config.VirtualMachine) (*VirtualMachine, error) 
 	}, nil
 }
 
-func NewMacPlatformConfiguration() (*vz.MacPlatformConfiguration, error) {
-	// var HardwareModelVar =[]byte( "YnBsaXN0MDDTAQIDBAUGXxAZRGF0YVJlcHJlc2VudGF0aW9uVmVyc2lvbl8QD1BsYXRmb3JtVmVyc2lvbl8QEk1pbmltdW1TdXBwb3J0ZWRPUxQAAAAAAAAAAAAAAAAAAAABEAKjBwgIEA0QAAgPKz1SY2VpawAAAAAAAAEBAAAAAAAAAAkAAAAAAAAAAAAAAAAAAABt") // Binary plist with {"DataRepresentationVersion":1,"MinimumSupportedOS":[13,0,0],"PlatformVersion":2}
-	var AuxiliaryStorageVar = "/Users/foo/VM.bundle/AuxiliaryStorage"
-	var HardwareModelVar = "/Users/foo/VM.bundle/HardwareModel"
-	var MachineIdentifierVar = "/Users/foo/VM.bundle/MachineIdentifier"
-
-	hardwareModel, err := vz.NewMacHardwareModelWithDataPath(HardwareModelVar)
-
-	if err != nil {
-	    return nil, fmt.Errorf("hardwareModel error: %w", err)
-	}
-
-	macAuxiliaryStorage, err := vz.NewMacAuxiliaryStorage(
-		AuxiliaryStorageVar,
-		vz.WithCreatingMacAuxiliaryStorage(hardwareModel),
-	)
-
-	if err != nil {
-	    return nil, fmt.Errorf("macAuxiliaryStorage error: %w", err)
-	}
-
-	machineIdentifier, err := vz.NewMacMachineIdentifierWithDataPath(
-		MachineIdentifierVar,
-	)
-
-	if err != nil {
-	    return nil, fmt.Errorf("machineIdentifier error: %w", err)
-	}
-
-	platformConfig, err := vz.NewMacPlatformConfiguration(
-		vz.WithMacAuxiliaryStorage(macAuxiliaryStorage),
-		vz.WithMacHardwareModel(hardwareModel),
-		vz.WithMacMachineIdentifier(machineIdentifier),
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return platformConfig, nil
-}
-
 func (vm *VirtualMachine) Start() error {
 	if vm.VirtualMachine == nil {
 		if err := vm.toVz(); err != nil {

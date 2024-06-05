@@ -117,43 +117,31 @@ func (dev *VirtioInput) AddToVirtualMachineConfig(vmConfig *VirtualMachineConfig
 	return nil
 }
 
-func (dev *VirtioGPU) toVz() (vz.GraphicsDeviceConfiguration, error) {
-	const MacDisplayPixelsPerInch = int64(80) // Hardcoded since HiDPI scaling doesn't seem to work
+func newVirtioGraphicsDeviceConfiguration(dev *VirtioGPU) (vz.GraphicsDeviceConfiguration, error) {
+	gpuDeviceConfig, err := vz.NewVirtioGraphicsDeviceConfiguration()
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize virtio graphics device: %w", err)
+	}
+	graphicsScanoutConfig, err := vz.NewVirtioGraphicsScanoutConfiguration(int64(dev.Width), int64(dev.Height))
 
+	if err != nil {
+		return nil, fmt.Errorf("failed to create graphics scanout: %w", err)
+	}
+
+	gpuDeviceConfig.SetScanouts(
+		graphicsScanoutConfig,
+	)
+
+	return gpuDeviceConfig, nil
+}
+
+func (dev *VirtioGPU) toVz() (vz.GraphicsDeviceConfiguration, error) {
 	log.Debugf("Setting up graphics device with %vx%v resolution.", dev.Width, dev.Height)
 
 	if PlatformType == "macos" {
-		gpuDeviceConfig, err := vz.NewMacGraphicsDeviceConfiguration()
-		if err != nil {
-			return nil, fmt.Errorf("failed to initialize macOS graphics device: %w", err)
-		}
-		graphicsDisplayConfig, err := vz.NewMacGraphicsDisplayConfiguration(int64(dev.Width), int64(dev.Height), MacDisplayPixelsPerInch)
-
-		if err != nil {
-			return nil, fmt.Errorf("failed to create macOS graphics configuration: %w", err)
-		}
-
-		gpuDeviceConfig.SetDisplays(
-			graphicsDisplayConfig,
-		)
-
-		return gpuDeviceConfig, nil
+		return newMacGraphicsDeviceConfiguration(dev)
 	} else {
-		gpuDeviceConfig, err := vz.NewVirtioGraphicsDeviceConfiguration()
-		if err != nil {
-			return nil, fmt.Errorf("failed to initialize virtio graphics device: %w", err)
-		}
-		graphicsScanoutConfig, err := vz.NewVirtioGraphicsScanoutConfiguration(int64(dev.Width), int64(dev.Height))
-
-		if err != nil {
-			return nil, fmt.Errorf("failed to create graphics scanout: %w", err)
-		}
-
-		gpuDeviceConfig.SetScanouts(
-			graphicsScanoutConfig,
-		)
-
-		return gpuDeviceConfig, nil
+		return newVirtioGraphicsDeviceConfiguration(dev)
 	}
 
 }
