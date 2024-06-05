@@ -7,20 +7,16 @@ import (
 	"github.com/crc-org/vfkit/pkg/config"
 )
 
-func NewMacPlatformConfiguration() (vz.PlatformConfiguration, error) {
+func NewMacPlatformConfiguration(auxiliaryStorageVar, hardwareModelVar, machineIdentifierVar string) (vz.PlatformConfiguration, error) {
 	// var HardwareModelVar =[]byte( "YnBsaXN0MDDTAQIDBAUGXxAZRGF0YVJlcHJlc2VudGF0aW9uVmVyc2lvbl8QD1BsYXRmb3JtVmVyc2lvbl8QEk1pbmltdW1TdXBwb3J0ZWRPUxQAAAAAAAAAAAAAAAAAAAABEAKjBwgIEA0QAAgPKz1SY2VpawAAAAAAAAEBAAAAAAAAAAkAAAAAAAAAAAAAAAAAAABt") // Binary plist with {"DataRepresentationVersion":1,"MinimumSupportedOS":[13,0,0],"PlatformVersion":2}
-	var AuxiliaryStorageVar = "/Users/foo/VM.bundle/AuxiliaryStorage"
-	var HardwareModelVar = "/Users/foo/VM.bundle/HardwareModel"
-	var MachineIdentifierVar = "/Users/foo/VM.bundle/MachineIdentifier"
-
-	hardwareModel, err := vz.NewMacHardwareModelWithDataPath(HardwareModelVar)
+	hardwareModel, err := vz.NewMacHardwareModelWithDataPath(hardwareModelVar)
 
 	if err != nil {
 		return nil, fmt.Errorf("hardwareModel error: %w", err)
 	}
 
 	macAuxiliaryStorage, err := vz.NewMacAuxiliaryStorage(
-		AuxiliaryStorageVar,
+		auxiliaryStorageVar,
 		vz.WithCreatingMacAuxiliaryStorage(hardwareModel),
 	)
 
@@ -29,7 +25,7 @@ func NewMacPlatformConfiguration() (vz.PlatformConfiguration, error) {
 	}
 
 	machineIdentifier, err := vz.NewMacMachineIdentifierWithDataPath(
-		MachineIdentifierVar,
+		machineIdentifierVar,
 	)
 
 	if err != nil {
