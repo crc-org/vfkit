@@ -45,7 +45,7 @@ func NewMacPlatformConfiguration(machineIdentifierVar, hardwareModelVar, auxilia
 	return platformConfig, nil
 }
 
-func toVzMacOSBootloader(bootloader *config.MacOSBootloader) (vz.BootLoader, error) {
+func toVzMacOSBootloader(_ *config.MacOSBootloader) (vz.BootLoader, error) {
 	return vz.NewMacOSBootLoader()
 }
 

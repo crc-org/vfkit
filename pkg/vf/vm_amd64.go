@@ -8,13 +8,13 @@ import (
 )
 
 func NewMacPlatformConfiguration(auxiliaryStorageVar, hardwareModelVar, machineIdentifierVar string) (vz.PlatformConfiguration, error) {
-	return nil, fmt.Errorf("macOS guests are only supported on ARM devices.")
+	return nil, fmt.Errorf("Running macOS guests is only supported on ARM devices")
 }
 
-func toVzMacOSBootloader(bootloader *config.MacOSBootloader) (vz.BootLoader, error) {
-	return nil, fmt.Errorf("macOS guests are only supported on ARM devices.")
+func toVzMacOSBootloader(_bootloader *config.MacOSBootloader) (vz.BootLoader, error) {
+	return nil, fmt.Errorf("Running macOS guests is only supported on ARM devices")
 }
 
 func newMacGraphicsDeviceConfiguration(dev *VirtioGPU) (vz.GraphicsDeviceConfiguration, error) {
-	return nil, fmt.Errorf("macOS guests are only supported on ARM devices.")
+	return nil, fmt.Errorf("Running macOS guests is only supported on ARM devices")
 }

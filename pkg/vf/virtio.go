@@ -140,9 +140,8 @@ func (dev *VirtioGPU) toVz() (vz.GraphicsDeviceConfiguration, error) {
 
 	if PlatformType == "macos" {
 		return newMacGraphicsDeviceConfiguration(dev)
-	} else {
-		return newVirtioGraphicsDeviceConfiguration(dev)
 	}
+	return newVirtioGraphicsDeviceConfiguration(dev)
 
 }
 
