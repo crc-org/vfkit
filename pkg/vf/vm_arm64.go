@@ -7,7 +7,7 @@ import (
 	"github.com/crc-org/vfkit/pkg/config"
 )
 
-func NewMacPlatformConfiguration(auxiliaryStorageVar, hardwareModelVar, machineIdentifierVar string) (vz.PlatformConfiguration, error) {
+func NewMacPlatformConfiguration(machineIdentifierVar, hardwareModelVar, auxiliaryStorageVar string) (vz.PlatformConfiguration, error) {
 	// var HardwareModelVar =[]byte( "YnBsaXN0MDDTAQIDBAUGXxAZRGF0YVJlcHJlc2VudGF0aW9uVmVyc2lvbl8QD1BsYXRmb3JtVmVyc2lvbl8QEk1pbmltdW1TdXBwb3J0ZWRPUxQAAAAAAAAAAAAAAAAAAAABEAKjBwgIEA0QAAgPKz1SY2VpawAAAAAAAAEBAAAAAAAAAAkAAAAAAAAAAAAAAAAAAABt") // Binary plist with {"DataRepresentationVersion":1,"MinimumSupportedOS":[13,0,0],"PlatformVersion":2}
 	hardwareModel, err := vz.NewMacHardwareModelWithDataPath(hardwareModelVar)
 
