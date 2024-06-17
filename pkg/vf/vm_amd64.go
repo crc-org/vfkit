@@ -7,7 +7,7 @@ import (
 	"github.com/crc-org/vfkit/pkg/config"
 )
 
-func NewMacPlatformConfiguration(_, hardwareModelVar, machineIdentifierVar string) (vz.PlatformConfiguration, error) {
+func NewMacPlatformConfiguration(_, _, _ string) (vz.PlatformConfiguration, error) {
 	return nil, fmt.Errorf("Running macOS guests is only supported on ARM devices")
 }
 
