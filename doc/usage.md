@@ -75,13 +75,13 @@ The kernel command line must be enclosed in `"`, and depending on your shell, th
 
 #### Arguments
 
-- `machineIdentifierPath`: path to a binary property list containing a unique ECID identifier for the VM
-- `hardwareModelPath`: path to a binary property list defining OS version support
-- `auxImagePath`: path to the auxiliary storage file with NVRAM contents and the iBoot bootloader
+- `machineIdentifierPath`: absolute path to a binary property list containing a unique ECID identifier for the VM
+- `hardwareModelPath`: absolute path to a binary property list defining OS version support
+- `auxImagePath`: absolute path to the auxiliary storage file with NVRAM contents and the iBoot bootloader
 
 #### Example
 
-`--bootloader macos,machineIdentifierPath=~/VM.bundle/MachineIdentifier,hardwareModelPath=~/VM.bundle/HardwareModel,auxImagePath=~/VM.bundle/AuxiliaryStorage`
+`--bootloader macos,machineIdentifierPath=/Users/virtuser/VM.bundle/MachineIdentifier,hardwareModelPath=/Users/virtuser/VM.bundle/HardwareModel,auxImagePath=/Users/virtuser/VM.bundle/AuxiliaryStorage`
 
 ### EFI bootloader
 
