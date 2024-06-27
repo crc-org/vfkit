@@ -19,8 +19,8 @@ github.com/cloudwego/base64x v0.1.4 h1:jwCgWpFanWmN8xoIUHa2rtzmkd5J2plF/dnLS6Xd/
 github.com/cloudwego/base64x v0.1.4/go.mod h1:0zlkT4Wn5C6NdauXdJRhSKRlJvmclQ1hhJgA0rcu/8w=
 github.com/cloudwego/iasm v0.2.0 h1:1KNIy1I1H9hNNFEEH3DVnI4UujN+1zjpuk6gwHLTssg=
 github.com/cloudwego/iasm v0.2.0/go.mod h1:8rXZaNYT2n95jn+zTI1sDr+IgcD2GVs0nlbbQPiEFhY=
-github.com/containers/common v0.58.3 h1:Iy/CdYjluEK926QT+ejonz7YvoRHazeW7BAiLIkmUQ4=
-github.com/containers/common v0.58.3/go.mod h1:p4V1SNk+WOISgp01m+axuqCUxaDP3WSZPPzvnJnS/cQ=
+github.com/containers/common v0.59.1 h1:7VkmJN3YvD0jLFwaUjLHSRJ98JLffydiyOJjYr0dUTo=
+github.com/containers/common v0.59.1/go.mod h1:53VicJCZ2AD0O+Br7VVoyrS7viXF4YmwlTIocWUT8XE=
 github.com/cpuguy83/go-md2man/v2 v2.0.3/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
 github.com/crc-org/crc/v2 v2.37.1 h1:X5THVL4ELaBQXo3p6Kklp23XvTyJBJUVnLEDMsuOwLg=
 github.com/crc-org/crc/v2 v2.37.1/go.mod h1:Z4E3ZGWODjDBiRc0EB0n7X9Au/yPQmIsHar/eV7O/HY=
