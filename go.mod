@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/Code-Hex/vz/v3 v3.1.0
 	github.com/cavaliergopher/grab/v3 v3.0.1
-	github.com/containers/common v0.58.3
+	github.com/containers/common v0.59.1
 	github.com/crc-org/crc/v2 v2.37.1
 	github.com/gin-gonic/gin v1.10.0
 	github.com/prashantgupta24/mac-sleep-notifier v1.0.1
