@@ -17,6 +17,9 @@ brew tap cfergeau/crc
 brew install vfkit
 ```
 
+### Building
+
+From the root direction of this repository, run `make`. You will need a valid Apple Developer certificate to sign the binaries with the required entitlements.
 
 ### Usage
 

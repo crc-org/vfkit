@@ -144,7 +144,7 @@ func runVirtualMachine(vmConfig *config.VirtualMachine, vm *vf.VirtualMachine) e
 	if err := waitForVMState(vm, vz.VirtualMachineStateRunning, time.After(5*time.Second)); err != nil {
 		return err
 	}
-	log.Infof("virtual machine is running")
+	log.Infof("Virtual machine is running")
 
 	vsockDevs := vmConfig.VirtioVsockDevices()
 	for _, vsock := range vsockDevs {
@@ -172,7 +172,8 @@ func runVirtualMachine(vmConfig *config.VirtualMachine, vm *vf.VirtualMachine) e
 		log.Debugf("%v", err)
 	}
 
-	log.Infof("waiting for VM to stop")
+	// Is this print statement necessary? It gives the impression that any running VM is in the process of stopping
+	log.Infof("Waiting for VM to stop")
 
 	errCh := make(chan error, 1)
 	go func() {
