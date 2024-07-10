@@ -7,6 +7,16 @@ on:
       - "*"
   pull_request: {}
 jobs:
+  golangci:
+    name: lint
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
   build:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -16,8 +26,6 @@ jobs:
         - macOS-11
         - macOS-12
         - macOS-13
-        go:
-        - stable
     steps:
       - name: Check out repository code
         uses: actions/checkout@v4
@@ -33,7 +41,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: ${{ matrix.go }}
+          go-version: stable
       - name: Build
         run: make
       - name: Test
@@ -41,8 +49,6 @@ jobs:
         run: make test
       - name: vet
         run: go vet ./...
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v6
       - name: Upload vfkit artifact
         if: matrix.os == 'macOS-13'
         uses: actions/upload-artifact@v4
