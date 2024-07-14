@@ -12,11 +12,28 @@ type VirtualMachine struct {
 	vfConfig *VirtualMachineConfiguration
 }
 
+var PlatformType string
+
 func NewVirtualMachine(vmConfig config.VirtualMachine) (*VirtualMachine, error) {
 	vfConfig, err := NewVirtualMachineConfiguration(&vmConfig)
 	if err != nil {
 		return nil, err
 	}
+
+	if macosBootloader, ok := vmConfig.Bootloader.(*config.MacOSBootloader); ok {
+		platformConfig, err := NewMacPlatformConfiguration(macosBootloader.MachineIdentifierPath, macosBootloader.HardwareModelPath, macosBootloader.AuxImagePath)
+
+		PlatformType = "macos"
+
+		if err != nil {
+			return nil, err
+		}
+
+		vfConfig.SetPlatformVirtualMachineConfiguration(platformConfig)
+	} else {
+		PlatformType = "linux"
+	}
+
 	return &VirtualMachine{
 		vfConfig: vfConfig,
 	}, nil
