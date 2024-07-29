@@ -1,11 +1,12 @@
 module github.com/crc-org/vfkit
 
 go 1.21
+toolchain go1.22.5
 
 require (
 	github.com/Code-Hex/vz/v3 v3.1.0
 	github.com/cavaliergopher/grab/v3 v3.0.1
-	github.com/containers/common v0.59.1
+	github.com/containers/common v0.60.0
 	github.com/crc-org/crc/v2 v2.38.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/prashantgupta24/mac-sleep-notifier v1.0.1
@@ -13,9 +14,9 @@ require (
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.9.0
-	golang.org/x/crypto v0.24.0
+	golang.org/x/crypto v0.25.0
 	golang.org/x/mod v0.18.0
-	golang.org/x/sys v0.21.0
+	golang.org/x/sys v0.22.0
 	inet.af/tcpproxy v0.0.0-20231102063150-2862066fc2a9
 )
 
@@ -65,7 +66,7 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	golang.org/x/arch v0.8.0 // indirect
 	golang.org/x/net v0.26.0 // indirect
-	golang.org/x/term v0.21.0 // indirect
+	golang.org/x/term v0.22.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
 	google.golang.org/protobuf v1.34.1 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
