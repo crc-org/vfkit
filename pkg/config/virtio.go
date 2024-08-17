@@ -708,7 +708,11 @@ func (config *StorageConfig) ToCmdLine() ([]string, error) {
 	if config.ImagePath == "" {
 		return nil, fmt.Errorf("%s devices need the path to a disk image", config.DevName)
 	}
-	return []string{"--device", fmt.Sprintf("%s,path=%s", config.DevName, config.ImagePath)}, nil
+	value := fmt.Sprintf("%s,path=%s", config.DevName, config.ImagePath)
+	if config.ReadOnly {
+		value += ",readonly"
+	}
+	return []string{"--device", value}, nil
 }
 
 func (config *StorageConfig) FromOptions(options []option) error {
@@ -716,6 +720,11 @@ func (config *StorageConfig) FromOptions(options []option) error {
 		switch option.key {
 		case "path":
 			config.ImagePath = option.value
+		case "readonly":
+			if option.value != "" {
+				return fmt.Errorf("unexpected value for virtio-blk 'readonly' option: %s", option.value)
+			}
+			config.ReadOnly = true
 		default:
 			return fmt.Errorf("unknown option for %s devices: %s", config.DevName, option.key)
 		}
