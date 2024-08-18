@@ -168,6 +168,24 @@ var virtioDevTests = map[string]virtioDevTest{
 		},
 		expectedCmdLine: []string{"--device", "usb-mass-storage,path=/foo/bar"},
 	},
+	"NewUSBMassStorageReadOnly": {
+		newDev: func() (VirtioDevice, error) {
+			dev, err := USBMassStorageNew("/foo/bar")
+			if err != nil {
+				return nil, err
+			}
+			dev.SetReadOnly(true)
+			return dev, err
+		},
+		expectedDev: &USBMassStorage{
+			StorageConfig: StorageConfig{
+				DevName:   "usb-mass-storage",
+				ImagePath: "/foo/bar",
+				ReadOnly:  true,
+			},
+		},
+		expectedCmdLine: []string{"--device", "usb-mass-storage,path=/foo/bar,readonly"},
+	},
 	"NewVirtioInputWithPointingDevice": {
 		newDev: func() (VirtioDevice, error) { return VirtioInputNew("pointing") },
 		expectedDev: &VirtioInput{
