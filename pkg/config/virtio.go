@@ -667,11 +667,15 @@ func usbMassStorageNewEmpty() *USBMassStorage {
 
 // USBMassStorageNew creates a new USB disk to use in the virtual machine. It will use
 // the file at imagePath as the disk image. This image must be in raw or ISO format.
-func USBMassStorageNew(imagePath string) (VMComponent, error) {
+func USBMassStorageNew(imagePath string) (*USBMassStorage, error) {
 	usbMassStorage := usbMassStorageNewEmpty()
 	usbMassStorage.ImagePath = imagePath
 
 	return usbMassStorage, nil
+}
+
+func (dev *USBMassStorage) SetReadOnly(readOnly bool) {
+	dev.StorageConfig.ReadOnly = readOnly
 }
 
 // StorageConfig configures a disk device.
