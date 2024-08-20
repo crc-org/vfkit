@@ -294,7 +294,7 @@ func (dev *VirtioInput) FromOptions(options []option) error {
 		switch option.key {
 		case VirtioInputPointingDevice, VirtioInputKeyboardDevice:
 			if option.value != "" {
-				return fmt.Errorf(fmt.Sprintf("unexpected value for virtio-input %s option: %s", option.key, option.value))
+				return fmt.Errorf("unexpected value for virtio-input %s option: %s", option.key, option.value)
 			}
 			dev.InputType = option.key
 		default:
@@ -339,14 +339,14 @@ func (dev *VirtioGPU) FromOptions(options []option) error {
 		case VirtioGPUResolutionHeight:
 			height, err := strconv.Atoi(option.value)
 			if err != nil || height < 1 {
-				return fmt.Errorf(fmt.Sprintf("Invalid value for virtio-gpu %s: %s", option.key, option.value))
+				return fmt.Errorf("Invalid value for virtio-gpu %s: %s", option.key, option.value)
 			}
 
 			dev.Height = height
 		case VirtioGPUResolutionWidth:
 			width, err := strconv.Atoi(option.value)
 			if err != nil || width < 1 {
-				return fmt.Errorf(fmt.Sprintf("Invalid value for virtio-gpu %s: %s", option.key, option.value))
+				return fmt.Errorf("Invalid value for virtio-gpu %s: %s", option.key, option.value)
 			}
 
 			dev.Width = width
