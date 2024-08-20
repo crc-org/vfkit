@@ -29,7 +29,7 @@ Number of virtual CPUs (vCPU) available in the VM. It defaults to 1 vCPU.
 
 - `--memory`
 
-Amount of memory available in the virtual machine. The value is in MiB (mibibytes, 1024 * 1024 * 1024 bytes), and the default is 512 MiB.
+Amount of memory available in the virtual machine. The value is in MiB ([mebibytes](https://simple.wikipedia.org/wiki/Mebibyte), 1024 * 1024 bytes), and the default is 512 MiB.
 
 ### Time Synchronization Configuration
 
