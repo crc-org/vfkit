@@ -13,7 +13,7 @@ Device configuration is optional, but most VM will need a disk image and a netwo
 
 Set the log-level for VFKit.  Supported values are `debug`, `info`, and `error`.
 
-- `--restful-URI`
+- `--restful-uri`
 
 The URI (address) of the RESTful service.  The default is `tcp://localhost:8081`.  Valid schemes are
 `tcp`, `none`, or `unix`.  In the case of unix, the "host" portion would be a path to where the unix domain socket will be stored. A scheme of `none` disables the RESTful service.
