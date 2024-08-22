@@ -183,12 +183,13 @@ The `--device usb-mass-storage` option adds a USB mass storage device to the vir
 
 #### Arguments
 - `path`: the absolute path to the disk image file.
+- `readonly`: if specified the device will be read only.
 
 #### Example
 
-This adds a USB mass storage device to the VM which will be backed by the ISO image at `/Users/virtuser/distro.iso`:
+This adds a read only USB mass storage device to the VM which will be backed by the ISO image at `/Users/virtuser/distro.iso`:
 ```
---device usb-mass-storage,path=/Users/virtuser/distro.iso
+--device usb-mass-storage,path=/Users/virtuser/distro.iso,readonly
 ```
 
 
