@@ -5,7 +5,7 @@ go 1.21.0
 require (
 	github.com/Code-Hex/vz/v3 v3.1.0
 	github.com/cavaliergopher/grab/v3 v3.0.1
-	github.com/containers/common v0.59.1
+	github.com/containers/common v0.60.2
 	github.com/crc-org/crc/v2 v2.40.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/prashantgupta24/mac-sleep-notifier v1.0.1
@@ -47,7 +47,7 @@ require (
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/mattn/go-runewidth v0.0.15 // indirect
+	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
@@ -64,7 +64,7 @@ require (
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	golang.org/x/arch v0.8.0 // indirect
-	golang.org/x/net v0.27.0 // indirect
+	golang.org/x/net v0.28.0 // indirect
 	golang.org/x/term v0.23.0 // indirect
 	golang.org/x/text v0.17.0 // indirect
 	google.golang.org/protobuf v1.34.1 // indirect
