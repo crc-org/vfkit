@@ -212,6 +212,11 @@ func (dev *VirtioRng) AddToVirtualMachineConfig(vmConfig *VirtualMachineConfigur
 	return nil
 }
 
+func unixFd(fd uintptr) int {
+	// On unix the underlying fd is int, overflow is not possible.
+	return int(fd) //#nosec G115 -- potential integer overflow
+}
+
 // https://developer.apple.com/documentation/virtualization/running_linux_in_a_virtual_machine#3880009
 func setRawMode(f *os.File) error {
 	var attr unix.Termios

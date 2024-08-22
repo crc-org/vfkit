@@ -64,10 +64,12 @@ func (dev *VirtioNet) connectUnixPath() error {
 		return err
 	}
 	err = rawConn.Control(func(fd uintptr) {
-		if err = syscall.SetsockoptInt(int(fd), syscall.SOL_SOCKET, syscall.SO_SNDBUF, 1*1024*1024); err != nil {
+		err := syscall.SetsockoptInt(unixFd(fd), syscall.SOL_SOCKET, syscall.SO_SNDBUF, 1*1024*1024)
+		if err != nil {
 			return
 		}
-		if err = syscall.SetsockoptInt(int(fd), syscall.SOL_SOCKET, syscall.SO_RCVBUF, 4*1024*1024); err != nil {
+		err = syscall.SetsockoptInt(unixFd(fd), syscall.SOL_SOCKET, syscall.SO_RCVBUF, 4*1024*1024)
+		if err != nil {
 			return
 		}
 	})
