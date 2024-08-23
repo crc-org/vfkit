@@ -5,14 +5,14 @@
 vfkit is a macOS command-line-based hypervisor, which uses [Apple's Virtualization Framework](https://developer.apple.com/documentation/virtualization?language=objc) to run virtual machines.
 You start a virtual machine by running vfkit with a set of arguments describing the virtual machine configuration/hardware.
 When vfkit stops, the virtual machine stops running.
-It requires macOS 11 or newer, and runs on both x86_64 and aarch64 Macs.
+It requires macOS 11 or newer, and runs on both Intel and Apple silicon Macs.
 File sharing is only available on macOS 12 or newer.
 UEFI boot and graphical user interface support are only available on macOS 13 or newer.
 
 
 ## Installation
 
-You can get vfkit either by downloading it from [its release page](https://github.com/crc-org/vfkit/releases), or get it from [brew](https://brew.sh/):
+You can either download vfkit from [its release page](https://github.com/crc-org/vfkit/releases), or install it from [brew](https://brew.sh/):
 ```
 # Only the first time
 brew tap cfergeau/crc
@@ -66,6 +66,10 @@ If you are using an image or an older macOS version which does not support UEFI 
 This requires a separate kernel, initrd file and kernel command-line arguments.
 Details can be found in the [usage instructions](https://github.com/crc-org/vfkit/blob/main/doc/usage.md#linux-bootloader).
 
+### Adding a GUI
+
+To run a VM with a graphical user interface, append the necessary flags to your vfkit command:
+`--device virtio-input,keyboard --device virtio-input,pointing --device virtio-gpu,width=800,height=600 --gui`
 
 ### Adding a serial console for boot logs
 
@@ -83,7 +87,7 @@ On more verbose images, the boot logs are only shown late in the boot process as
 
 To make the interactions with the virtual machine easier, we can add a virtio-net device to it:
 ```
-    --device virtio-net,nat
+--device virtio-net,nat
 ```
 
 After booting, the Fedora image prints the IP address of the VM in the serial console before the login prompt.
@@ -104,8 +108,9 @@ Once you have a virtual machine up and running, here are some additional feature
 - [host/guest communication over virtio-vsock](https://github.com/crc-org/vfkit/blob/main/doc/usage.md#virtio-vsock-communication)
 - [host/guest file sharing with virtio-fs](https://github.com/crc-org/vfkit/blob/main/doc/usage.md#file-sharing)
 - [Rosetta support to run x86_64 binaries in virtual machines on Apple silicon Macs](https://github.com/crc-org/vfkit/blob/main/doc/usage.md#rosetta)
-- [GUI support](https://github.com/crc-org/vfkit/blob/main/doc/usage.md#enabling-a-graphical-user-interface)
 - [REST API to control the virtual machine](https://github.com/crc-org/vfkit/blob/main/doc/usage.md#restful-service)
 - [user-mode networking with the `gvproxy` command from gvisor-tap-vsock](https://github.com/containers/gvisor-tap-vsock)
+
+Full documentation of vfkit's various features is documented in the [usage guide](https://github.com/crc-org/vfkit/blob/main/doc/usage.md).
 
 Any questions/issues/... with vfkit can be reported [on GitHub](https://github.com/crc-org/vfkit/issues/new).
