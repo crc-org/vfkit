@@ -33,7 +33,7 @@ func syncGuestTime(conn net.Conn) error {
 	return nil
 }
 
-func watchWakeupNotifications(vm *vf.VirtualMachine, vsockPort uint) {
+func watchWakeupNotifications(vm *vf.VirtualMachine, vsockPort uint32) {
 	var vsockConn net.Conn
 	defer func() {
 		if vsockConn != nil {

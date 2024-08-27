@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"math"
 	"net"
 	"os"
 	"strconv"
@@ -47,7 +48,7 @@ type VirtioGPU struct {
 type VirtioVsock struct {
 	// Port is the virtio-vsock port used for this device, see `man vsock` for more
 	// details.
-	Port uint `json:"port"`
+	Port uint32 `json:"port"`
 	// SocketURL is the path to a unix socket on the host to use for the virtio-vsock communication with the guest.
 	SocketURL string `json:"socketURL"`
 	// If true, vsock connections will have to be done from guest to host. If false, vsock connections will only be possible
@@ -532,8 +533,11 @@ func (dev *VirtioBlk) ToCmdLine() ([]string, error) {
 // When listen is true, the host will be listening for connections over vsock.
 // When listen  is false, the guest will be listening for connections over vsock.
 func VirtioVsockNew(port uint, socketURL string, listen bool) (VirtioDevice, error) {
+	if port > math.MaxUint32 {
+		return nil, fmt.Errorf("invalid vsock port: %d", port)
+	}
 	return &VirtioVsock{
-		Port:      port,
+		Port:      uint32(port), //#nosec G115 -- was compared to math.MaxUint32
 		SocketURL: socketURL,
 		Listen:    listen,
 	}, nil
@@ -560,11 +564,11 @@ func (dev *VirtioVsock) FromOptions(options []option) error {
 		case "socketURL":
 			dev.SocketURL = option.value
 		case "port":
-			port, err := strconv.Atoi(option.value)
+			port, err := strconv.ParseUint(option.value, 10, 32)
 			if err != nil {
 				return err
 			}
-			dev.Port = uint(port)
+			dev.Port = uint32(port) //#nosec G115 -- ParseUint(_, _, 32) guarantees no overflow
 		case "listen":
 			dev.Listen = true
 		case "connect":

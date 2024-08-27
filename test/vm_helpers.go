@@ -139,7 +139,7 @@ type testVM struct {
 
 	sshNetwork     string
 	macAddress     string // for SSH over TCP
-	port           int
+	port           uint
 	vsockPath      string // for SSH over vsock
 	sshClient      *ssh.Client
 	restSocketPath string
@@ -235,7 +235,7 @@ func (vm *testVM) WaitForSSH(t *testing.T) {
 	case "tcp":
 		ip, err := retryIPFromMAC(vm.vfkitCmd.errCh, vm.macAddress)
 		require.NoError(t, err)
-		sshClient, err = retrySSHDial(vm.vfkitCmd.errCh, "tcp", net.JoinHostPort(ip, strconv.Itoa(vm.port)), vm.provider.SSHConfig())
+		sshClient, err = retrySSHDial(vm.vfkitCmd.errCh, "tcp", net.JoinHostPort(ip, strconv.FormatUint(uint64(vm.port), 10)), vm.provider.SSHConfig())
 		require.NoError(t, err)
 	case "vsock":
 		sshClient, err = retrySSHDial(vm.vfkitCmd.errCh, "unix", vm.vsockPath, vm.provider.SSHConfig())
