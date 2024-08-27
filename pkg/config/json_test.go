@@ -40,7 +40,7 @@ func fillStruct(t *testing.T, obj interface{}, skipFields []string) {
 		switch fieldVal.Kind() {
 		case reflect.Int, reflect.Int64:
 			fieldVal.SetInt(2)
-		case reflect.Uint, reflect.Uint64:
+		case reflect.Uint, reflect.Uint32, reflect.Uint64:
 			fieldVal.SetUint(3)
 		case reflect.Bool:
 			fieldVal.SetBool(true)
