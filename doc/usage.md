@@ -16,8 +16,7 @@ Set the log-level for VFKit.  Supported values are `debug`, `info`, and `error`.
 - `--restful-URI`
 
 The URI (address) of the RESTful service.  The default is `tcp://localhost:8081`.  Valid schemes are
-`tcp`, `none`, or `unix`.  In the case of unix, the "host" portion would be a path to where the unix domain
-socket will be stored. A scheme of `none` disables the RESTful service.
+`tcp`, `none`, or `unix`.  In the case of unix, the "host" portion would be a path to where the unix domain socket will be stored. A scheme of `none` disables the RESTful service.
 
 ### Virtual Machine Resources
 
@@ -47,7 +46,7 @@ It must be configured to communicate over virtio-vsock.
 
 ## Bootloader Configuration
 
-A bootloader is required to tell vfkit _how_ it should be starting the guest OS.
+A bootloader is required to tell vfkit _how_ it should start the guest OS.
 
 ### Linux bootloader
 
@@ -68,6 +67,21 @@ It allows to specify which kernel and initrd should be used when starting the VM
 
 The kernel command line must be enclosed in `"`, and depending on your shell, they might need to be escaped (`\"`)
 
+### macOS bootloader
+
+#### Description
+
+`--bootloader macos` is required to run macOS VMs. You must use an arm64/Apple silicon device running macOS 12 or later. Due to hardcoded limitations in the Apple Virtualization framework, it's not possible to run more than two macOS VMs at a time. Since macOS guests can't run headlessly, you'll need to enable a GUI, even if you only plan to interact with the VM over SSH.
+
+#### Arguments
+
+- `machineIdentifierPath`: absolute path to a binary property list containing a unique ECID identifier for the VM
+- `hardwareModelPath`: absolute path to a binary property list defining OS version support
+- `auxImagePath`: absolute path to the auxiliary storage file with NVRAM contents and the iBoot bootloader
+
+#### Example
+
+`--bootloader macos,machineIdentifierPath=/Users/virtuser/VM.bundle/MachineIdentifier,hardwareModelPath=/Users/virtuser/VM.bundle/HardwareModel,auxImagePath=/Users/virtuser/VM.bundle/AuxiliaryStorage`
 
 ### EFI bootloader
 
@@ -111,7 +125,7 @@ Kernel command line to use when starting the virtual machine.
 
 ## Device Configuration
 
-Various devices can be added to the virtual machines. They are all paravirtualized devices using VirtIO. They are grouped under the `--device` commande line flag.
+Various devices can be added to the virtual machines. They are all paravirtualized devices using VirtIO. They are grouped under the `--device` command line flag.
 
 
 ### Disk
@@ -124,17 +138,16 @@ See also [vz/CreateDiskImage](https://pkg.go.dev/github.com/Code-Hex/vz/v3#Creat
 
 #### Thin images
 
-Apple Virtualization Framework only support raw disk images and ISO images.
+Apple Virtualization Framework only supports raw disk images and ISO images.
 There is no support for thin image formats such as [qcow2](https://en.wikipedia.org/wiki/Qcow).
 
-However, APFS, the default macOS filesystem has support for sparse files and copy-on-write files, so it offers the main features of thin image format.
+However, APFS, the default macOS filesystem has support for sparse files and copy-on-write files, so it offers the main features of thin image formats.
 
 A sparse raw image can be created/expanded using the `truncate` command or
-using
-[`truncate(2)`](https://manpagez.com/man/2/truncate/).
+using [`truncate(2)`](https://manpagez.com/man/2/truncate/).
 For example, an empty 1GiB disk can be created with `truncate -s 1G
 vfkit.img`. Such an image will only use disk space when content is written to
-it. It initially only uses a few bytes of actual disk space even if it's size
+it. It initially only uses a few bytes of actual disk space even if its size
 is 1G.
 
 A copy-on-write image is a raw image file which references a backing file. Its
@@ -318,11 +331,15 @@ This will share `/Users/virtuser/vfkit` with the guest:
 --device virtio-fs,sharedDir=/Users/virtuser/vfkit/,mountTag=vfkit-share
 ```
 
-The share can then be mounted in the guest with:
+The share can then be mounted in Linux guests with:
 ```
 mount -t virtiofs vfkit-share /mount
 ```
 
+and on macOS with:
+```
+mkdir /tmp/tag && mount_virtiofs vfkit-share /tmp/tag
+```
 
 ### Rosetta
 
@@ -386,34 +403,45 @@ None
 `--device virtio-input,pointing`
 
 
-## RESTful Service
+## RESTful API
+
+To interact with the RESTful API, append a valid scheme to your base command: `--restful-uri tcp://localhost:8081`.
 
 ### Get VM state
 
-Used to obtain the state of the virtual machine that is being run by vfkit.
+Obtain the state of the virtual machine that is being run by vfkit.
 
-GET `/vm/state`
-Response: { "state": string, "canStart": bool, "canPause": bool, "canResume": bool, "canStop": bool, "canHardStop": bool }
+Request:
+```HTTP
+GET /vm/state
+```
 
-> `canHardStop` is only supported on macOS 12 and newer, false will always be returned on older versions.
+Response:
+`{ "state": string, "canStart": bool, "canPause": bool, "canResume": bool, "canStop": bool, "canHardStop": bool }`
+
+`canHardStop` is only supported on macOS 12 and newer, false will always be returned on older versions.
 
 ### Change VM State
 
-Change the state of the virtual machine. Valid states are:
+Change the state of the virtual machine. Valid state values are:
 * HardStop
 * Pause
 * Resume
 * Stop
 
-POST `/vm/state` { "state": "new value"}
-
-Response: http 200
+```HTTP
+POST /vm/state { "state": "new value"}
+```
+Response: HTTP 200
 
 ### Inspect VM
 
 Get description of the virtual machine
 
-GET `/vm/inspect`
+```HTTP
+GET /vm/inspect
+```
+
 Response: { "cpus": uint, "memory": uint64, "devices": []config.VirtIODevice }
 
 ## Enabling a Graphical User Interface

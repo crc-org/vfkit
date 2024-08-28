@@ -17,6 +17,9 @@ brew tap cfergeau/crc
 brew install vfkit
 ```
 
+### Building
+
+From the root direction of this repository, run `make`.
 
 ### Usage
 
