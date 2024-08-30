@@ -13,7 +13,7 @@ Device configuration is optional, but most VM will need a disk image and a netwo
 
 Set the log-level for VFKit.  Supported values are `debug`, `info`, and `error`.
 
-- `--restful-URI`
+- `--restful-uri`
 
 The URI (address) of the RESTful service.  The default is `tcp://localhost:8081`.  Valid schemes are
 `tcp`, `none`, or `unix`.  In the case of unix, the "host" portion would be a path to where the unix domain socket will be stored. A scheme of `none` disables the RESTful service.
@@ -29,7 +29,7 @@ Number of virtual CPUs (vCPU) available in the VM. It defaults to 1 vCPU.
 
 - `--memory`
 
-Amount of memory available in the virtual machine. The value is in MiB (mibibytes, 1024 * 1024 * 1024 bytes), and the default is 512 MiB.
+Amount of memory available in the virtual machine. The value is in MiB ([mebibytes](https://simple.wikipedia.org/wiki/Mebibyte), 1024 * 1024 bytes), and the default is 512 MiB.
 
 ### Time Synchronization Configuration
 
