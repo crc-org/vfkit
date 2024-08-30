@@ -22,8 +22,8 @@ github.com/cloudwego/iasm v0.2.0/go.mod h1:8rXZaNYT2n95jn+zTI1sDr+IgcD2GVs0nlbbQ
 github.com/containers/common v0.60.2 h1:utcwp2YkO8c0mNlwRxsxfOiqfj157FRrBjxgjR6f+7o=
 github.com/containers/common v0.60.2/go.mod h1:I0upBi1qJX3QmzGbUOBN1LVP6RvkKhd3qQpZbQT+Q54=
 github.com/cpuguy83/go-md2man/v2 v2.0.4/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
-github.com/crc-org/crc/v2 v2.40.0 h1:xmQ1ajd+hcVs1aD8dOWYZA35L2CBVdD4adZEMZ4qlx4=
-github.com/crc-org/crc/v2 v2.40.0/go.mod h1:uQka243eTz1+F6ncfPzQ1yNWnGKW2bLzrbnNMnBWt/w=
+github.com/crc-org/crc/v2 v2.41.0 h1:puybKCcQC5welDVggnIkWGX7GZS2u9nSnDmn+jM/OW8=
+github.com/crc-org/crc/v2 v2.41.0/go.mod h1:/EkxdLzWyTTVF21Oqva17fAiqhbg2WjXybWfKONoEeM=
 github.com/crc-org/machine v0.0.0-20240715101719-0c1bc9eb95f8 h1:KVdN/5PTWRwth2suZEQCY54MXSXp1SAUd54CiE952oI=
 github.com/crc-org/machine v0.0.0-20240715101719-0c1bc9eb95f8/go.mod h1:trWeQimjfE3dJ8qWOxI4ePtYm13aecK42bf01s6h/Nc=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
