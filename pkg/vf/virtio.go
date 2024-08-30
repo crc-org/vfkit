@@ -211,10 +211,15 @@ func (dev *VirtioRng) AddToVirtualMachineConfig(vmConfig *VirtualMachineConfigur
 	return nil
 }
 
+func unixFd(fd uintptr) int {
+	// On unix the underlying fd is int, overflow is not possible.
+	return int(fd) //#nosec G115 -- potential integer overflow
+}
+
 // https://developer.apple.com/documentation/virtualization/running_linux_in_a_virtual_machine#3880009
 func setRawMode(f *os.File) error {
 	// Get settings for terminal
-	attr, _ := unix.IoctlGetTermios(int(f.Fd()), unix.TIOCGETA)
+	attr, _ := unix.IoctlGetTermios(unixFd(f.Fd()), unix.TIOCGETA)
 
 	// Put stdin into raw mode, disabling local echo, input canonicalization,
 	// and CR-NL mapping.
@@ -228,7 +233,7 @@ func setRawMode(f *os.File) error {
 	attr.Cc[syscall.VTIME] = 0
 
 	// reflects the changed settings
-	return unix.IoctlSetTermios(int(f.Fd()), unix.TIOCSETA, attr)
+	return unix.IoctlSetTermios(unixFd(f.Fd()), unix.TIOCSETA, attr)
 }
 
 func (dev *VirtioSerial) toVz() (*vz.VirtioConsoleDeviceSerialPortConfiguration, error) {

@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"os/exec"
 	"strconv"
@@ -23,7 +24,7 @@ type VirtualMachine struct {
 // TimeSync enables synchronization of the host time to the linux guest after the host was suspended.
 // This requires qemu-guest-agent to be running in the guest, and to be listening on a vsock socket
 type TimeSync struct {
-	VsockPort uint `json:"vsockPort"`
+	VsockPort uint32 `json:"vsockPort"`
 }
 
 // The VMComponent interface represents a VM element (device, bootloader, ...)
@@ -180,8 +181,12 @@ func (vm *VirtualMachine) TimeSync() *TimeSync {
 }
 
 func TimeSyncNew(vsockPort uint) (VMComponent, error) {
+
+	if vsockPort > math.MaxUint32 {
+		return nil, fmt.Errorf("invalid vsock port: %d", vsockPort)
+	}
 	return &TimeSync{
-		VsockPort: vsockPort,
+		VsockPort: uint32(vsockPort), //#nosec G115 -- was compared to math.MaxUint32
 	}, nil
 }
 
@@ -197,11 +202,11 @@ func (ts *TimeSync) FromOptions(options []option) error {
 	for _, option := range options {
 		switch option.key {
 		case "vsockPort":
-			vsockPort, err := strconv.ParseUint(option.value, 10, 64)
+			vsockPort, err := strconv.ParseUint(option.value, 10, 32)
 			if err != nil {
 				return err
 			}
-			ts.VsockPort = uint(vsockPort)
+			ts.VsockPort = uint32(vsockPort) //#nosec G115 -- ParseUint(_, _, 32) guarantees no overflow
 		default:
 			return fmt.Errorf("unknown option for timesync parameter: %s", option.key)
 		}

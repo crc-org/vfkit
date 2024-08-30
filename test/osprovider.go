@@ -51,7 +51,7 @@ type OsProvider interface {
 
 type SSHAccessMethod struct {
 	network string
-	port    int
+	port    uint
 }
 
 type PuiPuiProvider struct {
