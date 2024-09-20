@@ -19,20 +19,12 @@ type VirtioNet struct {
 	localAddr *net.UnixAddr
 }
 
-func localUnixSocketPath() (string, error) {
-	homeDir, err := os.UserHomeDir()
+func localUnixSocketPath(dir string) (string, error) {
+	tmpFile, err := os.CreateTemp(dir, fmt.Sprintf("vfkit-%d-*.sock", os.Getpid()))
 	if err != nil {
 		return "", err
 	}
-	dir := filepath.Join(homeDir, "Library", "Application Support", "vfkit")
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return "", err
-	}
-	tmpFile, err := os.CreateTemp(dir, fmt.Sprintf("net-%d-*.sock", os.Getpid()))
-	if err != nil {
-		return "", err
-	}
-	// slightly racy, but this is in a directory only user-writable
+	// slightly racy, but hopefully this is in a directory only user-writable
 	defer tmpFile.Close()
 	defer os.Remove(tmpFile.Name())
 
@@ -44,7 +36,7 @@ func (dev *VirtioNet) connectUnixPath() error {
 		Name: dev.UnixSocketPath,
 		Net:  "unixgram",
 	}
-	localSocketPath, err := localUnixSocketPath()
+	localSocketPath, err := localUnixSocketPath(filepath.Dir(dev.UnixSocketPath))
 	if err != nil {
 		return err
 	}
