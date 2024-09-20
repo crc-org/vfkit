@@ -57,10 +57,10 @@ func TestConnectUnixPath(t *testing.T) {
 	})
 
 	t.Run("Failed connection - End socket longer than 104 bytes", func(t *testing.T) {
-		err := testConnectUnixgram(t, 104)
+		err := testConnectUnixgram(t, maxUnixgramPathLen)
 		// It should return an error
 		require.Error(t, err)
-		require.ErrorContains(t, err, "invalid argument")
+		require.ErrorContains(t, err, "is too long")
 	})
 }
 
