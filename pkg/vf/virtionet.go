@@ -32,6 +32,9 @@ func localUnixSocketPath(dir string) (string, error) {
 }
 
 func (dev *VirtioNet) connectUnixPath() error {
+	// path for unixgram sockets must be less than 104 bytes on macOS
+	const maxUnixgramPathLen = 104
+
 	remoteAddr := net.UnixAddr{
 		Name: dev.UnixSocketPath,
 		Net:  "unixgram",
@@ -40,7 +43,10 @@ func (dev *VirtioNet) connectUnixPath() error {
 	if err != nil {
 		return err
 	}
-	// FIXME: need to remove localSocketPath at process  exit
+	if len(localSocketPath) >= maxUnixgramPathLen {
+		return fmt.Errorf("unixgram path '%s' is too long: %d >= %d bytes", localSocketPath, len(localSocketPath), maxUnixgramPathLen)
+	}
+	// FIXME: need to remove localSocketPath at process exit
 	localAddr := net.UnixAddr{
 		Name: localSocketPath,
 		Net:  "unixgram",
