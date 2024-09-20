@@ -2,6 +2,7 @@ package vf
 
 import (
 	"fmt"
+	"math/rand"
 	"net"
 	"os"
 	"os/signal"
@@ -20,7 +21,18 @@ type VirtioNet struct {
 }
 
 func localUnixSocketPath(dir string) (string, error) {
-	tmpFile, err := os.CreateTemp(dir, fmt.Sprintf("vfkit-%d-*.sock", os.Getpid()))
+	// unix socket endpoints are filesystem paths, but their max length is
+	// quite small (a bit over 100 bytes).
+	// In this function we try to build a filename which is relatively
+	// unique, not easily guessable (to prevent hostile collisions), and
+	// short (`os.CreateTemp` filenames are a bit too long)
+	//
+	// os.Getpid() is unique but guessable. We append a short 16 bit random
+	// number to it. We only use hex values to make the representation more
+	// compact
+	filename := filepath.Join(dir, fmt.Sprintf("vfkit-%x-%x.sock", os.Getpid(), rand.Int31n(0xffff))) //#nosec G404 -- no need for crypto/rand here
+
+	tmpFile, err := os.OpenFile(filename, os.O_CREATE|os.O_EXCL, 0600)
 	if err != nil {
 		return "", err
 	}
