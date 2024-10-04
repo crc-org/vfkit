@@ -75,7 +75,8 @@ type VirtioFs struct {
 // RosettaShare configures rosetta support in the guest to run Intel binaries on Apple CPUs
 type RosettaShare struct {
 	DirectorySharingConfig
-	InstallRosetta bool `json:"installRosetta"`
+	InstallRosetta  bool `json:"installRosetta"`
+	IgnoreIfMissing bool `json:"ignoreIfMissing"`
 }
 
 // NVMExpressController configures a NVMe controller in the guest
@@ -639,6 +640,9 @@ func (dev *RosettaShare) ToCmdLine() ([]string, error) {
 	if dev.InstallRosetta {
 		builder.WriteString(",install")
 	}
+	if dev.IgnoreIfMissing {
+		builder.WriteString(",ignore-if-missing")
+	}
 
 	return []string{"--device", builder.String()}, nil
 }
@@ -650,6 +654,8 @@ func (dev *RosettaShare) FromOptions(options []option) error {
 			dev.MountTag = option.value
 		case "install":
 			dev.InstallRosetta = true
+		case "ignore-if-missing":
+			dev.IgnoreIfMissing = true
 		default:
 			return fmt.Errorf("unknown option for rosetta share: %s", option.key)
 		}

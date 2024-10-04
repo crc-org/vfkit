@@ -2,22 +2,36 @@ package vf
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/Code-Hex/vz/v3"
 	log "github.com/sirupsen/logrus"
 )
 
-func checkRosettaAvailability(install bool) error {
-	availability := vz.LinuxRosettaDirectoryShareAvailability()
+var (
+	checkRosettaDirectoryShareAvailability = vz.LinuxRosettaDirectoryShareAvailability
+	doInstallRosetta                       = vz.LinuxRosettaDirectoryShareInstallRosetta
+)
+
+func (dev *RosettaShare) checkRosettaAvailability() error {
+	availability := checkRosettaDirectoryShareAvailability()
 	switch availability {
 	case vz.LinuxRosettaAvailabilityNotSupported:
 		return fmt.Errorf("rosetta is not supported")
 	case vz.LinuxRosettaAvailabilityNotInstalled:
-		if !install {
+		if !dev.InstallRosetta {
 			return fmt.Errorf("rosetta is not installed")
 		}
 		log.Debugf("installing rosetta")
-		if err := vz.LinuxRosettaDirectoryShareInstallRosetta(); err != nil {
+		if err := doInstallRosetta(); err != nil {
+			if dev.IgnoreIfMissing {
+				log.Info("Rosetta installation failed. Continuing without Rosetta.")
+				_, err = os.Stderr.WriteString(err.Error() + "\n")
+				if err != nil {
+					log.Debugf("Failed to write error to stderr: %v", err)
+				}
+				return nil
+			}
 			return fmt.Errorf("failed to install rosetta: %w", err)
 		}
 		log.Debugf("rosetta installed")
@@ -32,7 +46,7 @@ func (dev *RosettaShare) toVz() (vz.DirectorySharingDeviceConfiguration, error) 
 	if dev.MountTag == "" {
 		return nil, fmt.Errorf("missing mandatory 'mountTage' option for rosetta share")
 	}
-	if err := checkRosettaAvailability(dev.InstallRosetta); err != nil {
+	if err := dev.checkRosettaAvailability(); err != nil {
 		return nil, err
 	}
 
