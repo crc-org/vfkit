@@ -1,3 +1,10 @@
+// Package vf converts a config.VirtualMachine configuration to native
+// virtualization framework datatypes. It also provides APIs to start/stop/...
+// the virtualization framework virtual machine.
+//
+// The interaction with the virtualization framework is done using the
+// Code-Hex/vz Objective-C bindings. This requires cgo, and this package cannot
+// be easily cross-compiled, it must be built on macOS.
 package vf
 
 import (

@@ -5,7 +5,8 @@
 vfkit is a macOS command-line-based hypervisor, which uses [Apple's Virtualization Framework](https://developer.apple.com/documentation/virtualization?language=objc) to run virtual machines.
 You start a virtual machine by running vfkit with a set of arguments describing the virtual machine configuration/hardware.
 When vfkit stops, the virtual machine stops running.
-It requires macOS 11 or newer, and runs on both Intel and Apple silicon Macs.
+It requires macOS 12 or newer, and runs on both Intel and Apple silicon Macs.
+It may build and run on macOS 11, but this platform is no longer tested as it's [out of support](https://endoflife.date/macos).
 File sharing is only available on macOS 12 or newer.
 UEFI boot and graphical user interface support are only available on macOS 13 or newer.
 

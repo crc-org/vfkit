@@ -1,3 +1,14 @@
+// Package config provides native go data types to describe a VM configuration
+// (memory, CPUs, bootloader, devices, ...).
+// It's used by vfkit which generates a VirtualMachine instance after parsing
+// its command line using FromOptions().
+// It can also be used by application writers who want to start a VM with
+// vfkit. After creating a VirtualMachine instance with the needed devices,
+// calling VirtualMachine.Cmd() will return an exec.Cmd which can be used
+// to start the virtual machine.
+//
+// This package does not use Code-Hex/vz directly as it must possible to
+// cross-compile code using it.
 package config
 
 import (

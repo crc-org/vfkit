@@ -13,6 +13,9 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+// vf will define toVZ() and AddToVirtualMachineConfig() methods on these types
+// We alias the types from the config package to avoid duplicating struct
+// definitions between the config and vf packages
 type RosettaShare config.RosettaShare
 type NVMExpressController config.NVMExpressController
 type VirtioBlk config.VirtioBlk
