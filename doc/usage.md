@@ -362,6 +362,7 @@ See https://developer.apple.com/documentation/virtualization/running_intel_binar
 #### Arguments
 - `mountTag`: tag which will be used to mount the rosetta share in the guest.
 - `install`: indicates to automatically install rosetta on systems where it's missing. By default, an error will be reported if `--device rosetta` is used when rosetta is not installed.
+- `ignoreIfMissing`: indicates if vfkit has to keep executing even though rosetta is not installed. It may happen that the user cancels rosetta installation or the installation fails for other reasons. By default, if rosetta installation fails and vfkit cannot find it, vfkit exits with an error.
 
 #### Example
 
