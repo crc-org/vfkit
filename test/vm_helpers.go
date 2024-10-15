@@ -215,7 +215,12 @@ func (vm *testVM) Start(t *testing.T) {
 }
 
 func (vm *testVM) Stop(t *testing.T) {
-	vm.SSHRun(t, "poweroff")
+	switch vm.provider.(type) {
+	case *FedoraProvider:
+		vm.SSHRun(t, "sudo shutdown now")
+	default:
+		vm.SSHRun(t, "poweroff")
+	}
 	vm.vfkitCmd.Wait(t)
 }
 
