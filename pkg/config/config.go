@@ -16,6 +16,7 @@ import (
 	"math"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -30,6 +31,7 @@ type VirtualMachine struct {
 	Bootloader Bootloader     `json:"bootloader"`
 	Devices    []VirtioDevice `json:"devices,omitempty"`
 	Timesync   *TimeSync      `json:"timesync,omitempty"`
+	Ignition   *Ignition      `json:"ignition,omitempty"`
 }
 
 // TimeSync enables synchronization of the host time to the linux guest after the host was suspended.
@@ -38,12 +40,22 @@ type TimeSync struct {
 	VsockPort uint32 `json:"vsockPort"`
 }
 
+type Ignition struct {
+	ConfigPath string `json:"configPath"`
+	SocketPath string `json:"socketPath"`
+}
+
 // The VMComponent interface represents a VM element (device, bootloader, ...)
 // which can be converted from/to commandline parameters
 type VMComponent interface {
 	FromOptions([]option) error
 	ToCmdLine() ([]string, error)
 }
+
+const (
+	ignitionVsockPort  uint   = 1024
+	ignitionSocketName string = "ignition.sock"
+)
 
 // NewVirtualMachine creates a new VirtualMachine instance. The virtual machine
 // will use vcpus virtual CPUs and it will be allocated memoryMiB mibibytes
@@ -94,6 +106,10 @@ func (vm *VirtualMachine) ToCmdLine() ([]string, error) {
 			return nil, err
 		}
 		args = append(args, devArgs...)
+	}
+
+	if vm.Ignition != nil {
+		args = append(args, "--ignition", vm.Ignition.ConfigPath)
 	}
 
 	return args, nil
@@ -189,6 +205,39 @@ func (vm *VirtualMachine) AddTimeSyncFromCmdLine(cmdlineOpts string) error {
 
 func (vm *VirtualMachine) TimeSync() *TimeSync {
 	return vm.Timesync
+}
+
+func IgnitionNew(configPath string, socketPath string) (*Ignition, error) {
+	if configPath == "" || socketPath == "" {
+		return nil, fmt.Errorf("config path and socket path cannot be empty")
+	}
+	return &Ignition{
+		ConfigPath: configPath,
+		SocketPath: socketPath,
+	}, nil
+}
+
+func (vm *VirtualMachine) AddIgnitionFileFromCmdLine(cmdlineOpts string) error {
+	if cmdlineOpts == "" {
+		return nil
+	}
+	opts := strings.Split(cmdlineOpts, ",")
+	if len(opts) != 1 {
+		return fmt.Errorf("ignition only accept one option in command line argument")
+	}
+
+	socketPath := filepath.Join(os.TempDir(), ignitionSocketName)
+	dev, err := VirtioVsockNew(ignitionVsockPort, socketPath, true)
+	if err != nil {
+		return err
+	}
+	vm.Devices = append(vm.Devices, dev)
+	ignition, err := IgnitionNew(opts[0], socketPath)
+	if err != nil {
+		return err
+	}
+	vm.Ignition = ignition
+	return nil
 }
 
 func TimeSyncNew(vsockPort uint) (VMComponent, error) {
