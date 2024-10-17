@@ -165,7 +165,7 @@ var jsonTests = map[string]jsonTest{
 
 			return vm
 		},
-		expectedJSON: `{"vcpus":3,"memoryBytes":4194304000,"bootloader":{"kind":"linuxBootloader","vmlinuzPath":"/vmlinuz","initrdPath":"/initrd","kernelCmdLine":"console=hvc0"},"devices":[{"kind":"virtioserial","logFile":"/virtioserial"},{"kind":"virtioinput","inputType":"keyboard"},{"kind":"virtiogpu","usesGUI":false,"width":800,"height":600},{"kind":"virtionet","nat":true,"macAddress":"00:11:22:33:44:55"},{"kind":"virtiorng"},{"kind":"virtioblk","devName":"virtio-blk","imagePath":"/virtioblk"},{"kind":"virtiosock","port":1234,"socketURL":"/virtiovsock"},{"kind":"virtiofs","mountTag":"tag","sharedDir":"/virtiofs"},{"kind":"usbmassstorage","devName":"usb-mass-storage","imagePath":"/usbmassstorage","readOnly":true},{"kind":"rosetta","mountTag":"vz-rosetta","installRosetta":false}]}`,
+		expectedJSON: `{"vcpus":3,"memoryBytes":4194304000,"bootloader":{"kind":"linuxBootloader","vmlinuzPath":"/vmlinuz","initrdPath":"/initrd","kernelCmdLine":"console=hvc0"},"devices":[{"kind":"virtioserial","logFile":"/virtioserial"},{"kind":"virtioinput","inputType":"keyboard"},{"kind":"virtiogpu","usesGUI":false,"width":800,"height":600},{"kind":"virtionet","nat":true,"macAddress":"00:11:22:33:44:55"},{"kind":"virtiorng"},{"kind":"virtioblk","devName":"virtio-blk","imagePath":"/virtioblk"},{"kind":"virtiosock","port":1234,"socketURL":"/virtiovsock"},{"kind":"virtiofs","mountTag":"tag","sharedDir":"/virtiofs"},{"kind":"usbmassstorage","devName":"usb-mass-storage","imagePath":"/usbmassstorage","readOnly":true},{"kind":"rosetta","mountTag":"vz-rosetta","installRosetta":false,"ignoreIfMissing":false}]}`,
 	},
 }
 
@@ -212,7 +212,7 @@ var jsonStabilityTests = map[string]jsonStabilityTest{
 	},
 	"RosettaShare": {
 		obj:          &RosettaShare{},
-		expectedJSON: `{"kind":"rosetta","mountTag":"MountTag","installRosetta":true}`,
+		expectedJSON: `{"kind":"rosetta","mountTag":"MountTag","installRosetta":true,"ignoreIfMissing":true}`,
 	},
 	"VirtioFs": {
 		obj:          &VirtioFs{},
