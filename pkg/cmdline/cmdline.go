@@ -23,6 +23,8 @@ type Options struct {
 	LogLevel string
 
 	UseGUI bool
+
+	IgnitionPath string
 }
 
 const DefaultRestfulURI = "none://"
@@ -49,5 +51,7 @@ func AddFlags(cmd *cobra.Command, opts *Options) {
 
 	cmd.Flags().StringVar(&opts.LogLevel, "log-level", "", "set log level")
 	cmd.Flags().StringVar(&opts.RestfulURI, "restful-uri", DefaultRestfulURI, "URI address for RESTful services")
+
+	cmd.Flags().StringVar(&opts.IgnitionPath, "ignition", "", "path to the ignition file")
 
 }
