@@ -28,6 +28,7 @@ const (
 	usbMassStorage vmComponentKind = "usbmassstorage"
 	nvme           vmComponentKind = "nvme"
 	rosetta        vmComponentKind = "rosetta"
+	ignition       vmComponentKind = "ignition"
 )
 
 type jsonKind struct {
@@ -87,6 +88,17 @@ func unmarshalDevices(rawMsg json.RawMessage) ([]VirtioDevice, error) {
 	}
 
 	return devices, nil
+}
+
+func unmarshalIgnition(rawMsg json.RawMessage) (Ignition, error) {
+	var ignition Ignition
+
+	err := json.Unmarshal(rawMsg, &ignition)
+	if err != nil {
+		return Ignition{}, err
+	}
+
+	return ignition, nil
 }
 
 // VirtioNet needs a custom unmarshaller as net.HardwareAddress is not
@@ -207,6 +219,11 @@ func (vm *VirtualMachine) UnmarshalJSON(b []byte) error {
 			devices, err = unmarshalDevices(*rawMsg)
 			if err == nil {
 				vm.Devices = devices
+			}
+		case "ignition":
+			ignition, err := unmarshalIgnition(*rawMsg)
+			if err == nil {
+				vm.Ignition = &ignition
 			}
 		}
 
@@ -365,5 +382,16 @@ func (dev *USBMassStorage) MarshalJSON() ([]byte, error) {
 	return json.Marshal(devWithKind{
 		jsonKind:       kind(usbMassStorage),
 		USBMassStorage: *dev,
+	})
+}
+
+func (ign *Ignition) MarshalJSON() ([]byte, error) {
+	type devWithKind struct {
+		jsonKind
+		Ignition
+	}
+	return json.Marshal(devWithKind{
+		jsonKind: kind(ignition),
+		Ignition: *ign,
 	})
 }

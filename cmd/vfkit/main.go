@@ -21,6 +21,9 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"runtime"
@@ -86,6 +89,10 @@ func newVMConfiguration(opts *cmdline.Options) (*config.VirtualMachine, error) {
 		return nil, err
 	}
 
+	if err := vmConfig.AddIgnitionFileFromCmdLine(opts.IgnitionPath); err != nil {
+		return nil, fmt.Errorf("failed to add ignition file: %w", err)
+	}
+
 	return vmConfig, nil
 }
 
@@ -137,6 +144,21 @@ func runVFKit(vmConfig *config.VirtualMachine, opts *cmdline.Options) error {
 }
 
 func runVirtualMachine(vmConfig *config.VirtualMachine, vm *vf.VirtualMachine) error {
+	if vm.Config().Ignition != nil {
+		go func() {
+			file, err := os.Open(vmConfig.Ignition.ConfigPath)
+			if err != nil {
+				log.Error(err)
+			}
+			defer file.Close()
+			reader := file
+			if err := startIgnitionProvisionerServer(reader, vmConfig.Ignition.SocketPath); err != nil {
+				log.Error(err)
+			}
+			log.Debug("ignition vsock server exited")
+		}()
+	}
+
 	if err := vm.Start(); err != nil {
 		return err
 	}
@@ -197,4 +219,34 @@ func runVirtualMachine(vmConfig *config.VirtualMachine, vm *vf.VirtualMachine) e
 	}
 
 	return <-errCh
+}
+
+func startIgnitionProvisionerServer(ignitionReader io.Reader, ignitionSocketPath string) error {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
+		_, err := io.Copy(w, ignitionReader)
+		if err != nil {
+			log.Errorf("failed to serve ignition file: %v", err)
+		}
+	})
+
+	listener, err := net.Listen("unix", ignitionSocketPath)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := listener.Close(); err != nil {
+			log.Error(err)
+		}
+	}()
+
+	srv := &http.Server{
+		Handler:           mux,
+		Addr:              ignitionSocketPath,
+		ReadHeaderTimeout: 10 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+
+	log.Debugf("ignition socket: %s", ignitionSocketPath)
+	return srv.Serve(listener)
 }
