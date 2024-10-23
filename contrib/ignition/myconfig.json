@@ -1,0 +1,31 @@
+{
+  "ignition": {
+    "version": "3.0.0"
+  },
+  "passwd": {
+    "users": [
+      {
+        "name": "testuser",
+        "sshAuthorizedKeys": [
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIO43Z9aRPvvj1zMib/Hh4oWX+MuOPXdFChFMaWfishLj"
+        ]
+      }
+    ]
+  },
+  "storage": {
+    "files": [{
+      "path": "/etc/someconfig",
+      "mode": 420,
+      "contents": { "source": "data:,example%20file%0A" }
+    }]
+  },
+  "systemd": {
+    "units": [{
+      "name": "systemd-journald.service",
+      "dropins": [{
+        "name": "debug.conf",
+        "contents": "[Service]\nEnvironment=SYSTEMD_LOG_LEVEL=debug"
+      }]
+    }]
+  }
+}

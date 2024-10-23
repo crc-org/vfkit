@@ -461,3 +461,18 @@ Proper use of this flag may look similar to the following section of a command:
 ```bash
 --device virtio-input,keyboard --device virtio-input,pointing --device virtio-gpu,width=1920,height=1080 --gui
 ```
+
+### Ignition
+
+#### Description
+
+The `--ignition` option allows you to specify a configuration file for Ignition. Vfkit will open a vsock connection between the host and the guest and start a lightweight HTTP server to push the configuration file to Ignition.
+
+You can find example configurations and more details about Ignition at https://coreos.github.io/ignition/ 
+
+#### Example
+
+This command provisions the configuration file to Ignition on the guest
+```
+--ignition configuration-path
+```

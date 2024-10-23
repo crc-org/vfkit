@@ -85,6 +85,16 @@ var jsonTests = map[string]jsonTest{
 		},
 		expectedJSON: `{"vcpus":3,"memoryBytes":4194304000,"bootloader":{"kind":"linuxBootloader","vmlinuzPath":"/vmlinuz","initrdPath":"/initrd","kernelCmdLine":"console=hvc0"},"timesync":{"vsockPort":1234}}`,
 	},
+	"TestIgnition": {
+		newVM: func(t *testing.T) *VirtualMachine {
+			vm := newLinuxVM(t)
+			ignition, err := IgnitionNew("config", "socket")
+			require.NoError(t, err)
+			vm.Ignition = ignition
+			return vm
+		},
+		expectedJSON: `{"vcpus":3,"memoryBytes":4194304000,"bootloader":{"kind":"linuxBootloader","vmlinuzPath":"/vmlinuz","initrdPath":"/initrd","kernelCmdLine":"console=hvc0"}, "ignition":{"kind":"ignition","configPath":"config","socketPath":"socket"}}`,
+	},
 	"TestVirtioRNG": {
 		newVM: func(t *testing.T) *VirtualMachine {
 			vm := newLinuxVM(t)
@@ -207,7 +217,7 @@ var jsonStabilityTests = map[string]jsonStabilityTest{
 
 			return vm
 		},
-		skipFields:   []string{"Bootloader", "Devices", "Timesync"},
+		skipFields:   []string{"Bootloader", "Devices", "Timesync", "Ignition"},
 		expectedJSON: `{"vcpus":3,"memoryBytes":3,"bootloader":{"kind":"linuxBootloader","vmlinuzPath":"/vmlinuz","kernelCmdLine":"console=hvc0","initrdPath":"/initrd"},"devices":[{"kind":"virtiorng"}],"timesync":{"vsockPort":1234}}`,
 	},
 	"RosettaShare": {
