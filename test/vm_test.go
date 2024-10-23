@@ -341,3 +341,63 @@ func checkPCIDevice(t *testing.T, vm *testVM, vendorID, deviceID int) {
 	require.NoError(t, err)
 	require.Regexp(t, re, string(lspci))
 }
+
+func TestCloudInit(t *testing.T) {
+	if err := macOSAvailable(13); err != nil {
+		t.Log("Skipping TestCloudInit test")
+		return
+	}
+	fedoraProvider := NewFedoraProvider()
+	log.Info("fetching os image")
+	tempDir := t.TempDir()
+	err := fedoraProvider.Fetch(tempDir)
+	require.NoError(t, err)
+
+	// set efi bootloader
+	fedoraProvider.efiVariableStorePath = "efi-variable-store"
+	fedoraProvider.createVariableStore = true
+
+	vm := NewTestVM(t, fedoraProvider)
+	defer vm.Close(t)
+	require.NotNil(t, vm)
+
+	vm.AddSSH(t, "tcp")
+
+	// add vm image
+	dev1, err := config.VirtioBlkNew(fedoraProvider.diskImage)
+	require.NoError(t, err)
+	vm.AddDevice(t, dev1)
+	log.Infof("shared disk: %s - fedora", dev1.DevName)
+
+	/* 	add cloud init config by using a premade ISO image
+	   	seed.img is an ISO image containing the user-data and meta-data file needed to configure the VM by cloud-init.
+	   	meta-data is an empty file
+	   	user-data has info about a new user that will be used to verify if the configuration has been applied. Its content is
+		----
+	   	#cloud-config
+		users:
+		- name: vfkituser
+			sudo: ALL=(ALL) NOPASSWD:ALL
+			shell: /bin/bash
+			groups: users
+			plain_text_passwd: vfkittest
+			lock_passwd: false
+		ssh_pwauth: true
+		chpasswd: { expire: false }
+	*/
+	dev, err := config.VirtioBlkNew("assets/seed.img")
+	require.NoError(t, err)
+	vm.AddDevice(t, dev)
+	log.Infof("shared disk: %s - cloud-init", dev.DevName)
+
+	vm.Start(t)
+	vm.WaitForSSH(t)
+
+	data, err := vm.SSHCombinedOutput(t, "whoami")
+	require.NoError(t, err)
+	log.Infof("executed whoami - output: %s", string(data))
+	require.Equal(t, "vfkituser\n", string(data))
+
+	log.Info("stopping vm")
+	vm.Stop(t)
+}

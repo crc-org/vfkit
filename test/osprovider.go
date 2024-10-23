@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/crc-org/vfkit/pkg/config"
+	"github.com/xi2/xz"
 
 	"github.com/cavaliergopher/grab/v3"
 	"github.com/crc-org/crc/v2/pkg/extract"
@@ -42,6 +43,50 @@ func downloadPuipui(destDir string) ([]string, error) {
 	return extract.Uncompress(resp.Filename, destDir)
 }
 
+func downloadFedora(destDir string) (string, error) {
+	const fedoraVersion = "40"
+	arch := kernelArch()
+	release := "1.14"
+	buildString := fmt.Sprintf("%s-%s-%s", arch, fedoraVersion, release)
+
+	var fedoraURL = fmt.Sprintf("https://download.fedoraproject.org/pub/fedora/linux/releases/%s/Cloud/%s/images/Fedora-Cloud-Base-AmazonEC2.%s.raw.xz", fedoraVersion, arch, buildString)
+
+	// https://github.com/cavaliergopher/grab/issues/104
+	grab.DefaultClient.UserAgent = "vfkit"
+	resp, err := grab.Get(destDir, fedoraURL)
+	if err != nil {
+		return "", err
+	}
+	return uncompressFedora(resp.Filename, destDir)
+}
+
+func uncompressFedora(fileName string, targetDir string) (string, error) {
+	file, err := os.Open(filepath.Clean(fileName))
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	reader, err := xz.NewReader(file, 0)
+	if err != nil {
+		return "", err
+	}
+
+	xzCutName, _ := strings.CutSuffix(filepath.Base(file.Name()), ".xz")
+	outPath := filepath.Join(targetDir, xzCutName)
+	out, err := os.Create(outPath)
+	if err != nil {
+		return "", err
+	}
+
+	_, err = io.Copy(out, reader)
+	if err != nil {
+		return "", err
+	}
+
+	return outPath, nil
+}
+
 type OsProvider interface {
 	Fetch(destDir string) error
 	ToVirtualMachine() (*config.VirtualMachine, error)
@@ -62,6 +107,16 @@ type PuiPuiProvider struct {
 
 func NewPuipuiProvider() *PuiPuiProvider {
 	return &PuiPuiProvider{}
+}
+
+type FedoraProvider struct {
+	diskImage            string
+	efiVariableStorePath string
+	createVariableStore  bool
+}
+
+func NewFedoraProvider() *FedoraProvider {
+	return &FedoraProvider{}
 }
 
 func findFile(files []string, filename string) (string, error) {
@@ -143,11 +198,30 @@ func (puipui *PuiPuiProvider) Fetch(destDir string) error {
 	return nil
 }
 
+func (fedora *FedoraProvider) Fetch(destDir string) error {
+	log.Infof("downloading fedora to %s", destDir)
+	file, err := downloadFedora(destDir)
+	if err != nil {
+		return err
+	}
+
+	fedora.diskImage = file
+
+	return nil
+}
+
 const puipuiMemoryMiB = 1 * 1024
 const puipuiCPUs = 2
 
 func (puipui *PuiPuiProvider) ToVirtualMachine() (*config.VirtualMachine, error) {
 	bootloader := config.NewLinuxBootloader(puipui.vmlinuz, puipui.kernelArgs, puipui.initramfs)
+	vm := config.NewVirtualMachine(puipuiCPUs, puipuiMemoryMiB, bootloader)
+
+	return vm, nil
+}
+
+func (fedora *FedoraProvider) ToVirtualMachine() (*config.VirtualMachine, error) {
+	bootloader := config.NewEFIBootloader(fedora.efiVariableStorePath, fedora.createVariableStore)
 	vm := config.NewVirtualMachine(puipuiCPUs, puipuiMemoryMiB, bootloader)
 
 	return vm, nil
@@ -163,6 +237,29 @@ func (puipui *PuiPuiProvider) SSHConfig() *ssh.ClientConfig {
 }
 
 func (puipui *PuiPuiProvider) SSHAccessMethods() []SSHAccessMethod {
+	return []SSHAccessMethod{
+		{
+			network: "tcp",
+			port:    22,
+		},
+		{
+			network: "vsock",
+			port:    2222,
+		},
+	}
+}
+
+func (fedora *FedoraProvider) SSHConfig() *ssh.ClientConfig {
+	return &ssh.ClientConfig{
+		User: "vfkituser",
+		Auth: []ssh.AuthMethod{ssh.Password("vfkittest")},
+		// #nosec 106 -- the host SSH key of the VM will change each time it boots
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+	}
+
+}
+
+func (fedora *FedoraProvider) SSHAccessMethods() []SSHAccessMethod {
 	return []SSHAccessMethod{
 		{
 			network: "tcp",

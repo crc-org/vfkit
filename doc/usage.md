@@ -135,7 +135,6 @@ Various devices can be added to the virtual machines. They are all paravirtualiz
 The `--device virtio-blk` option adds a disk to the virtual machine. The disk is backed by an image file on the host machine. This file is a raw image file.
 See also [vz/CreateDiskImage](https://pkg.go.dev/github.com/Code-Hex/vz/v3#CreateDiskImage).
 
-
 #### Thin images
 
 Apple Virtualization Framework only supports raw disk images and ISO images.
@@ -158,6 +157,20 @@ made to the copy-on-write image, and not to the backing file. Only the
 modified data will use actual disk space.
 A copy-on-write image can be created using `cp -c` or [clonefile(2)](http://www.manpagez.com/man/2/clonefile/).
 
+#### Cloud-init
+
+The `--device virtio-blk` option can also be used to supply an initial configuration to cloud-init through a disk image.
+
+The ISO image file must be labelled cidata or CIDATA and it must contain the user-data and meta-data files. 
+It is also possible to add further configurations by using the network-config and vendor-data files.
+See https://cloudinit.readthedocs.io/en/latest/reference/datasources/nocloud.html#runtime-configurations for more details.
+
+To create the ISO image you can use the following command within a folder containing the user-data and meta-data files
+```
+mkisofs -output seed.img -volid cidata -rock {user-data,meta-data}
+```
+
+See https://cloudinit.readthedocs.io/en/latest/reference/datasources/nocloud.html#example-creating-a-disk for further details about how to create a disk image
 
 #### Arguments
 - `path`: the absolute path to the disk image file.
@@ -168,6 +181,11 @@ A copy-on-write image can be created using `cp -c` or [clonefile(2)](http://www.
 This adds a virtio-blk device to the VM which will be backed by the raw image at `/Users/virtuser/vfkit.img`:
 ```
 --device virtio-blk,path=/Users/virtuser/vfkit.img
+```
+
+To also provide the cloud-init configuration you can add an additional virtio-blk device backed by an image containing the cloud-init configuration files
+```
+--device virtio-blk,path=/Users/virtuser/cloudinit.img
 ```
 
 
