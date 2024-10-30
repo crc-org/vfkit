@@ -274,7 +274,7 @@ var jsonStabilityTests = map[string]jsonStabilityTest{
 			return blk
 		},
 
-		skipFields:   []string{"DevName"},
+		skipFields:   []string{"DevName", "URI"},
 		expectedJSON: `{"kind":"virtioblk","devName":"virtio-blk","imagePath":"ImagePath","readOnly":true,"deviceIdentifier":"DeviceIdentifier"}`,
 	},
 	"USBMassStorage": {
@@ -283,7 +283,7 @@ var jsonStabilityTests = map[string]jsonStabilityTest{
 			require.NoError(t, err)
 			return usb
 		},
-		skipFields:   []string{"DevName"},
+		skipFields:   []string{"DevName", "URI"},
 		expectedJSON: `{"kind":"usbmassstorage","devName":"usb-mass-storage","imagePath":"ImagePath","readOnly":true}`,
 	},
 	"NVMExpressController": {
@@ -292,7 +292,7 @@ var jsonStabilityTests = map[string]jsonStabilityTest{
 			require.NoError(t, err)
 			return nvme
 		},
-		skipFields:   []string{"DevName"},
+		skipFields:   []string{"DevName", "URI"},
 		expectedJSON: `{"kind":"nvme","devName":"nvme","imagePath":"ImagePath","readOnly":true}`,
 	},
 	"LinuxBootloader": {

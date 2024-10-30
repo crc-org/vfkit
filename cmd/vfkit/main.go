@@ -189,6 +189,11 @@ func runVirtualMachine(vmConfig *config.VirtualMachine, vm *vf.VirtualMachine) e
 		defer closer.Close()
 	}
 
+	if err := vf.ListenNetworkBlockDevices(vm); err != nil {
+		log.Debugf("%v", err)
+		return err
+	}
+
 	if err := setupGuestTimeSync(vm, vmConfig.TimeSync()); err != nil {
 		log.Warnf("Error configuring guest time synchronization")
 		log.Debugf("%v", err)
