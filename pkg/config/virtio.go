@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // The VirtioDevice interface is an interface which is implemented by all virtio devices.
@@ -108,6 +109,19 @@ type VirtioSerial struct {
 	UsesStdio bool   `json:"usesStdio,omitempty"`
 }
 
+type NBDSynchronizationMode string
+
+const (
+	SynchronizationFullMode NBDSynchronizationMode = "full"
+	SynchronizationNoneMode NBDSynchronizationMode = "none"
+)
+
+type NetworkBlockDevice struct {
+	VirtioBlk
+	Timeout             time.Duration
+	SynchronizationMode NBDSynchronizationMode
+}
+
 // TODO: Add VirtioBalloon
 // https://github.com/Code-Hex/vz/blob/master/memory_balloon.go
 
@@ -170,6 +184,8 @@ func deviceFromCmdLine(deviceOpts string) (VirtioDevice, error) {
 		dev = &VirtioInput{}
 	case "virtio-gpu":
 		dev = &VirtioGPU{}
+	case "nbd":
+		dev = networkBlockDeviceNewEmpty()
 	default:
 		return nil, fmt.Errorf("unknown device type: %s", opts[0])
 	}
@@ -663,6 +679,79 @@ func (dev *RosettaShare) FromOptions(options []option) error {
 	return nil
 }
 
+func networkBlockDeviceNewEmpty() *NetworkBlockDevice {
+	return &NetworkBlockDevice{
+		VirtioBlk: VirtioBlk{
+			StorageConfig: StorageConfig{
+				DevName: "nbd",
+			},
+			DeviceIdentifier: "",
+		},
+		Timeout:             time.Duration(15000 * time.Millisecond), // set a default timeout to 15s
+		SynchronizationMode: SynchronizationFullMode,                 // default mode to full
+	}
+}
+
+// NetworkBlockDeviceNew creates a new disk by connecting to a remote Network Block Device (NBD) server.
+// The provided uri must be in the format <scheme>://<address>/<export-name>
+// where scheme could have any of these value: nbd, nbds, nbd+unix and nbds+unix.
+// More info can be found at https://github.com/NetworkBlockDevice/nbd/blob/master/doc/uri.md
+// This allows the virtual machine to access and use the remote storage as if it were a local disk.
+func NetworkBlockDeviceNew(uri string, timeout uint32, synchronization NBDSynchronizationMode) (*NetworkBlockDevice, error) {
+	nbd := networkBlockDeviceNewEmpty()
+	nbd.URI = uri
+	nbd.Timeout = time.Duration(timeout) * time.Millisecond
+	nbd.SynchronizationMode = synchronization
+
+	return nbd, nil
+}
+
+func (nbd *NetworkBlockDevice) ToCmdLine() ([]string, error) {
+	cmdLine, err := nbd.VirtioBlk.ToCmdLine()
+	if err != nil {
+		return []string{}, err
+	}
+	if len(cmdLine) != 2 {
+		return []string{}, fmt.Errorf("unexpected storage config commandline")
+	}
+
+	if nbd.Timeout.Milliseconds() > 0 {
+		cmdLine[1] = fmt.Sprintf("%s,timeout=%d", cmdLine[1], nbd.Timeout.Milliseconds())
+	}
+	if nbd.SynchronizationMode == "none" || nbd.SynchronizationMode == "full" {
+		cmdLine[1] = fmt.Sprintf("%s,sync=%s", cmdLine[1], nbd.SynchronizationMode)
+	}
+
+	return cmdLine, nil
+}
+
+func (nbd *NetworkBlockDevice) FromOptions(options []option) error {
+	unhandledOpts := []option{}
+	for _, option := range options {
+		switch option.key {
+		case "timeout":
+			timeoutMS, err := strconv.ParseInt(option.value, 10, 32)
+			if err != nil {
+				return err
+			}
+			nbd.Timeout = time.Duration(timeoutMS) * time.Millisecond
+		case "sync":
+			switch option.value {
+			case string(SynchronizationFullMode):
+				nbd.SynchronizationMode = SynchronizationFullMode
+			case string(SynchronizationNoneMode):
+				nbd.SynchronizationMode = SynchronizationNoneMode
+			default:
+				return fmt.Errorf("invalid sync mode: %s, must be 'full' or 'none'", option.value)
+			}
+		default:
+			unhandledOpts = append(unhandledOpts, option)
+		}
+	}
+
+	return nbd.VirtioBlk.FromOptions(unhandledOpts)
+}
+
 type USBMassStorage struct {
 	StorageConfig
 }
@@ -691,15 +780,26 @@ func (dev *USBMassStorage) SetReadOnly(readOnly bool) {
 // StorageConfig configures a disk device.
 type StorageConfig struct {
 	DevName   string `json:"devName"`
-	ImagePath string `json:"imagePath"`
+	ImagePath string `json:"imagePath,omitempty"`
+	URI       string `json:"uri,omitempty"`
 	ReadOnly  bool   `json:"readOnly,omitempty"`
 }
 
 func (config *StorageConfig) ToCmdLine() ([]string, error) {
-	if config.ImagePath == "" {
-		return nil, fmt.Errorf("%s devices need the path to a disk image", config.DevName)
+	if config.ImagePath != "" && config.URI != "" {
+		return nil, fmt.Errorf("%s devices cannot have both path to a disk image and a uri to a remote block device", config.DevName)
 	}
-	value := fmt.Sprintf("%s,path=%s", config.DevName, config.ImagePath)
+	if config.ImagePath == "" && config.URI == "" {
+		return nil, fmt.Errorf("%s devices need a path to a disk image or a uri to a remote block device", config.DevName)
+	}
+	var value string
+	if config.ImagePath != "" {
+		value = fmt.Sprintf("%s,path=%s", config.DevName, config.ImagePath)
+	}
+	if config.URI != "" {
+		value = fmt.Sprintf("%s,uri=%s", config.DevName, config.URI)
+	}
+
 	if config.ReadOnly {
 		value += ",readonly"
 	}
@@ -711,6 +811,8 @@ func (config *StorageConfig) FromOptions(options []option) error {
 		switch option.key {
 		case "path":
 			config.ImagePath = option.value
+		case "uri":
+			config.URI = option.value
 		case "readonly":
 			if option.value != "" {
 				return fmt.Errorf("unexpected value for virtio-blk 'readonly' option: %s", option.value)
