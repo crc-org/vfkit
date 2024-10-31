@@ -29,6 +29,7 @@ const (
 	nvme           vmComponentKind = "nvme"
 	rosetta        vmComponentKind = "rosetta"
 	ignition       vmComponentKind = "ignition"
+	vfNbd          vmComponentKind = "nbd"
 )
 
 type jsonKind struct {
@@ -172,6 +173,10 @@ func unmarshalDevice(rawMsg json.RawMessage) (VirtioDevice, error) {
 		dev = &newDevice
 	case usbMassStorage:
 		var newDevice USBMassStorage
+		err = json.Unmarshal(rawMsg, &newDevice)
+		dev = &newDevice
+	case vfNbd:
+		var newDevice NetworkBlockDevice
 		err = json.Unmarshal(rawMsg, &newDevice)
 		dev = &newDevice
 	default:
@@ -393,5 +398,16 @@ func (ign *Ignition) MarshalJSON() ([]byte, error) {
 	return json.Marshal(devWithKind{
 		jsonKind: kind(ignition),
 		Ignition: *ign,
+	})
+}
+
+func (dev *NetworkBlockDevice) MarshalJSON() ([]byte, error) {
+	type devWithKind struct {
+		jsonKind
+		NetworkBlockDevice
+	}
+	return json.Marshal(devWithKind{
+		jsonKind:           kind(vfNbd),
+		NetworkBlockDevice: *dev,
 	})
 }
