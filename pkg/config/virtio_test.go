@@ -2,6 +2,7 @@ package config
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -12,6 +13,7 @@ type virtioDevTest struct {
 	expectedDev      VirtioDevice
 	expectedCmdLine  []string
 	alternateCmdLine []string
+	errorMsg         string
 }
 
 var virtioDevTests = map[string]virtioDevTest{
@@ -223,6 +225,41 @@ var virtioDevTests = map[string]virtioDevTest{
 		},
 		expectedCmdLine: []string{"--device", "virtio-gpu,width=1920,height=1080"},
 	},
+	"NetworkBlockDeviceNew": {
+		newDev: func() (VirtioDevice, error) {
+			return NetworkBlockDeviceNew("nbd://1.1.1.1:10000", 1000, SynchronizationNoneMode)
+		},
+		expectedDev: &NetworkBlockDevice{
+			VirtioBlk: VirtioBlk{
+				StorageConfig: StorageConfig{
+					DevName: "nbd",
+					URI:     "nbd://1.1.1.1:10000",
+				},
+				DeviceIdentifier: "",
+			},
+			Timeout:             time.Duration(1000 * time.Millisecond),
+			SynchronizationMode: SynchronizationNoneMode,
+		},
+		expectedCmdLine: []string{"--device", "nbd,uri=nbd://1.1.1.1:10000,timeout=1000,sync=none"},
+	},
+	"StorageConfigErrorImageUri": {
+		newDev: func() (VirtioDevice, error) {
+			return &StorageConfig{
+				DevName:   "dev",
+				ImagePath: "path",
+				URI:       "uri",
+			}, nil
+		},
+		errorMsg: "dev devices cannot have both path to a disk image and a uri to a remote block device",
+	},
+	"StorageConfigErrorNoImageOrUri": {
+		newDev: func() (VirtioDevice, error) {
+			return &StorageConfig{
+				DevName: "dev",
+			}, nil
+		},
+		errorMsg: "dev devices need a path to a disk image or a uri to a remote block device",
+	},
 }
 
 func testVirtioDev(t *testing.T, test *virtioDevTest) {
@@ -252,12 +289,25 @@ func testVirtioDev(t *testing.T, test *virtioDevTest) {
 
 }
 
+func testErrorVirtioDev(t *testing.T, test *virtioDevTest) {
+	dev, err := test.newDev()
+	require.NoError(t, err)
+
+	_, err = dev.ToCmdLine()
+	require.Error(t, err)
+	require.EqualError(t, err, test.errorMsg)
+}
+
 func TestVirtioDevices(t *testing.T) {
 	t.Run("virtio-devices", func(t *testing.T) {
 		for name := range virtioDevTests {
 			t.Run(name, func(t *testing.T) {
 				test := virtioDevTests[name]
-				testVirtioDev(t, &test)
+				if test.errorMsg != "" {
+					testErrorVirtioDev(t, &test)
+				} else {
+					testVirtioDev(t, &test)
+				}
 			})
 		}
 
