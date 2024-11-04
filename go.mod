@@ -3,7 +3,7 @@ module github.com/crc-org/vfkit
 go 1.22.0
 
 require (
-	github.com/Code-Hex/vz/v3 v3.1.0
+	github.com/Code-Hex/vz/v3 v3.3.0
 	github.com/cavaliergopher/grab/v3 v3.0.1
 	github.com/containers/common v0.60.4
 	github.com/crc-org/crc/v2 v2.42.0
@@ -13,6 +13,7 @@ require (
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.9.0
+	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8
 	golang.org/x/crypto v0.28.0
 	golang.org/x/mod v0.21.0
 	golang.org/x/sys v0.26.0
@@ -61,7 +62,6 @@ require (
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
-	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	golang.org/x/arch v0.8.0 // indirect
 	golang.org/x/net v0.29.0 // indirect
