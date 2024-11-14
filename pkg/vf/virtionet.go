@@ -2,6 +2,7 @@ package vf
 
 import (
 	"fmt"
+	"math/rand"
 	"net"
 	"os"
 	"os/signal"
@@ -19,36 +20,46 @@ type VirtioNet struct {
 	localAddr *net.UnixAddr
 }
 
-func localUnixSocketPath() (string, error) {
-	homeDir, err := os.UserHomeDir()
+func localUnixSocketPath(dir string) (string, error) {
+	// unix socket endpoints are filesystem paths, but their max length is
+	// quite small (a bit over 100 bytes).
+	// In this function we try to build a filename which is relatively
+	// unique, not easily guessable (to prevent hostile collisions), and
+	// short (`os.CreateTemp` filenames are a bit too long)
+	//
+	// os.Getpid() is unique but guessable. We append a short 16 bit random
+	// number to it. We only use hex values to make the representation more
+	// compact
+	filename := filepath.Join(dir, fmt.Sprintf("vfkit-%x-%x.sock", os.Getpid(), rand.Int31n(0xffff))) //#nosec G404 -- no need for crypto/rand here
+
+	tmpFile, err := os.OpenFile(filename, os.O_CREATE|os.O_EXCL, 0600)
 	if err != nil {
 		return "", err
 	}
-	dir := filepath.Join(homeDir, "Library", "Application Support", "vfkit")
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return "", err
-	}
-	tmpFile, err := os.CreateTemp(dir, fmt.Sprintf("net-%d-*.sock", os.Getpid()))
-	if err != nil {
-		return "", err
-	}
-	// slightly racy, but this is in a directory only user-writable
+	// slightly racy, but hopefully this is in a directory only user-writable
 	defer tmpFile.Close()
 	defer os.Remove(tmpFile.Name())
 
 	return tmpFile.Name(), nil
 }
 
+// path for unixgram sockets must be less than 104 bytes on macOS
+const maxUnixgramPathLen = 104
+
 func (dev *VirtioNet) connectUnixPath() error {
+
 	remoteAddr := net.UnixAddr{
 		Name: dev.UnixSocketPath,
 		Net:  "unixgram",
 	}
-	localSocketPath, err := localUnixSocketPath()
+	localSocketPath, err := localUnixSocketPath(filepath.Dir(dev.UnixSocketPath))
 	if err != nil {
 		return err
 	}
-	// FIXME: need to remove localSocketPath at process  exit
+	if len(localSocketPath) >= maxUnixgramPathLen {
+		return fmt.Errorf("unixgram path '%s' is too long: %d >= %d bytes", localSocketPath, len(localSocketPath), maxUnixgramPathLen)
+	}
+	// FIXME: need to remove localSocketPath at process exit
 	localAddr := net.UnixAddr{
 		Name: localSocketPath,
 		Net:  "unixgram",
