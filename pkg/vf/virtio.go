@@ -2,8 +2,10 @@ package vf
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"syscall"
 
 	"github.com/crc-org/vfkit/pkg/config"
@@ -25,6 +27,12 @@ type VirtioSerial config.VirtioSerial
 type VirtioVsock config.VirtioVsock
 type VirtioInput config.VirtioInput
 type VirtioGPU config.VirtioGPU
+type NetworkBlockDevice config.NetworkBlockDevice
+
+type vzNetworkBlockDevice struct {
+	*vz.VirtioBlockDeviceConfiguration
+	config *NetworkBlockDevice
+}
 
 func (dev *NVMExpressController) toVz() (vz.StorageDeviceConfiguration, error) {
 	var storageConfig StorageConfig = StorageConfig(dev.StorageConfig)
@@ -289,6 +297,108 @@ func (dev *VirtioVsock) AddToVirtualMachineConfig(vmConfig *VirtualMachineConfig
 	return nil
 }
 
+func (dev *NetworkBlockDevice) toVz() (vz.StorageDeviceConfiguration, error) {
+	if err := dev.validateNbdURI(dev.URI); err != nil {
+		return nil, fmt.Errorf("invalid NBD device 'uri': %s", err.Error())
+	}
+
+	if err := dev.validateNbdDeviceIdentifier(dev.DeviceIdentifier); err != nil {
+		return nil, fmt.Errorf("invalid NBD device 'deviceId': %s", err.Error())
+	}
+
+	attachment, err := vz.NewNetworkBlockDeviceStorageDeviceAttachment(dev.URI, dev.Timeout, dev.ReadOnly, dev.SynchronizationModeVZ())
+	if err != nil {
+		return nil, err
+	}
+
+	vzdev, err := vz.NewVirtioBlockDeviceConfiguration(attachment)
+	if err != nil {
+		return nil, err
+	}
+	err = vzdev.SetBlockDeviceIdentifier(dev.DeviceIdentifier)
+	if err != nil {
+		return nil, err
+	}
+
+	return vzNetworkBlockDevice{VirtioBlockDeviceConfiguration: vzdev, config: dev}, nil
+}
+
+func (dev *NetworkBlockDevice) validateNbdURI(uri string) error {
+	if uri == "" {
+		return fmt.Errorf("'uri' must be specified")
+	}
+
+	parsed, err := url.Parse(uri)
+	if err != nil {
+		return fmt.Errorf("error: %w", err)
+	}
+
+	// The format specified by https://github.com/NetworkBlockDevice/nbd/blob/master/doc/uri.md
+	if parsed.Scheme != "nbd" && parsed.Scheme != "nbds" && parsed.Scheme != "nbd+unix" && parsed.Scheme != "nbds+unix" {
+		return fmt.Errorf("invalid scheme: %s. Expected one of: 'nbd', 'nbds', 'nbd+unix', or 'nbds+unix'", parsed.Scheme)
+	}
+
+	return nil
+}
+
+func (dev *NetworkBlockDevice) validateNbdDeviceIdentifier(deviceID string) error {
+	if deviceID == "" {
+		return fmt.Errorf("'deviceId' must be specified")
+	}
+
+	if strings.Contains(deviceID, "/") {
+		return fmt.Errorf("invalid 'deviceId': it cannot contain any forward slash")
+	}
+
+	if len(deviceID) > 255 {
+		return fmt.Errorf("invalid 'deviceId': exceeds maximum length")
+	}
+
+	return nil
+}
+
+func (dev *NetworkBlockDevice) SynchronizationModeVZ() vz.DiskSynchronizationMode {
+	if dev.SynchronizationMode == config.SynchronizationNoneMode {
+		return vz.DiskSynchronizationModeNone
+	}
+	return vz.DiskSynchronizationModeFull
+}
+
+func (dev *NetworkBlockDevice) AddToVirtualMachineConfig(vmConfig *VirtualMachineConfiguration) error {
+	storageDeviceConfig, err := dev.toVz()
+	if err != nil {
+		return err
+	}
+	log.Infof("Adding NBD device (uri: %s, deviceId: %s)", dev.URI, dev.DeviceIdentifier)
+	vmConfig.storageDevicesConfiguration = append(vmConfig.storageDevicesConfiguration, storageDeviceConfig)
+
+	return nil
+}
+
+func ListenNetworkBlockDevices(vm *VirtualMachine) error {
+	for _, dev := range vm.vfConfig.storageDevicesConfiguration {
+		if nbdDev, isNbdDev := dev.(vzNetworkBlockDevice); isNbdDev {
+			nbdAttachment, isNbdAttachment := dev.Attachment().(*vz.NetworkBlockDeviceStorageDeviceAttachment)
+			if !isNbdAttachment {
+				log.Info("Found NBD device with no NBD attachment. Please file a vfkit bug.")
+				return fmt.Errorf("NetworkBlockDevice must use a NBD attachment")
+			}
+			nbdConfig := nbdDev.config
+			go func() {
+				for {
+					select {
+					case err := <-nbdAttachment.DidEncounterError():
+						log.Infof("Disconnected from NBD server %s. Error %v", nbdConfig.URI, err.Error())
+					case <-nbdAttachment.Connected():
+						log.Infof("Successfully connected to NBD server %s.", nbdConfig.URI)
+					}
+				}
+			}()
+		}
+	}
+	return nil
+}
+
 func AddToVirtualMachineConfig(vmConfig *VirtualMachineConfiguration, dev config.VirtioDevice) error {
 	switch d := dev.(type) {
 	case *config.USBMassStorage:
@@ -314,6 +424,8 @@ func AddToVirtualMachineConfig(vmConfig *VirtualMachineConfiguration, dev config
 		return (*VirtioInput)(d).AddToVirtualMachineConfig(vmConfig)
 	case *config.VirtioGPU:
 		return (*VirtioGPU)(d).AddToVirtualMachineConfig(vmConfig)
+	case *config.NetworkBlockDevice:
+		return (*NetworkBlockDevice)(d).AddToVirtualMachineConfig(vmConfig)
 	default:
 		return fmt.Errorf("Unexpected virtio device type: %T", d)
 	}

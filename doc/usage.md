@@ -223,6 +223,28 @@ This adds a read only USB mass storage device to the VM which will be backed by 
 --device usb-mass-storage,path=/Users/virtuser/distro.iso,readonly
 ```
 
+### Network Block Device
+
+#### Description
+
+The `--device nbd` option allows to connect to a remote NBD server, effectively accessing a remote block device over the network as if it were a local disk.
+
+The NBD client running on the VM is informed in case the connection drops and it tries to reconnect automatically to the server.
+
+#### Arguments
+- `uri`: the URI that refers to the NBD server to which the NBD client will connect, e.g. `nbd://10.10.2.8:10000/export`. More info at https://github.com/NetworkBlockDevice/nbd/blob/master/doc/uri.md
+- `deviceId`: `/dev/disk/by-id/virtio-` identifier to use for this device.
+- `sync`: the mode in which the NBD client synchronizes data with the NBD server. It can be `full`or `none`, more info at https://developer.apple.com/documentation/virtualization/vzdisksynchronizationmode?language=objc
+- `timeout`: the timeout value in milliseconds for the connection between the client and server
+- `readonly`: if specified the device will be read only.
+
+#### Example
+
+This allows to connect to the export of the remote NBD server:
+```
+--device nbd,uri=nbd://192.168.64.4:11111/export,deviceId=nbd1,timeout=3000
+```
+
 
 ### Networking
 

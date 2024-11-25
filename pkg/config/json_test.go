@@ -170,12 +170,15 @@ var jsonTests = map[string]jsonTest{
 			// rosetta
 			rosetta, err := RosettaShareNew("vz-rosetta")
 			require.NoError(t, err)
-			err = vm.AddDevices(fs, usb, rosetta)
+			// NBD
+			nbd, err := NetworkBlockDeviceNew("uri", 1, SynchronizationFullMode)
+			require.NoError(t, err)
+			err = vm.AddDevices(fs, usb, rosetta, nbd)
 			require.NoError(t, err)
 
 			return vm
 		},
-		expectedJSON: `{"vcpus":3,"memoryBytes":4194304000,"bootloader":{"kind":"linuxBootloader","vmlinuzPath":"/vmlinuz","initrdPath":"/initrd","kernelCmdLine":"console=hvc0"},"devices":[{"kind":"virtioserial","logFile":"/virtioserial"},{"kind":"virtioinput","inputType":"keyboard"},{"kind":"virtiogpu","usesGUI":false,"width":800,"height":600},{"kind":"virtionet","nat":true,"macAddress":"00:11:22:33:44:55"},{"kind":"virtiorng"},{"kind":"virtioblk","devName":"virtio-blk","imagePath":"/virtioblk"},{"kind":"virtiosock","port":1234,"socketURL":"/virtiovsock"},{"kind":"virtiofs","mountTag":"tag","sharedDir":"/virtiofs"},{"kind":"usbmassstorage","devName":"usb-mass-storage","imagePath":"/usbmassstorage","readOnly":true},{"kind":"rosetta","mountTag":"vz-rosetta","installRosetta":false,"ignoreIfMissing":false}]}`,
+		expectedJSON: `{"vcpus":3,"memoryBytes":4194304000,"bootloader":{"kind":"linuxBootloader","vmlinuzPath":"/vmlinuz","initrdPath":"/initrd","kernelCmdLine":"console=hvc0"},"devices":[{"kind":"virtioserial","logFile":"/virtioserial"},{"kind":"virtioinput","inputType":"keyboard"},{"kind":"virtiogpu","usesGUI":false,"width":800,"height":600},{"kind":"virtionet","nat":true,"macAddress":"00:11:22:33:44:55"},{"kind":"virtiorng"},{"kind":"virtioblk","devName":"virtio-blk","imagePath":"/virtioblk"},{"kind":"virtiosock","port":1234,"socketURL":"/virtiovsock"},{"kind":"virtiofs","mountTag":"tag","sharedDir":"/virtiofs"},{"kind":"usbmassstorage","devName":"usb-mass-storage","imagePath":"/usbmassstorage","readOnly":true},{"kind":"rosetta","mountTag":"vz-rosetta","installRosetta":false,"ignoreIfMissing":false},{"kind":"nbd", "devName":"nbd", "uri":"uri", "SynchronizationMode":"full","Timeout":1000000}]}`,
 	},
 }
 
@@ -274,7 +277,7 @@ var jsonStabilityTests = map[string]jsonStabilityTest{
 			return blk
 		},
 
-		skipFields:   []string{"DevName"},
+		skipFields:   []string{"DevName", "URI"},
 		expectedJSON: `{"kind":"virtioblk","devName":"virtio-blk","imagePath":"ImagePath","readOnly":true,"deviceIdentifier":"DeviceIdentifier"}`,
 	},
 	"USBMassStorage": {
@@ -283,7 +286,7 @@ var jsonStabilityTests = map[string]jsonStabilityTest{
 			require.NoError(t, err)
 			return usb
 		},
-		skipFields:   []string{"DevName"},
+		skipFields:   []string{"DevName", "URI"},
 		expectedJSON: `{"kind":"usbmassstorage","devName":"usb-mass-storage","imagePath":"ImagePath","readOnly":true}`,
 	},
 	"NVMExpressController": {
@@ -292,7 +295,7 @@ var jsonStabilityTests = map[string]jsonStabilityTest{
 			require.NoError(t, err)
 			return nvme
 		},
-		skipFields:   []string{"DevName"},
+		skipFields:   []string{"DevName", "URI"},
 		expectedJSON: `{"kind":"nvme","devName":"nvme","imagePath":"ImagePath","readOnly":true}`,
 	},
 	"LinuxBootloader": {
@@ -306,6 +309,15 @@ var jsonStabilityTests = map[string]jsonStabilityTest{
 	"TimeSync": {
 		obj:          &TimeSync{},
 		expectedJSON: `{"vsockPort":3}`,
+	},
+	"NetworkBlockDevice": {
+		newObjectFunc: func(t *testing.T) any {
+			nbd, err := NetworkBlockDeviceNew("uri", 1000, SynchronizationFullMode)
+			require.NoError(t, err)
+			return nbd
+		},
+		skipFields:   []string{"DevName", "ImagePath"},
+		expectedJSON: `{"kind":"nbd","deviceIdentifier":"DeviceIdentifier","devName":"nbd","uri":"URI","readOnly":true,"SynchronizationMode":"SynchronizationMode","Timeout":2}`,
 	},
 }
 

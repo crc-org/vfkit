@@ -178,6 +178,16 @@ func (vm *VirtualMachine) VirtioVsockDevices() []*VirtioVsock {
 	return vsockDevs
 }
 
+func (vm *VirtualMachine) NetworkBlockDevice(deviceID string) *NetworkBlockDevice {
+	for _, dev := range vm.Devices {
+		if nbdDev, isNbdDev := dev.(*NetworkBlockDevice); isNbdDev && nbdDev.DeviceIdentifier == deviceID {
+			return nbdDev
+		}
+	}
+
+	return nil
+}
+
 // AddDevice adds a dev to vm. This device can be created with one of the
 // VirtioXXXNew methods.
 func (vm *VirtualMachine) AddDevice(dev VirtioDevice) error {
