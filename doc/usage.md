@@ -461,7 +461,7 @@ None
 
 To interact with the RESTful API, append a valid scheme to your base command: `--restful-uri tcp://localhost:8081`.
 
-### Get VM state
+### Get the virtual machine's state
 
 Obtain the state of the virtual machine that is being run by vfkit.
 
@@ -474,8 +474,9 @@ Response:
 `{ "state": string, "canStart": bool, "canPause": bool, "canResume": bool, "canStop": bool, "canHardStop": bool }`
 
 `canHardStop` is only supported on macOS 12 and newer, false will always be returned on older versions.
+`state` is one of `VirtualMachineStateRunning`, `VirtualMachineStateStopped`, `VirtualMachineStatePaused`, `VirtualMachineStateError`, `VirtualMachineStateStarting`, `VirtualMachineStatePausing`, `VirtualMachineStateResuming`, `VirtualMachineStateStopping`, `VirtualMachineStateSaving`, or `VirtualMachineStateRestoring`.
 
-### Change VM State
+### Change the virtual machine's state
 
 Change the state of the virtual machine. Valid state values are:
 * HardStop
@@ -486,7 +487,7 @@ Change the state of the virtual machine. Valid state values are:
 ```HTTP
 POST /vm/state { "state": "new value"}
 ```
-Response: HTTP 200
+Response: `HTTP 200`
 
 ### Inspect VM
 
@@ -496,7 +497,7 @@ Get description of the virtual machine
 GET /vm/inspect
 ```
 
-Response: { "cpus": uint, "memory": uint64, "devices": []config.VirtIODevice }
+Response: `{ "cpus": uint, "memory": uint64, "devices": []config.VirtIODevice }`
 
 ## Enabling a Graphical User Interface
 
