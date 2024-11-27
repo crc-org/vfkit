@@ -35,7 +35,7 @@ type vzNetworkBlockDevice struct {
 }
 
 func (dev *NVMExpressController) toVz() (vz.StorageDeviceConfiguration, error) {
-	var storageConfig StorageConfig = StorageConfig(dev.StorageConfig)
+	var storageConfig DiskStorageConfig = DiskStorageConfig(dev.DiskStorageConfig)
 	attachment, err := storageConfig.toVz()
 	if err != nil {
 		return nil, err
@@ -60,7 +60,7 @@ func (dev *NVMExpressController) AddToVirtualMachineConfig(vmConfig *VirtualMach
 }
 
 func (dev *VirtioBlk) toVz() (vz.StorageDeviceConfiguration, error) {
-	var storageConfig StorageConfig = StorageConfig(dev.StorageConfig)
+	var storageConfig DiskStorageConfig = DiskStorageConfig(dev.DiskStorageConfig)
 	attachment, err := storageConfig.toVz()
 	if err != nil {
 		return nil, err
@@ -431,7 +431,7 @@ func AddToVirtualMachineConfig(vmConfig *VirtualMachineConfiguration, dev config
 	}
 }
 
-func (config *StorageConfig) toVz() (vz.StorageDeviceAttachment, error) {
+func (config *DiskStorageConfig) toVz() (vz.StorageDeviceAttachment, error) {
 	if config.ImagePath == "" {
 		return nil, fmt.Errorf("missing mandatory 'path' option for %s device", config.DevName)
 	}
@@ -441,7 +441,7 @@ func (config *StorageConfig) toVz() (vz.StorageDeviceAttachment, error) {
 }
 
 func (dev *USBMassStorage) toVz() (vz.StorageDeviceConfiguration, error) {
-	var storageConfig StorageConfig = StorageConfig(dev.StorageConfig)
+	var storageConfig DiskStorageConfig = DiskStorageConfig(dev.DiskStorageConfig)
 	attachment, err := storageConfig.toVz()
 	if err != nil {
 		return nil, err
@@ -460,6 +460,6 @@ func (dev *USBMassStorage) AddToVirtualMachineConfig(vmConfig *VirtualMachineCon
 	return nil
 }
 
-type StorageConfig config.StorageConfig
+type DiskStorageConfig config.DiskStorageConfig
 
 type USBMassStorage config.USBMassStorage

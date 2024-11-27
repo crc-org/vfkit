@@ -20,8 +20,10 @@ var virtioDevTests = map[string]virtioDevTest{
 	"NewVirtioBlk": {
 		newDev: func() (VirtioDevice, error) { return VirtioBlkNew("/foo/bar") },
 		expectedDev: &VirtioBlk{
-			StorageConfig: StorageConfig{
-				DevName:   "virtio-blk",
+			DiskStorageConfig: DiskStorageConfig{
+				StorageConfig: StorageConfig{
+					DevName: "virtio-blk",
+				},
 				ImagePath: "/foo/bar",
 			},
 			DeviceIdentifier: "",
@@ -38,8 +40,10 @@ var virtioDevTests = map[string]virtioDevTest{
 			return dev, nil
 		},
 		expectedDev: &VirtioBlk{
-			StorageConfig: StorageConfig{
-				DevName:   "virtio-blk",
+			DiskStorageConfig: DiskStorageConfig{
+				StorageConfig: StorageConfig{
+					DevName: "virtio-blk",
+				},
 				ImagePath: "/foo/bar",
 			},
 			DeviceIdentifier: "test",
@@ -50,8 +54,10 @@ var virtioDevTests = map[string]virtioDevTest{
 	"NewNVMe": {
 		newDev: func() (VirtioDevice, error) { return NVMExpressControllerNew("/foo/bar") },
 		expectedDev: &NVMExpressController{
-			StorageConfig: StorageConfig{
-				DevName:   "nvme",
+			DiskStorageConfig: DiskStorageConfig{
+				StorageConfig: StorageConfig{
+					DevName: "nvme",
+				},
 				ImagePath: "/foo/bar",
 			},
 		},
@@ -156,8 +162,10 @@ var virtioDevTests = map[string]virtioDevTest{
 	"NewUSBMassStorage": {
 		newDev: func() (VirtioDevice, error) { return USBMassStorageNew("/foo/bar") },
 		expectedDev: &USBMassStorage{
-			StorageConfig: StorageConfig{
-				DevName:   "usb-mass-storage",
+			DiskStorageConfig: DiskStorageConfig{
+				StorageConfig: StorageConfig{
+					DevName: "usb-mass-storage",
+				},
 				ImagePath: "/foo/bar",
 			},
 		},
@@ -173,10 +181,12 @@ var virtioDevTests = map[string]virtioDevTest{
 			return dev, err
 		},
 		expectedDev: &USBMassStorage{
-			StorageConfig: StorageConfig{
-				DevName:   "usb-mass-storage",
+			DiskStorageConfig: DiskStorageConfig{
+				StorageConfig: StorageConfig{
+					DevName:  "usb-mass-storage",
+					ReadOnly: true,
+				},
 				ImagePath: "/foo/bar",
-				ReadOnly:  true,
 			},
 		},
 		expectedCmdLine: []string{"--device", "usb-mass-storage,path=/foo/bar,readonly"},
@@ -223,35 +233,17 @@ var virtioDevTests = map[string]virtioDevTest{
 			return NetworkBlockDeviceNew("nbd://1.1.1.1:10000", 1000, SynchronizationNoneMode)
 		},
 		expectedDev: &NetworkBlockDevice{
-			VirtioBlk: VirtioBlk{
+			NetworkBlockStorageConfig: NetworkBlockStorageConfig{
 				StorageConfig: StorageConfig{
 					DevName: "nbd",
-					URI:     "nbd://1.1.1.1:10000",
 				},
-				DeviceIdentifier: "",
+				URI: "nbd://1.1.1.1:10000",
 			},
+			DeviceIdentifier:    "",
 			Timeout:             time.Duration(1000 * time.Millisecond),
 			SynchronizationMode: SynchronizationNoneMode,
 		},
 		expectedCmdLine: []string{"--device", "nbd,uri=nbd://1.1.1.1:10000,timeout=1000,sync=none"},
-	},
-	"StorageConfigErrorImageUri": {
-		newDev: func() (VirtioDevice, error) {
-			return &StorageConfig{
-				DevName:   "dev",
-				ImagePath: "path",
-				URI:       "uri",
-			}, nil
-		},
-		errorMsg: "dev devices cannot have both path to a disk image and a uri to a remote block device",
-	},
-	"StorageConfigErrorNoImageOrUri": {
-		newDev: func() (VirtioDevice, error) {
-			return &StorageConfig{
-				DevName: "dev",
-			}, nil
-		},
-		errorMsg: "dev devices need a path to a disk image or a uri to a remote block device",
 	},
 }
 
