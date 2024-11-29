@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"github.com/crc-org/vfkit/pkg/config"
+	"github.com/crc-org/vfkit/pkg/util"
 
 	"github.com/Code-Hex/vz/v3"
 	"github.com/onsi/gocleanup"
@@ -102,7 +103,7 @@ func (dev *VirtioNet) connectUnixPath() error {
 	dev.Socket = fd
 	dev.localAddr = &localAddr
 	dev.UnixSocketPath = ""
-	gocleanup.Register(func() { _ = dev.Shutdown() })
+	util.RegisterExitHandler(func() { _ = dev.Shutdown() })
 	return nil
 }
 
