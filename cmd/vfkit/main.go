@@ -243,6 +243,11 @@ func startIgnitionProvisionerServer(ignitionReader io.Reader, ignitionSocketPath
 	if err != nil {
 		return err
 	}
+
+	util.RegisterExitHandler(func() {
+		os.Remove(ignitionSocketPath)
+	})
+
 	defer func() {
 		if err := listener.Close(); err != nil {
 			log.Error(err)
