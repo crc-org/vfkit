@@ -1,0 +1,44 @@
+package util
+
+import (
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
+)
+
+var exitHandlers []func()
+
+// RegisterExitHandler appends a func Exit handler to the list of handlers.
+// The handlers will be invoked when vfkit receives a termination or interruption signal
+//
+// This method is useful when a caller wishes to execute a func before a shutdown.
+func RegisterExitHandler(handler func()) {
+	exitHandlers = append(exitHandlers, handler)
+}
+
+// SetupExitSignalHandling sets up a signal channel to listen for termination or interruption signals.
+// When one of these signals is received, all the registered exit handlers will be invoked, just
+// before terminating the program.
+func SetupExitSignalHandling() {
+	setupExitSignalHandling(true)
+}
+
+// setupExitSignalHandling sets up a signal channel to listen for termination or interruption signals.
+// When one of these signals is received, all the registered exit handlers will be invoked.
+// It is possible to prevent the program from exiting by setting the doExit param to false (used for testing)
+func setupExitSignalHandling(doExit bool) {
+	sigChan := make(chan os.Signal, 2)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
+	go func() {
+		for sig := range sigChan {
+			log.Printf("captured %v, calling exit handlers and exiting..", sig)
+			for _, handler := range exitHandlers {
+				handler()
+			}
+			if doExit {
+				os.Exit(1)
+			}
+		}
+	}()
+}
