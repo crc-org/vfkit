@@ -6,7 +6,7 @@ require (
 	github.com/Code-Hex/vz/v3 v3.5.1
 	github.com/cavaliergopher/grab/v3 v3.0.1
 	github.com/containers/common v0.60.4
-	github.com/crc-org/crc/v2 v2.44.0
+	github.com/crc-org/crc/v2 v2.45.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/prashantgupta24/mac-sleep-notifier v1.0.1
 	github.com/sirupsen/logrus v1.9.3
@@ -14,15 +14,15 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.10.0
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8
-	golang.org/x/crypto v0.29.0
+	golang.org/x/crypto v0.30.0
 	golang.org/x/mod v0.22.0
-	golang.org/x/sys v0.27.0
+	golang.org/x/sys v0.28.0
 	inet.af/tcpproxy v0.0.0-20231102063150-2862066fc2a9
 )
 
 require (
 	github.com/Code-Hex/go-infinity-channel v1.0.0 // indirect
-	github.com/Masterminds/semver/v3 v3.3.0 // indirect
+	github.com/Masterminds/semver/v3 v3.3.1 // indirect
 	github.com/VividCortex/ewma v1.2.0 // indirect
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
@@ -64,9 +64,9 @@ require (
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	golang.org/x/arch v0.8.0 // indirect
-	golang.org/x/net v0.31.0 // indirect
-	golang.org/x/term v0.26.0 // indirect
-	golang.org/x/text v0.20.0 // indirect
+	golang.org/x/net v0.32.0 // indirect
+	golang.org/x/term v0.27.0 // indirect
+	golang.org/x/text v0.21.0 // indirect
 	google.golang.org/protobuf v1.35.1 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
