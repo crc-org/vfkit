@@ -178,7 +178,7 @@ var jsonTests = map[string]jsonTest{
 
 			return vm
 		},
-		expectedJSON: `{"vcpus":3,"memoryBytes":4194304000,"bootloader":{"kind":"linuxBootloader","vmlinuzPath":"/vmlinuz","initrdPath":"/initrd","kernelCmdLine":"console=hvc0"},"devices":[{"kind":"virtioserial","logFile":"/virtioserial"},{"kind":"virtioinput","inputType":"keyboard"},{"kind":"virtiogpu","usesGUI":false,"width":800,"height":600},{"kind":"virtionet","nat":true,"macAddress":"00:11:22:33:44:55"},{"kind":"virtiorng"},{"kind":"virtioblk","devName":"virtio-blk","imagePath":"/virtioblk"},{"kind":"virtiosock","port":1234,"socketURL":"/virtiovsock"},{"kind":"virtiofs","mountTag":"tag","sharedDir":"/virtiofs"},{"kind":"usbmassstorage","devName":"usb-mass-storage","imagePath":"/usbmassstorage","readOnly":true},{"kind":"rosetta","mountTag":"vz-rosetta","installRosetta":false,"ignoreIfMissing":false},{"kind":"nbd", "devName":"nbd", "uri":"uri", "SynchronizationMode":"full","Timeout":1000000}]}`,
+		expectedJSON: `{"vcpus":3,"memoryBytes":4194304000,"bootloader":{"kind":"linuxBootloader","vmlinuzPath":"/vmlinuz","initrdPath":"/initrd","kernelCmdLine":"console=hvc0"},"devices":[{"kind":"virtioserial","logFile":"/virtioserial"},{"kind":"virtioinput","inputType":"keyboard"},{"kind":"virtiogpu","usesGUI":false,"width":800,"height":600},{"kind":"virtionet","nat":true,"macAddress":"00:11:22:33:44:55"},{"kind":"virtiorng"},{"kind":"virtioblk","devName":"virtio-blk","imagePath":"/virtioblk"},{"kind":"virtiosock","port":1234,"socketURL":"/virtiovsock"},{"kind":"virtiofs","mountTag":"tag","sharedDir":"/virtiofs"},{"kind":"usbmassstorage","devName":"usb-mass-storage","imagePath":"/usbmassstorage","readOnly":true},{"kind":"rosetta","mountTag":"vz-rosetta","installRosetta":false,"ignoreIfMissing":false},{"kind":"nbd", "devName":"nbd", "uri":"uri", "DeviceIdentifier":"", "SynchronizationMode":"full","Timeout":1000000}]}`,
 	},
 }
 
@@ -317,7 +317,7 @@ var jsonStabilityTests = map[string]jsonStabilityTest{
 			return nbd
 		},
 		skipFields:   []string{"DevName", "ImagePath"},
-		expectedJSON: `{"kind":"nbd","deviceIdentifier":"DeviceIdentifier","devName":"nbd","uri":"URI","readOnly":true,"SynchronizationMode":"SynchronizationMode","Timeout":2}`,
+		expectedJSON: `{"kind":"nbd","DeviceIdentifier":"DeviceIdentifier","devName":"nbd","uri":"URI","readOnly":true,"SynchronizationMode":"SynchronizationMode","Timeout":2}`,
 	},
 }
 
