@@ -6,7 +6,7 @@ require (
 	github.com/Code-Hex/vz/v3 v3.6.0
 	github.com/cavaliergopher/grab/v3 v3.0.1
 	github.com/containers/common v0.60.4
-	github.com/crc-org/crc/v2 v2.44.0
+	github.com/crc-org/crc/v2 v2.45.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/prashantgupta24/mac-sleep-notifier v1.0.1
 	github.com/sirupsen/logrus v1.9.3
@@ -22,7 +22,7 @@ require (
 
 require (
 	github.com/Code-Hex/go-infinity-channel v1.0.0 // indirect
-	github.com/Masterminds/semver/v3 v3.3.0 // indirect
+	github.com/Masterminds/semver/v3 v3.3.1 // indirect
 	github.com/VividCortex/ewma v1.2.0 // indirect
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
@@ -64,7 +64,7 @@ require (
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	golang.org/x/arch v0.8.0 // indirect
-	golang.org/x/net v0.31.0 // indirect
+	golang.org/x/net v0.32.0 // indirect
 	golang.org/x/term v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	google.golang.org/protobuf v1.35.1 // indirect
