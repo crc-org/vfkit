@@ -59,7 +59,7 @@ type VirtioVsock struct {
 
 // VirtioBlk configures a disk device.
 type VirtioBlk struct {
-	StorageConfig
+	DiskStorageConfig
 	DeviceIdentifier string `json:"deviceIdentifier,omitempty"`
 }
 
@@ -82,7 +82,7 @@ type RosettaShare struct {
 
 // NVMExpressController configures a NVMe controller in the guest
 type NVMExpressController struct {
-	StorageConfig
+	DiskStorageConfig
 }
 
 // VirtioRng configures a random number generator (RNG) device.
@@ -117,7 +117,8 @@ const (
 )
 
 type NetworkBlockDevice struct {
-	VirtioBlk
+	NetworkBlockStorageConfig
+	DeviceIdentifier    string
 	Timeout             time.Duration
 	SynchronizationMode NBDSynchronizationMode
 }
@@ -479,8 +480,10 @@ func (dev *VirtioRng) FromOptions(options []option) error {
 
 func nvmExpressControllerNewEmpty() *NVMExpressController {
 	return &NVMExpressController{
-		StorageConfig: StorageConfig{
-			DevName: "nvme",
+		DiskStorageConfig: DiskStorageConfig{
+			StorageConfig: StorageConfig{
+				DevName: "nvme",
+			},
 		},
 	}
 }
@@ -496,8 +499,10 @@ func NVMExpressControllerNew(imagePath string) (*NVMExpressController, error) {
 
 func virtioBlkNewEmpty() *VirtioBlk {
 	return &VirtioBlk{
-		StorageConfig: StorageConfig{
-			DevName: "virtio-blk",
+		DiskStorageConfig: DiskStorageConfig{
+			StorageConfig: StorageConfig{
+				DevName: "virtio-blk",
+			},
 		},
 		DeviceIdentifier: "",
 	}
@@ -527,11 +532,11 @@ func (dev *VirtioBlk) FromOptions(options []option) error {
 		}
 	}
 
-	return dev.StorageConfig.FromOptions(unhandledOpts)
+	return dev.DiskStorageConfig.FromOptions(unhandledOpts)
 }
 
 func (dev *VirtioBlk) ToCmdLine() ([]string, error) {
-	cmdLine, err := dev.StorageConfig.ToCmdLine()
+	cmdLine, err := dev.DiskStorageConfig.ToCmdLine()
 	if err != nil {
 		return []string{}, err
 	}
@@ -681,12 +686,12 @@ func (dev *RosettaShare) FromOptions(options []option) error {
 
 func networkBlockDeviceNewEmpty() *NetworkBlockDevice {
 	return &NetworkBlockDevice{
-		VirtioBlk: VirtioBlk{
+		NetworkBlockStorageConfig: NetworkBlockStorageConfig{
 			StorageConfig: StorageConfig{
 				DevName: "nbd",
 			},
-			DeviceIdentifier: "",
 		},
+		DeviceIdentifier:    "",
 		Timeout:             time.Duration(15000 * time.Millisecond), // set a default timeout to 15s
 		SynchronizationMode: SynchronizationFullMode,                 // default mode to full
 	}
@@ -707,7 +712,7 @@ func NetworkBlockDeviceNew(uri string, timeout uint32, synchronization NBDSynchr
 }
 
 func (nbd *NetworkBlockDevice) ToCmdLine() ([]string, error) {
-	cmdLine, err := nbd.VirtioBlk.ToCmdLine()
+	cmdLine, err := nbd.NetworkBlockStorageConfig.ToCmdLine()
 	if err != nil {
 		return []string{}, err
 	}
@@ -715,6 +720,9 @@ func (nbd *NetworkBlockDevice) ToCmdLine() ([]string, error) {
 		return []string{}, fmt.Errorf("unexpected storage config commandline")
 	}
 
+	if nbd.DeviceIdentifier != "" {
+		cmdLine[1] = fmt.Sprintf("%s,deviceId=%s", cmdLine[1], nbd.DeviceIdentifier)
+	}
 	if nbd.Timeout.Milliseconds() > 0 {
 		cmdLine[1] = fmt.Sprintf("%s,timeout=%d", cmdLine[1], nbd.Timeout.Milliseconds())
 	}
@@ -729,6 +737,8 @@ func (nbd *NetworkBlockDevice) FromOptions(options []option) error {
 	unhandledOpts := []option{}
 	for _, option := range options {
 		switch option.key {
+		case "deviceId":
+			nbd.DeviceIdentifier = option.value
 		case "timeout":
 			timeoutMS, err := strconv.ParseInt(option.value, 10, 32)
 			if err != nil {
@@ -749,17 +759,19 @@ func (nbd *NetworkBlockDevice) FromOptions(options []option) error {
 		}
 	}
 
-	return nbd.VirtioBlk.FromOptions(unhandledOpts)
+	return nbd.NetworkBlockStorageConfig.FromOptions(unhandledOpts)
 }
 
 type USBMassStorage struct {
-	StorageConfig
+	DiskStorageConfig
 }
 
 func usbMassStorageNewEmpty() *USBMassStorage {
 	return &USBMassStorage{
-		StorageConfig{
-			DevName: "usb-mass-storage",
+		DiskStorageConfig: DiskStorageConfig{
+			StorageConfig: StorageConfig{
+				DevName: "usb-mass-storage",
+			},
 		},
 	}
 }
@@ -779,26 +791,26 @@ func (dev *USBMassStorage) SetReadOnly(readOnly bool) {
 
 // StorageConfig configures a disk device.
 type StorageConfig struct {
-	DevName   string `json:"devName"`
-	ImagePath string `json:"imagePath,omitempty"`
-	URI       string `json:"uri,omitempty"`
-	ReadOnly  bool   `json:"readOnly,omitempty"`
+	DevName  string `json:"devName"`
+	ReadOnly bool   `json:"readOnly,omitempty"`
 }
 
-func (config *StorageConfig) ToCmdLine() ([]string, error) {
-	if config.ImagePath != "" && config.URI != "" {
-		return nil, fmt.Errorf("%s devices cannot have both path to a disk image and a uri to a remote block device", config.DevName)
+type DiskStorageConfig struct {
+	StorageConfig
+	ImagePath string `json:"imagePath,omitempty"`
+}
+
+type NetworkBlockStorageConfig struct {
+	StorageConfig
+	URI string `json:"uri,omitempty"`
+}
+
+func (config *DiskStorageConfig) ToCmdLine() ([]string, error) {
+	if config.ImagePath == "" {
+		return nil, fmt.Errorf("%s devices need the path to a disk image", config.DevName)
 	}
-	if config.ImagePath == "" && config.URI == "" {
-		return nil, fmt.Errorf("%s devices need a path to a disk image or a uri to a remote block device", config.DevName)
-	}
-	var value string
-	if config.ImagePath != "" {
-		value = fmt.Sprintf("%s,path=%s", config.DevName, config.ImagePath)
-	}
-	if config.URI != "" {
-		value = fmt.Sprintf("%s,uri=%s", config.DevName, config.URI)
-	}
+
+	value := fmt.Sprintf("%s,path=%s", config.DevName, config.ImagePath)
 
 	if config.ReadOnly {
 		value += ",readonly"
@@ -806,11 +818,39 @@ func (config *StorageConfig) ToCmdLine() ([]string, error) {
 	return []string{"--device", value}, nil
 }
 
-func (config *StorageConfig) FromOptions(options []option) error {
+func (config *DiskStorageConfig) FromOptions(options []option) error {
 	for _, option := range options {
 		switch option.key {
 		case "path":
 			config.ImagePath = option.value
+		case "readonly":
+			if option.value != "" {
+				return fmt.Errorf("unexpected value for virtio-blk 'readonly' option: %s", option.value)
+			}
+			config.ReadOnly = true
+		default:
+			return fmt.Errorf("unknown option for %s devices: %s", config.DevName, option.key)
+		}
+	}
+	return nil
+}
+
+func (config *NetworkBlockStorageConfig) ToCmdLine() ([]string, error) {
+	if config.URI == "" {
+		return nil, fmt.Errorf("%s devices need the uri to a remote block device", config.DevName)
+	}
+
+	value := fmt.Sprintf("%s,uri=%s", config.DevName, config.URI)
+
+	if config.ReadOnly {
+		value += ",readonly"
+	}
+	return []string{"--device", value}, nil
+}
+
+func (config *NetworkBlockStorageConfig) FromOptions(options []option) error {
+	for _, option := range options {
+		switch option.key {
 		case "uri":
 			config.URI = option.value
 		case "readonly":
