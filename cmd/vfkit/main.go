@@ -37,6 +37,8 @@ import (
 	restvf "github.com/crc-org/vfkit/pkg/rest/vf"
 	"github.com/crc-org/vfkit/pkg/vf"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/crc-org/vfkit/pkg/util"
 )
 
 func newLegacyBootloader(opts *cmdline.Options) config.Bootloader {
@@ -120,6 +122,8 @@ func waitForVMState(vm *vf.VirtualMachine, state vz.VirtualMachineState, timeout
 func runVFKit(vmConfig *config.VirtualMachine, opts *cmdline.Options) error {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
+
+	util.SetupExitSignalHandling()
 
 	gpuDevs := vmConfig.VirtioGPUDevices()
 	if opts.UseGUI && len(gpuDevs) > 0 {
@@ -239,6 +243,11 @@ func startIgnitionProvisionerServer(ignitionReader io.Reader, ignitionSocketPath
 	if err != nil {
 		return err
 	}
+
+	util.RegisterExitHandler(func() {
+		os.Remove(ignitionSocketPath)
+	})
+
 	defer func() {
 		if err := listener.Close(); err != nil {
 			log.Error(err)
