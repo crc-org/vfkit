@@ -245,6 +245,11 @@ var virtioDevTests = map[string]virtioDevTest{
 		},
 		expectedCmdLine: []string{"--device", "nbd,uri=nbd://1.1.1.1:10000,timeout=1000,sync=none"},
 	},
+	"NewVirtioBalloon": {
+		newDev:          VirtioBalloonNew,
+		expectedDev:     &VirtioBalloon{},
+		expectedCmdLine: []string{"--device", "virtio-balloon"},
+	},
 }
 
 func testVirtioDev(t *testing.T, test *virtioDevTest) {
