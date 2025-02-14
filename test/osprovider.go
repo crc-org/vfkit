@@ -193,7 +193,7 @@ func (puipui *PuiPuiProvider) Fetch(destDir string) error {
 		return err
 	}
 	log.Infof("puipui initramfs: %s", puipui.initramfs)
-	puipui.kernelArgs = "console=hvc0"
+	puipui.kernelArgs = "quiet"
 	log.Infof("puipui kernel command line: %s", puipui.kernelArgs)
 
 	return nil
