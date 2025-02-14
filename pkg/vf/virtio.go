@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/crc-org/vfkit/pkg/config"
-	"github.com/onsi/gocleanup"
+	"github.com/crc-org/vfkit/pkg/util"
 	"golang.org/x/sys/unix"
 
 	"github.com/Code-Hex/vz/v3"
@@ -248,8 +248,7 @@ func unixFd(fd uintptr) int {
 func setRawMode(f *os.File) error {
 	// Get settings for terminal
 	var attr unix.Termios
-	err := termios.Tcgetattr(f.Fd(), &attr)
-	if err != nil {
+	if err := termios.Tcgetattr(f.Fd(), &attr); err != nil {
 		return err
 	}
 
@@ -271,26 +270,6 @@ func (dev *VirtioSerial) toVz() (*vz.VirtioConsoleDeviceSerialPortConfiguration,
 			return nil, err
 		}
 		serialPortAttachment, retErr = vz.NewFileHandleSerialPortAttachment(os.Stdin, os.Stdout)
-	case dev.UsesPty:
-		master, slave, err := termios.Pty()
-		if err != nil {
-			return nil, err
-		}
-		// as far as I can tell, we have no use for the slave fd in the
-		// vfkit process, the user will open minicom/screen/... /dev/ttys00?
-		// when needed
-		defer slave.Close()
-
-		// the master fd must stay open for vfkit's lifetime
-		gocleanup.Register(func() { _ = master.Close() })
-
-		dev.PtyName = slave.Name()
-
-		if err := setRawMode(master); err != nil {
-			return nil, err
-		}
-		serialPortAttachment, retErr = vz.NewFileHandleSerialPortAttachment(master, master)
-
 	default:
 		serialPortAttachment, retErr = vz.NewFileSerialPortAttachment(dev.LogFile, false)
 	}
@@ -299,6 +278,32 @@ func (dev *VirtioSerial) toVz() (*vz.VirtioConsoleDeviceSerialPortConfiguration,
 	}
 
 	return vz.NewVirtioConsoleDeviceSerialPortConfiguration(serialPortAttachment)
+}
+
+func (dev *VirtioSerial) toVzConsole() (*vz.VirtioConsolePortConfiguration, error) {
+	master, slave, err := termios.Pty()
+	if err != nil {
+		return nil, err
+	}
+
+	// the master fd and slave fd must stay open for vfkit's lifetime
+	util.RegisterExitHandler(func() {
+		_ = master.Close()
+		_ = slave.Close()
+	})
+
+	dev.PtyName = slave.Name()
+
+	if err := setRawMode(master); err != nil {
+		return nil, err
+	}
+	serialPortAttachment, retErr := vz.NewFileHandleSerialPortAttachment(master, master)
+	if retErr != nil {
+		return nil, retErr
+	}
+	return vz.NewVirtioConsolePortConfiguration(
+		vz.WithVirtioConsolePortConfigurationAttachment(serialPortAttachment),
+		vz.WithVirtioConsolePortConfigurationIsConsole(true))
 }
 
 func (dev *VirtioSerial) AddToVirtualMachineConfig(vmConfig *VirtualMachineConfiguration) error {
@@ -312,14 +317,20 @@ func (dev *VirtioSerial) AddToVirtualMachineConfig(vmConfig *VirtualMachineConfi
 		return fmt.Errorf("VirtioSerial.PtyName must be empty (current value: %s)", dev.PtyName)
 	}
 
-	consoleConfig, err := dev.toVz()
-	if err != nil {
-		return err
-	}
 	if dev.UsesPty {
+		consolePortConfig, err := dev.toVzConsole()
+		if err != nil {
+			return err
+		}
+		vmConfig.consolePortsConfiguration = append(vmConfig.consolePortsConfiguration, consolePortConfig)
 		log.Infof("Using PTY (pty path: %s)", dev.PtyName)
+	} else {
+		consoleConfig, err := dev.toVz()
+		if err != nil {
+			return err
+		}
+		vmConfig.serialPortsConfiguration = append(vmConfig.serialPortsConfiguration, consoleConfig)
 	}
-	vmConfig.serialPortsConfiguration = append(vmConfig.serialPortsConfiguration, consoleConfig)
 
 	return nil
 }

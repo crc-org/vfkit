@@ -300,7 +300,7 @@ This is useful in combination with usermode networking stacks such as [gvisor-ta
 #### Description
 
 The `--device virtio-serial` option adds a serial device to the virtual machine. This is useful to redirect text output from the virtual machine to a log file.
-The `logFilePath`, `stdio`, `pty` arguments are mutually exclusive.
+The `logFilePath`, `stdio` and `pty` arguments are mutually exclusive.
 
 #### Arguments
 - `logFilePath`: path where the serial port output should be written.
