@@ -12,7 +12,6 @@ import (
 	"github.com/crc-org/vfkit/pkg/util"
 
 	"github.com/Code-Hex/vz/v3"
-	"github.com/onsi/gocleanup"
 	log "github.com/sirupsen/logrus"
 )
 

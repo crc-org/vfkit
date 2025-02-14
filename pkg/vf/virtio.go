@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"syscall"
 
 	"github.com/crc-org/vfkit/pkg/config"
 	"github.com/onsi/gocleanup"
