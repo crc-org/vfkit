@@ -15,9 +15,6 @@ UEFI boot and graphical user interface support are only available on macOS 13 or
 
 You can either download vfkit from [its release page](https://github.com/crc-org/vfkit/releases), or install it from [brew](https://brew.sh/):
 ```
-# Only the first time
-brew tap cfergeau/crc
-
 brew install vfkit
 ```
 
