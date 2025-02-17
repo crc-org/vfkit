@@ -10,10 +10,9 @@ This package provides a native Go API to generate the vfkit command line.
 
 ### Installation
 
-vfkit is available in the `crc` brew tap:
+vfkit is available in brew:
 
 ```
-brew tap cfergeau/crc
 brew install vfkit
 ```
 
