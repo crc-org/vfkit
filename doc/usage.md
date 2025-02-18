@@ -161,7 +161,7 @@ A copy-on-write image can be created using `cp -c` or [clonefile(2)](http://www.
 
 The `--device virtio-blk` option can also be used to supply an initial configuration to cloud-init through a disk image.
 
-The ISO image file must be labelled cidata or CIDATA and it must contain the user-data and meta-data files. 
+The ISO image file must be labelled cidata or CIDATA and it must contain the user-data and meta-data files.
 It is also possible to add further configurations by using the network-config and vendor-data files.
 See https://cloudinit.readthedocs.io/en/latest/reference/datasources/nocloud.html#runtime-configurations for more details.
 
@@ -313,6 +313,21 @@ This adds a virtio-rng device to the VM:
 --device virtio-rng
 ```
 
+### Memory Balloon
+
+#### Description
+
+The `--device virtio-balloon` option adds a memory balloon device to the virtual machine.
+This device allows dynamic adjustment of guest memory allocation, enabling the host to reclaim memory from the guest
+when needed and return it when available.
+
+#### Example
+
+This adds a virtio-balloon device to the VM:
+
+```
+--device virtio-balloon
+```
 
 ### virtio-vsock communication
 
@@ -509,7 +524,7 @@ Proper use of this flag may look similar to the following section of a command:
 
 The `--ignition` option allows you to specify a configuration file for Ignition. Vfkit will open a vsock connection between the host and the guest and start a lightweight HTTP server to push the configuration file to Ignition.
 
-You can find example configurations and more details about Ignition at https://coreos.github.io/ignition/ 
+You can find example configurations and more details about Ignition at https://coreos.github.io/ignition/
 
 #### Example
 
