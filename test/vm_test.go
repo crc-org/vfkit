@@ -227,6 +227,13 @@ var pciidTests = map[string]pciidTest{
 			return config.VirtioFsNew("./", "vfkit-share-test")
 		},
 	},
+	"virtio-balloon": {
+		vendorID: 0x1af4, // Red Hat
+		deviceID: 0x1045,
+		createDev: func(_ *testing.T) (config.VirtioDevice, error) {
+			return config.VirtioBalloonNew()
+		},
+	},
 }
 
 var pciidMacOS13Tests = map[string]pciidTest{

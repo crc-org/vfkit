@@ -106,6 +106,17 @@ var jsonTests = map[string]jsonTest{
 		},
 		expectedJSON: `{"vcpus":3,"memoryBytes":4194304000,"bootloader":{"kind":"linuxBootloader","vmlinuzPath":"/vmlinuz","initrdPath":"/initrd","kernelCmdLine":"console=hvc0"},"devices":[{"kind":"virtiorng"}]}`,
 	},
+	"TestVirtioBalloon": {
+		newVM: func(t *testing.T) *VirtualMachine {
+			vm := newLinuxVM(t)
+			virtioBalloon, err := VirtioBalloonNew()
+			require.NoError(t, err)
+			err = vm.AddDevice(virtioBalloon)
+			require.NoError(t, err)
+			return vm
+		},
+		expectedJSON: `{"vcpus":3,"memoryBytes":4194304000,"bootloader":{"kind":"linuxBootloader","vmlinuzPath":"/vmlinuz","initrdPath":"/initrd","kernelCmdLine":"console=hvc0"},"devices":[{"kind":"virtioballoon"}]}`,
+	},
 	"TestMultipleVirtioBlk": {
 		newVM: func(t *testing.T) *VirtualMachine {
 			vm := newLinuxVM(t)
