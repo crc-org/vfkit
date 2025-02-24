@@ -8,6 +8,7 @@ require (
 	github.com/containers/common v0.60.4
 	github.com/crc-org/crc/v2 v2.47.0
 	github.com/gin-gonic/gin v1.10.0
+	github.com/kdomanski/iso9660 v0.4.0
 	github.com/prashantgupta24/mac-sleep-notifier v1.0.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.1
