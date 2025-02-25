@@ -27,6 +27,7 @@ type VirtioSerial config.VirtioSerial
 type VirtioVsock config.VirtioVsock
 type VirtioInput config.VirtioInput
 type VirtioGPU config.VirtioGPU
+type VirtioBalloon config.VirtioBalloon
 type NetworkBlockDevice config.NetworkBlockDevice
 
 type vzNetworkBlockDevice struct {
@@ -218,6 +219,21 @@ func (dev *VirtioRng) AddToVirtualMachineConfig(vmConfig *VirtualMachineConfigur
 		return err
 	}
 	vmConfig.entropyDevicesConfiguration = append(vmConfig.entropyDevicesConfiguration, entropyConfig)
+
+	return nil
+}
+
+func (dev *VirtioBalloon) toVz() (*vz.VirtioTraditionalMemoryBalloonDeviceConfiguration, error) {
+	return vz.NewVirtioTraditionalMemoryBalloonDeviceConfiguration()
+}
+
+func (dev *VirtioBalloon) AddToVirtualMachineConfig(vmConfig *VirtualMachineConfiguration) error {
+	log.Infof("Adding virtio-balloon device")
+	balloonConfig, err := dev.toVz()
+	if err != nil {
+		return err
+	}
+	vmConfig.SetMemoryBalloonDevicesVirtualMachineConfiguration([]vz.MemoryBalloonDeviceConfiguration{balloonConfig})
 
 	return nil
 }
@@ -424,6 +440,8 @@ func AddToVirtualMachineConfig(vmConfig *VirtualMachineConfiguration, dev config
 		return (*VirtioInput)(d).AddToVirtualMachineConfig(vmConfig)
 	case *config.VirtioGPU:
 		return (*VirtioGPU)(d).AddToVirtualMachineConfig(vmConfig)
+	case *config.VirtioBalloon:
+		return (*VirtioBalloon)(d).AddToVirtualMachineConfig(vmConfig)
 	case *config.NetworkBlockDevice:
 		return (*NetworkBlockDevice)(d).AddToVirtualMachineConfig(vmConfig)
 	default:

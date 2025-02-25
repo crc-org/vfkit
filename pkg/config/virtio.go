@@ -123,8 +123,22 @@ type NetworkBlockDevice struct {
 	SynchronizationMode NBDSynchronizationMode
 }
 
-// TODO: Add VirtioBalloon
-// https://github.com/Code-Hex/vz/blob/master/memory_balloon.go
+type VirtioBalloon struct{}
+
+func VirtioBalloonNew() (VirtioDevice, error) {
+	return &VirtioBalloon{}, nil
+}
+
+func (v *VirtioBalloon) FromOptions(options []option) error {
+	if len(options) != 0 {
+		return fmt.Errorf("unknown options for virtio-balloon devices: %s", options)
+	}
+	return nil
+}
+
+func (v *VirtioBalloon) ToCmdLine() ([]string, error) {
+	return []string{"--device", "virtio-balloon"}, nil
+}
 
 type option struct {
 	key   string
@@ -185,6 +199,8 @@ func deviceFromCmdLine(deviceOpts string) (VirtioDevice, error) {
 		dev = &VirtioInput{}
 	case "virtio-gpu":
 		dev = &VirtioGPU{}
+	case "virtio-balloon":
+		dev = &VirtioBalloon{}
 	case "nbd":
 		dev = networkBlockDeviceNewEmpty()
 	default:
