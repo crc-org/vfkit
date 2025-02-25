@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -41,4 +42,68 @@ func TestStartIgnitionProvisionerServer(t *testing.T) {
 	body, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 	assert.Equal(t, ignitionData, body)
+}
+
+func getTestAssetsDir() (string, error) {
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+
+	projectRoot := filepath.Join(currentDir, "../../")
+	return filepath.Join(projectRoot, "test", "assets"), nil
+}
+
+func TestGenerateCloudInitImage(t *testing.T) {
+	assetsDir, err := getTestAssetsDir()
+	require.NoError(t, err)
+
+	iso, err := generateCloudInitImage([]string{
+		filepath.Join(assetsDir, "user-data"),
+		filepath.Join(assetsDir, "meta-data"),
+	})
+	require.NoError(t, err)
+
+	assert.Contains(t, iso, "vfkit-cloudinit")
+
+	_, err = os.Stat(iso)
+	require.NoError(t, err)
+
+	err = os.Remove(iso)
+	require.NoError(t, err)
+}
+
+func TestGenerateCloudInitImageWithMissingFile(t *testing.T) {
+	assetsDir, err := getTestAssetsDir()
+	require.NoError(t, err)
+
+	iso, err := generateCloudInitImage([]string{
+		filepath.Join(assetsDir, "user-data"),
+	})
+	require.NoError(t, err)
+
+	assert.Contains(t, iso, "vfkit-cloudinit")
+
+	_, err = os.Stat(iso)
+	require.NoError(t, err)
+
+	err = os.Remove(iso)
+	require.NoError(t, err)
+}
+
+func TestGenerateCloudInitImageWithWrongFile(t *testing.T) {
+	assetsDir, err := getTestAssetsDir()
+	require.NoError(t, err)
+
+	iso, err := generateCloudInitImage([]string{
+		filepath.Join(assetsDir, "seed.img"),
+	})
+	assert.Empty(t, iso)
+	require.Error(t, err, "cloud-init needs user-data and meta-data files to work")
+}
+
+func TestGenerateCloudInitImageWithNoFile(t *testing.T) {
+	iso, err := generateCloudInitImage([]string{})
+	assert.Empty(t, iso)
+	require.NoError(t, err)
 }

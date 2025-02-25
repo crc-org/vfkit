@@ -1,0 +1,17 @@
+#cloud-config
+users:
+  - name: core
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    groups: users
+    lock_passwd: false
+    ssh_authorized_keys:
+      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDAcKzAecDf0R0mrLhO2eswdq6YRpLUFN4JNonl71Dud
+  - name: user2
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    groups: users
+    plain_text_passwd: test
+    lock_passwd: false  
+ssh_pwauth: true
+chpasswd: { expire: false }
