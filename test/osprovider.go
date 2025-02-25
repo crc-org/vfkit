@@ -2,6 +2,7 @@ package test
 
 import (
 	"compress/gzip"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -40,7 +41,7 @@ func downloadPuipui(destDir string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return extract.Uncompress(resp.Filename, destDir)
+	return extract.Uncompress(context.Background(), resp.Filename, destDir)
 }
 
 func downloadFedora(destDir string) (string, error) {
