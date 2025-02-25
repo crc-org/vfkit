@@ -85,6 +85,7 @@ type VirtualMachineConfiguration struct {
 	entropyDevicesConfiguration          []*vz.VirtioEntropyDeviceConfiguration
 	serialPortsConfiguration             []*vz.VirtioConsoleDeviceSerialPortConfiguration
 	socketDevicesConfiguration           []vz.SocketDeviceConfiguration
+	consolePortsConfiguration            []*vz.VirtioConsolePortConfiguration
 }
 
 func NewVirtualMachineConfiguration(vmConfig *config.VirtualMachine) (*VirtualMachineConfiguration, error) {
@@ -129,6 +130,18 @@ func (cfg *VirtualMachineConfiguration) toVz() (*vz.VirtualMachineConfiguration,
 	cfg.SetNetworkDevicesVirtualMachineConfiguration(cfg.networkDevicesConfiguration)
 	cfg.SetEntropyDevicesVirtualMachineConfiguration(cfg.entropyDevicesConfiguration)
 	cfg.SetSerialPortsVirtualMachineConfiguration(cfg.serialPortsConfiguration)
+
+	if len(cfg.consolePortsConfiguration) > 0 {
+		consoleDeviceConfiguration, err := vz.NewVirtioConsoleDeviceConfiguration()
+		if err != nil {
+			return nil, err
+		}
+		for i, portCfg := range cfg.consolePortsConfiguration {
+			consoleDeviceConfiguration.SetVirtioConsolePortConfiguration(i, portCfg)
+		}
+		cfg.SetConsoleDevicesVirtualMachineConfiguration([]vz.ConsoleDeviceConfiguration{consoleDeviceConfiguration})
+	}
+
 	// len(cfg.socketDevicesConfiguration should be 0 or 1
 	// https://developer.apple.com/documentation/virtualization/vzvirtiosocketdeviceconfiguration?language=objc
 	cfg.SetSocketDevicesVirtualMachineConfiguration(cfg.socketDevicesConfiguration)

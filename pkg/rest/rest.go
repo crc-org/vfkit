@@ -4,10 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"os"
 	"strings"
 	"syscall"
 
 	"github.com/crc-org/vfkit/pkg/cmdline"
+	"github.com/crc-org/vfkit/pkg/util"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
@@ -73,6 +75,7 @@ func (v *VFKitService) Start() {
 		case TCP:
 			err = v.router.Run(v.Host)
 		case Unix:
+			util.RegisterExitHandler(func() { os.Remove(v.Path) })
 			err = v.router.RunUnix(v.Path)
 		}
 		logrus.Fatal(err)
