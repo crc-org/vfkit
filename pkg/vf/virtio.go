@@ -6,13 +6,14 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"syscall"
 
 	"github.com/crc-org/vfkit/pkg/config"
+	"github.com/crc-org/vfkit/pkg/util"
+	"golang.org/x/sys/unix"
 
 	"github.com/Code-Hex/vz/v3"
+	"github.com/pkg/term/termios"
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/sys/unix"
 )
 
 // vf will define toVZ() and AddToVirtualMachineConfig() methods on these types
@@ -246,39 +247,63 @@ func unixFd(fd uintptr) int {
 // https://developer.apple.com/documentation/virtualization/running_linux_in_a_virtual_machine#3880009
 func setRawMode(f *os.File) error {
 	// Get settings for terminal
-	attr, _ := unix.IoctlGetTermios(unixFd(f.Fd()), unix.TIOCGETA)
+	var attr unix.Termios
+	if err := termios.Tcgetattr(f.Fd(), &attr); err != nil {
+		return err
+	}
 
 	// Put stdin into raw mode, disabling local echo, input canonicalization,
 	// and CR-NL mapping.
-	attr.Iflag &^= syscall.ICRNL
-	attr.Lflag &^= syscall.ICANON | syscall.ECHO
-
-	// Set minimum characters when reading = 1 char
-	attr.Cc[syscall.VMIN] = 1
-
-	// set timeout when reading as non-canonical mode
-	attr.Cc[syscall.VTIME] = 0
+	attr.Iflag &^= unix.ICRNL
+	attr.Lflag &^= unix.ICANON | unix.ECHO
 
 	// reflects the changed settings
-	return unix.IoctlSetTermios(unixFd(f.Fd()), unix.TIOCSETA, attr)
+	return termios.Tcsetattr(f.Fd(), termios.TCSANOW, &attr)
 }
 
 func (dev *VirtioSerial) toVz() (*vz.VirtioConsoleDeviceSerialPortConfiguration, error) {
 	var serialPortAttachment vz.SerialPortAttachment
-	var err error
-	if dev.UsesStdio {
+	var retErr error
+	switch {
+	case dev.UsesStdio:
 		if err := setRawMode(os.Stdin); err != nil {
 			return nil, err
 		}
-		serialPortAttachment, err = vz.NewFileHandleSerialPortAttachment(os.Stdin, os.Stdout)
-	} else {
-		serialPortAttachment, err = vz.NewFileSerialPortAttachment(dev.LogFile, false)
+		serialPortAttachment, retErr = vz.NewFileHandleSerialPortAttachment(os.Stdin, os.Stdout)
+	default:
+		serialPortAttachment, retErr = vz.NewFileSerialPortAttachment(dev.LogFile, false)
 	}
+	if retErr != nil {
+		return nil, retErr
+	}
+
+	return vz.NewVirtioConsoleDeviceSerialPortConfiguration(serialPortAttachment)
+}
+
+func (dev *VirtioSerial) toVzConsole() (*vz.VirtioConsolePortConfiguration, error) {
+	master, slave, err := termios.Pty()
 	if err != nil {
 		return nil, err
 	}
 
-	return vz.NewVirtioConsoleDeviceSerialPortConfiguration(serialPortAttachment)
+	// the master fd and slave fd must stay open for vfkit's lifetime
+	util.RegisterExitHandler(func() {
+		_ = master.Close()
+		_ = slave.Close()
+	})
+
+	dev.PtyName = slave.Name()
+
+	if err := setRawMode(master); err != nil {
+		return nil, err
+	}
+	serialPortAttachment, retErr := vz.NewFileHandleSerialPortAttachment(master, master)
+	if retErr != nil {
+		return nil, retErr
+	}
+	return vz.NewVirtioConsolePortConfiguration(
+		vz.WithVirtioConsolePortConfigurationAttachment(serialPortAttachment),
+		vz.WithVirtioConsolePortConfigurationIsConsole(true))
 }
 
 func (dev *VirtioSerial) AddToVirtualMachineConfig(vmConfig *VirtualMachineConfiguration) error {
@@ -288,12 +313,24 @@ func (dev *VirtioSerial) AddToVirtualMachineConfig(vmConfig *VirtualMachineConfi
 	if dev.UsesStdio {
 		log.Infof("Adding stdio console")
 	}
-
-	consoleConfig, err := dev.toVz()
-	if err != nil {
-		return err
+	if dev.PtyName != "" {
+		return fmt.Errorf("VirtioSerial.PtyName must be empty (current value: %s)", dev.PtyName)
 	}
-	vmConfig.serialPortsConfiguration = append(vmConfig.serialPortsConfiguration, consoleConfig)
+
+	if dev.UsesPty {
+		consolePortConfig, err := dev.toVzConsole()
+		if err != nil {
+			return err
+		}
+		vmConfig.consolePortsConfiguration = append(vmConfig.consolePortsConfiguration, consolePortConfig)
+		log.Infof("Using PTY (pty path: %s)", dev.PtyName)
+	} else {
+		consoleConfig, err := dev.toVz()
+		if err != nil {
+			return err
+		}
+		vmConfig.serialPortsConfiguration = append(vmConfig.serialPortsConfiguration, consoleConfig)
+	}
 
 	return nil
 }
