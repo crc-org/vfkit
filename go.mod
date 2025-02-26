@@ -1,6 +1,8 @@
 module github.com/crc-org/vfkit
 
-go 1.22.0
+go 1.23.0
+
+toolchain go1.23.6
 
 require (
 	github.com/Code-Hex/vz/v3 v3.6.0
@@ -14,7 +16,7 @@ require (
 	github.com/spf13/pflag v1.0.6
 	github.com/stretchr/testify v1.10.0
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8
-	golang.org/x/crypto v0.33.0
+	golang.org/x/crypto v0.35.0
 	golang.org/x/mod v0.23.0
 	golang.org/x/sys v0.30.0
 	inet.af/tcpproxy v0.0.0-20231102063150-2862066fc2a9
