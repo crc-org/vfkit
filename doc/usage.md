@@ -160,8 +160,24 @@ A copy-on-write image can be created using `cp -c` or [clonefile(2)](http://www.
 #### Cloud-init
 
 The `--device virtio-blk` option can also be used to supply an initial configuration to cloud-init through a disk image.
+Vfkit can create this ISO image automatically, or you can provide a pre-made ISO.
 
-The ISO image file must be labelled cidata or CIDATA and it must contain the user-data and meta-data files.
+##### Automatic ISO Creation
+
+Vfkit allows you to pass the file paths of your `user-data` and `meta-data` files directly as arguments. 
+It will then handle the creation of the ISO image and the virtio-blk device internally.
+
+Example
+```
+--cloud-init /Users/virtuser/user-data,/Users/virtuser/meta-data
+```
+
+N.B: Vfkit detects the files by using their names so make sure to save them as `user-data` and `meta-data`.
+
+##### Manual ISO Creation
+
+Alternatively, you can create the ISO image yourself. 
+The ISO image file must be labelled cidata or CIDATA and it must contain the user-data and meta-data files. 
 It is also possible to add further configurations by using the network-config and vendor-data files.
 See https://cloudinit.readthedocs.io/en/latest/reference/datasources/nocloud.html#runtime-configurations for more details.
 
@@ -186,6 +202,11 @@ This adds a virtio-blk device to the VM which will be backed by the raw image at
 To also provide the cloud-init configuration you can add an additional virtio-blk device backed by an image containing the cloud-init configuration files
 ```
 --device virtio-blk,path=/Users/virtuser/cloudinit.img
+```
+
+If you prefer to use the automatic ISO creation 
+```
+--cloud-init /Users/virtuser/user-data,/Users/virtuser/meta-data
 ```
 
 
