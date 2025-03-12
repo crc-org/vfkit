@@ -22,8 +22,8 @@ github.com/cloudwego/iasm v0.2.0/go.mod h1:8rXZaNYT2n95jn+zTI1sDr+IgcD2GVs0nlbbQ
 github.com/containers/common v0.62.1 h1:durvu7Kelb8PYgX7bwuAg/d5LKj2hs3cAaqcU7Vnqus=
 github.com/containers/common v0.62.1/go.mod h1:n9cEboBmY3AnTk1alkq4t7sLM4plwkDCiaWbsf67YxE=
 github.com/cpuguy83/go-md2man/v2 v2.0.6/go.mod h1:oOW0eioCTA6cOiMLiUPZOpcVxMig6NIQQ7OS05n1F4g=
-github.com/crc-org/crc/v2 v2.47.0 h1:f/O9sDh9QQvgFcBZenzRO5N824JL4Jw2+vh1HtYYAWE=
-github.com/crc-org/crc/v2 v2.47.0/go.mod h1:Oo5zOhqb1hQEKzi6bR1+hY8xMr2MlXh54SlPJR482gY=
+github.com/crc-org/crc/v2 v2.48.0 h1:sIR1RV3R5e0tFOYfk3zaC+M01WHsdy+kMzGHOBHEAp8=
+github.com/crc-org/crc/v2 v2.48.0/go.mod h1:1uV2LqVF6wKxit5uywcTiuamyYlwg+PB1EoYx7GrjuA=
 github.com/crc-org/machine v0.0.0-20240926103419-a943b47fd48b h1:5577tKzQcPfd/i0dCekY32R9DUi677sNfhVLYKulBGM=
 github.com/crc-org/machine v0.0.0-20240926103419-a943b47fd48b/go.mod h1:trWeQimjfE3dJ8qWOxI4ePtYm13aecK42bf01s6h/Nc=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
@@ -64,11 +64,11 @@ github.com/json-iterator/go v1.1.12 h1:PV8peI4a0ysnczrg+LtxykD8LfKY9ML6u2jnxaEnr
 github.com/json-iterator/go v1.1.12/go.mod h1:e30LSqwooZae/UwlEbR2852Gd8hjQvJoHmT4TnhNGBo=
 github.com/kdomanski/iso9660 v0.4.0 h1:BPKKdcINz3m0MdjIMwS0wx1nofsOjxOq8TOr45WGHFg=
 github.com/kdomanski/iso9660 v0.4.0/go.mod h1:OxUSupHsO9ceI8lBLPJKWBTphLemjrCQY8LPXM7qSzU=
-github.com/klauspost/compress v1.17.11 h1:In6xLpyWOi1+C7tXUUWv2ot1QvBjxevKAaI6IXrJmUc=
-github.com/klauspost/compress v1.17.11/go.mod h1:pMDklpSncoRMuLFrf1W9Ss9KT+0rH90U12bZKk7uwG0=
+github.com/klauspost/compress v1.18.0 h1:c/Cqfb0r+Yi+JtIEq73FWXVkRonBlf0CRNYc8Zttxdo=
+github.com/klauspost/compress v1.18.0/go.mod h1:2Pp+KzxcywXVXMr50+X0Q/Lsb43OQHYWRCY2AiWywWQ=
 github.com/klauspost/cpuid/v2 v2.0.9/go.mod h1:FInQzS24/EEf25PyTYn52gqo7WaD8xa0213Md/qVLRg=
-github.com/klauspost/cpuid/v2 v2.2.9 h1:66ze0taIn2H33fBvCkXuv9BmCwDfafmiIVpKV9kKGuY=
-github.com/klauspost/cpuid/v2 v2.2.9/go.mod h1:rqkxqrZ1EhYM9G+hXH7YdowN5R5RGN6NK4QwQ3WMXF8=
+github.com/klauspost/cpuid/v2 v2.2.10 h1:tBs3QSyvjDyFTq3uoc/9xFpCuOsJQFNPiAhYdw2skhE=
+github.com/klauspost/cpuid/v2 v2.2.10/go.mod h1:hqwkgyIinND0mEev00jJYCxPNVRVXFQeu1XKlok6oO0=
 github.com/knz/go-libedit v1.10.1/go.mod h1:MZTVkCWyz0oBc7JOWP3wNAzd002ZbM/5hgShxwh4x8M=
 github.com/leodido/go-urn v1.4.0 h1:WT9HwE9SGECu3lg4d/dIA+jxlljEa1/ffXKmRjqdmIQ=
 github.com/leodido/go-urn v1.4.0/go.mod h1:bvxc+MVxLKB4z00jd1z+Dvzr47oO32F/QSNjSBOlFxI=
