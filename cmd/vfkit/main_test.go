@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,6 +26,14 @@ func TestStartIgnitionProvisionerServer(t *testing.T) {
 		err := startIgnitionProvisionerServer(ignitionReader, socketPath)
 		require.NoError(t, err)
 	}()
+
+	// Wait for the socket file to be created before serving, up to 2 seconds
+	for i := 0; i < 10; i++ {
+		if _, err := os.Stat(socketPath); err == nil {
+			break
+		}
+		time.Sleep(200 * time.Millisecond)
+	}
 
 	// Make a request to the server
 	client := http.Client{
