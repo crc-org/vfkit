@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/crc-org/vfkit/pkg/cmdline"
+	"github.com/crc-org/vfkit/pkg/util"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -28,6 +29,9 @@ var rootCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		// if vfkit stop execution by itself, i.e. when VM stops by guest OS
+		// we need to call ExecuteExitHandlers to clean up
+		defer util.ExecuteExitHandlers()
 		return runVFKit(vmConfig, opts)
 	},
 	Version: cmdline.Version(),

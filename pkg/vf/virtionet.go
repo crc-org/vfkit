@@ -59,7 +59,6 @@ func (dev *VirtioNet) connectUnixPath() error {
 	if len(localSocketPath) >= maxUnixgramPathLen {
 		return fmt.Errorf("unixgram path '%s' is too long: %d >= %d bytes", localSocketPath, len(localSocketPath), maxUnixgramPathLen)
 	}
-	// FIXME: need to remove localSocketPath at process exit
 	localAddr := net.UnixAddr{
 		Name: localSocketPath,
 		Net:  "unixgram",
