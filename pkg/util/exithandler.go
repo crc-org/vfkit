@@ -41,14 +41,20 @@ func setupExitSignalHandling(doExit bool) {
 	go func() {
 		for sig := range sigChan {
 			log.Printf("captured %v, calling exit handlers and exiting..", sig)
-			exitRegistry.mutex.Lock()
-			for _, handler := range exitRegistry.handlers {
-				handler()
-			}
-			exitRegistry.mutex.Unlock()
+			ExecuteExitHandlers()
 			if doExit {
 				os.Exit(1)
 			}
 		}
 	}()
+}
+
+// ExecuteExitHandlers is call all registered exit handlers
+// This function should be called when program finish work(i.e. when VM is turned off by guest OS)
+func ExecuteExitHandlers() {
+	exitRegistry.mutex.Lock()
+	for _, handler := range exitRegistry.handlers {
+		handler()
+	}
+	exitRegistry.mutex.Unlock()
 }
