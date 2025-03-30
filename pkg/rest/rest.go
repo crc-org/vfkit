@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"strings"
 	"syscall"
 
 	"github.com/crc-org/vfkit/pkg/cmdline"
@@ -143,14 +142,14 @@ func parseRestfulURI(inputURI string) (*url.URL, error) {
 	return restURI, err
 }
 
-// toRestScheme converts a string to a ServiceScheme
+// toRestScheme converts a string to a [ServiceScheme].
 func toRestScheme(s string) (ServiceScheme, error) {
-	switch strings.ToUpper(s) {
-	case "NONE":
+	switch s {
+	case "none":
 		return None, nil
-	case "UNIX":
+	case "unix":
 		return Unix, nil
-	case "TCP", "HTTP":
+	case "tcp", "http":
 		return TCP, nil
 	}
 	return None, fmt.Errorf("invalid scheme %s", s)

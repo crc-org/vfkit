@@ -142,14 +142,6 @@ func TestToRestScheme(t *testing.T) {
 			want:    2,
 			wantErr: assert.Error,
 		},
-		{
-			name: "case doesnt matter",
-			args: args{
-				s: "UnIx",
-			},
-			want:    Unix,
-			wantErr: assert.NoError,
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
