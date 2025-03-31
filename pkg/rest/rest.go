@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"syscall"
 
-	"github.com/crc-org/vfkit/pkg/cmdline"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
@@ -153,13 +152,4 @@ func toRestScheme(s string) (ServiceScheme, error) {
 		return TCP, nil
 	}
 	return None, fmt.Errorf("invalid scheme %s", s)
-}
-
-func validateRestfulURI(inputURI string) error {
-	if inputURI != cmdline.DefaultRestfulURI {
-		if _, err := parseRestfulURI(inputURI); err != nil {
-			return err
-		}
-	}
-	return nil
 }
