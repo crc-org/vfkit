@@ -300,11 +300,12 @@ This is useful in combination with usermode networking stacks such as [gvisor-ta
 #### Description
 
 The `--device virtio-serial` option adds a serial device to the virtual machine. This is useful to redirect text output from the virtual machine to a log file.
-The `logFilePath` and `stdio` arguments are mutually exclusive.
+The `logFilePath`, `stdio` and `pty` arguments are mutually exclusive.
 
 #### Arguments
 - `logFilePath`: path where the serial port output should be written.
 - `stdio`: uses stdin/stdout for the serial console input/output.
+- `pty`: allocates a pseudo-terminal for the serial console input/output.
 
 #### Example
 
@@ -319,6 +320,18 @@ launched from will be used as an interactive serial console for that device:
 --device virtio-serial,stdio
 ```
 
+This adds a virtio-serial device to the VM, and creates a pseudo-terminal for
+the console for that device:
+```
+--device virtio-serial,pty
+```
+Once the VM is running, you can connect to its console with:
+```
+screen /dev/ttys002
+```
+`/dev/ttys002` will vary between `vfkit` runs.
+The `/dev/ttys???` path to the pty is printed during vfkit startup.
+It's also available through the `/vm/inspect` endpoint of [REST API](#restful-service) in the `ptyName` field of the `virtio-serial` device.
 
 ### Random Number Generator
 
