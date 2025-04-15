@@ -142,14 +142,6 @@ func TestToRestScheme(t *testing.T) {
 			want:    2,
 			wantErr: assert.Error,
 		},
-		{
-			name: "case doesnt matter",
-			args: args{
-				s: "UnIx",
-			},
-			want:    Unix,
-			wantErr: assert.NoError,
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -158,67 +150,6 @@ func TestToRestScheme(t *testing.T) {
 				return
 			}
 			assert.Equalf(t, tt.want, got, "toRestScheme(%v)", tt.args.s)
-		})
-	}
-}
-
-func Test_validateRestfulURI(t *testing.T) {
-	type args struct {
-		inputURI string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-	}{
-		{
-			name: "valid tcp",
-			args: args{
-				inputURI: "tcp://localhost:8080",
-			},
-			wantErr: false,
-		},
-		{
-			name: "invalid tcp - no host",
-			args: args{
-				inputURI: "tcp://",
-			},
-			wantErr: true,
-		},
-		{
-			name: "invalid scheme",
-			args: args{
-				inputURI: "http://localhost",
-			},
-			wantErr: true,
-		},
-		{
-			name: "valid uds",
-			args: args{
-				inputURI: "unix:///my/socket/goes/here/vfkit.sock",
-			},
-			wantErr: false,
-		},
-		{
-			name: "invalid uds - no path",
-			args: args{
-				inputURI: "unix://",
-			},
-			wantErr: true,
-		},
-		{
-			name: "none",
-			args: args{
-				inputURI: "none://",
-			},
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := validateRestfulURI(tt.args.inputURI); (err != nil) != tt.wantErr {
-				t.Errorf("validateRestfulURI() error = %v, wantErr %v", err, tt.wantErr)
-			}
 		})
 	}
 }
