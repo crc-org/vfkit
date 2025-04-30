@@ -1,6 +1,7 @@
 package config
 
 import (
+	"bytes"
 	"fmt"
 	"math"
 	"net"
@@ -28,6 +29,7 @@ const (
 	// Default VirtioGPU Resolution
 	defaultVirtioGPUResolutionWidth  = 800
 	defaultVirtioGPUResolutionHeight = 600
+	qcow2Header                      = "QFI\xfb"
 )
 
 // VirtioInput configures an input device, such as a keyboard or pointing device
@@ -597,6 +599,24 @@ func (dev *VirtioBlk) ToCmdLine() ([]string, error) {
 		cmdLine[1] = fmt.Sprintf("%s,deviceId=%s", cmdLine[1], dev.DeviceIdentifier)
 	}
 	return cmdLine, nil
+}
+
+func (dev *VirtioBlk) Validate() error {
+	imgPath := dev.ImagePath
+	file, err := os.Open(imgPath)
+	if err != nil {
+		return fmt.Errorf("failed to open file %s: %v", imgPath, err)
+	}
+	defer file.Close()
+	header := make([]byte, 4)
+	_, err = file.Read(header)
+	if err != nil {
+		return fmt.Errorf("failed to read the header of file %s: %v", imgPath, err)
+	}
+	if bytes.Equal(header, []byte(qcow2Header)) {
+		return fmt.Errorf("vfkit does not support qcow2 image format")
+	}
+	return nil
 }
 
 // VirtioVsockNew creates a new virtio-vsock device for 2-way communication
