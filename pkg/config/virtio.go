@@ -153,6 +153,10 @@ func (v *VirtioBalloon) Validate() error {
 	return nil
 }
 
+func (v *DirectorySharingConfig) Validate() error {
+	return nil
+}
+
 type option struct {
 	key   string
 	value string
@@ -299,7 +303,7 @@ func (dev *VirtioSerial) FromOptions(options []option) error {
 		}
 	}
 
-	return dev.Validate()
+	return nil
 }
 
 // VirtioInputNew creates a new input device for the virtual machine.
@@ -344,7 +348,7 @@ func (dev *VirtioInput) FromOptions(options []option) error {
 			return fmt.Errorf("unknown option for virtio-input devices: %s", option.key)
 		}
 	}
-	return dev.Validate()
+	return nil
 }
 
 // VirtioGPUNew creates a new gpu device for the virtual machine.
@@ -403,7 +407,7 @@ func (dev *VirtioGPU) FromOptions(options []option) error {
 		dev.Height = defaultVirtioGPUResolutionHeight
 	}
 
-	return dev.Validate()
+	return nil
 }
 
 // VirtioNetNew creates a new network device for the virtual machine. It will
@@ -506,7 +510,7 @@ func (dev *VirtioNet) FromOptions(options []option) error {
 		}
 	}
 
-	return dev.Validate()
+	return nil
 }
 
 // VirtioRngNew creates a new random number generator device to feed entropy
@@ -713,10 +717,6 @@ func (dev *VirtioFs) FromOptions(options []option) error {
 	return nil
 }
 
-func (dev *VirtioFs) Validate() error {
-	return nil
-}
-
 // RosettaShareNew RosettaShare creates a new rosetta share for running x86_64 binaries on M1 machines.
 // It will share a directory containing the linux rosetta binaries with the
 // virtual machine. This directory can be mounted in the VM using `mount -t
@@ -759,10 +759,6 @@ func (dev *RosettaShare) FromOptions(options []option) error {
 			return fmt.Errorf("unknown option for rosetta share: %s", option.key)
 		}
 	}
-	return nil
-}
-
-func (dev *RosettaShare) Validate() error {
 	return nil
 }
 

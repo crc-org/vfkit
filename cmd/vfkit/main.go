@@ -104,6 +104,10 @@ func newVMConfiguration(opts *cmdline.Options) (*config.VirtualMachine, error) {
 		return nil, err
 	}
 
+	if err := vmConfig.ValidateDevices(); err != nil {
+		return nil, err
+	}
+
 	if err := vmConfig.AddIgnitionFileFromCmdLine(opts.IgnitionPath); err != nil {
 		return nil, fmt.Errorf("failed to add ignition file: %w", err)
 	}
