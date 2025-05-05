@@ -90,6 +90,6 @@ func toVzBootloader(bootloader config.Bootloader) (vz.BootLoader, error) {
 	case *config.MacOSBootloader:
 		return toVzMacOSBootloader(b)
 	default:
-		return nil, fmt.Errorf("Unexpected bootloader type: %T", b)
+		return nil, fmt.Errorf("unexpected bootloader type: %T", b)
 	}
 }

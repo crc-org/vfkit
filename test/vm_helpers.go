@@ -126,7 +126,7 @@ func (cmd *vfkitRunner) Wait(t *testing.T) {
 func (cmd *vfkitRunner) Close() {
 	if cmd != nil && !cmd.gracefullyShutdown {
 		log.Infof("killing left-over vfkit process")
-		err := cmd.Cmd.Process.Kill()
+		err := cmd.Process.Kill()
 		if err != nil {
 			log.Warnf("failed to kill vfkit process: %v", err)
 		}

@@ -68,7 +68,7 @@ func parseString(str string) ([]string, error) {
 			continue
 		}
 		if withinQuotes {
-			return nil, fmt.Errorf("Coding error in arg parsing")
+			return nil, fmt.Errorf("coding error in arg parsing")
 		}
 		switch c {
 		case ',':
@@ -82,7 +82,7 @@ func parseString(str string) ([]string, error) {
 		}
 	}
 	if withinQuotes {
-		return nil, fmt.Errorf("Mismatched \"")
+		return nil, fmt.Errorf("mismatched \"")
 	}
 
 	return builder.End()

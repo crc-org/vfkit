@@ -373,14 +373,14 @@ func (dev *VirtioGPU) FromOptions(options []option) error {
 		case VirtioGPUResolutionHeight:
 			height, err := strconv.Atoi(option.value)
 			if err != nil || height < 1 {
-				return fmt.Errorf("Invalid value for virtio-gpu %s: %s", option.key, option.value)
+				return fmt.Errorf("invalid value for virtio-gpu %s: %s", option.key, option.value)
 			}
 
 			dev.Height = height
 		case VirtioGPUResolutionWidth:
 			width, err := strconv.Atoi(option.value)
 			if err != nil || width < 1 {
-				return fmt.Errorf("Invalid value for virtio-gpu %s: %s", option.key, option.value)
+				return fmt.Errorf("invalid value for virtio-gpu %s: %s", option.key, option.value)
 			}
 
 			dev.Width = width
@@ -825,7 +825,7 @@ func USBMassStorageNew(imagePath string) (*USBMassStorage, error) {
 }
 
 func (dev *USBMassStorage) SetReadOnly(readOnly bool) {
-	dev.StorageConfig.ReadOnly = readOnly
+	dev.ReadOnly = readOnly
 }
 
 // StorageConfig configures a disk device.
