@@ -164,7 +164,7 @@ Vfkit can create this ISO image automatically, or you can provide a pre-made ISO
 
 ##### Automatic ISO Creation
 
-Vfkit allows you to pass the file paths of your `user-data` and `meta-data` files directly as arguments. 
+Vfkit allows you to pass the file paths of your `user-data`, `meta-data`, and `network-config` files directly as arguments.
 It will then handle the creation of the ISO image and the virtio-blk device internally.
 
 Example
