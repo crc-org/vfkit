@@ -1,0 +1,6 @@
+version: 2
+ethernets:
+  enp0s1:
+    dhcp4: false
+    addresses:
+      - 192.168.64.50/24
