@@ -1,13 +1,13 @@
 module github.com/crc-org/vfkit
 
-go 1.23.0
+go 1.23.3
 
 toolchain go1.23.6
 
 require (
 	github.com/Code-Hex/vz/v3 v3.6.0
 	github.com/cavaliergopher/grab/v3 v3.0.1
-	github.com/containers/common v0.62.3
+	github.com/containers/common v0.63.0
 	github.com/crc-org/crc/v2 v2.49.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/kdomanski/iso9660 v0.4.0
@@ -71,7 +71,7 @@ require (
 	golang.org/x/net v0.37.0 // indirect
 	golang.org/x/term v0.32.0 // indirect
 	golang.org/x/text v0.25.0 // indirect
-	google.golang.org/protobuf v1.36.5 // indirect
+	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
