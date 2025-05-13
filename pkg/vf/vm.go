@@ -151,7 +151,7 @@ func (cfg *VirtualMachineConfiguration) toVz() (*vz.VirtualMachineConfiguration,
 		return nil, err
 	}
 	if !valid {
-		return nil, fmt.Errorf("Invalid virtual machine configuration")
+		return nil, fmt.Errorf("invalid virtual machine configuration")
 	}
 
 	return cfg.VirtualMachineConfiguration, nil

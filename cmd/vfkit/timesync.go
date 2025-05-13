@@ -27,7 +27,7 @@ func syncGuestTime(conn net.Conn) error {
 	}
 
 	if response != `{"return": {}}`+"\n" {
-		return fmt.Errorf("Unexpected response from qemu-guest-agent: %s", response)
+		return fmt.Errorf("unexpected response from qemu-guest-agent: %s", response)
 	}
 
 	return nil

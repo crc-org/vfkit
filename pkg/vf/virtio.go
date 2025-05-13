@@ -37,7 +37,7 @@ type vzNetworkBlockDevice struct {
 }
 
 func (dev *NVMExpressController) toVz() (vz.StorageDeviceConfiguration, error) {
-	var storageConfig DiskStorageConfig = DiskStorageConfig(dev.DiskStorageConfig)
+	var storageConfig = DiskStorageConfig(dev.DiskStorageConfig)
 	attachment, err := storageConfig.toVz()
 	if err != nil {
 		return nil, err
@@ -62,7 +62,7 @@ func (dev *NVMExpressController) AddToVirtualMachineConfig(vmConfig *VirtualMach
 }
 
 func (dev *VirtioBlk) toVz() (vz.StorageDeviceConfiguration, error) {
-	var storageConfig DiskStorageConfig = DiskStorageConfig(dev.DiskStorageConfig)
+	var storageConfig = DiskStorageConfig(dev.DiskStorageConfig)
 	attachment, err := storageConfig.toVz()
 	if err != nil {
 		return nil, err
@@ -482,7 +482,7 @@ func AddToVirtualMachineConfig(vmConfig *VirtualMachineConfiguration, dev config
 	case *config.NetworkBlockDevice:
 		return (*NetworkBlockDevice)(d).AddToVirtualMachineConfig(vmConfig)
 	default:
-		return fmt.Errorf("Unexpected virtio device type: %T", d)
+		return fmt.Errorf("unexpected virtio device type: %T", d)
 	}
 }
 
@@ -496,7 +496,7 @@ func (config *DiskStorageConfig) toVz() (vz.StorageDeviceAttachment, error) {
 }
 
 func (dev *USBMassStorage) toVz() (vz.StorageDeviceConfiguration, error) {
-	var storageConfig DiskStorageConfig = DiskStorageConfig(dev.DiskStorageConfig)
+	var storageConfig = DiskStorageConfig(dev.DiskStorageConfig)
 	attachment, err := storageConfig.toVz()
 	if err != nil {
 		return nil, err
