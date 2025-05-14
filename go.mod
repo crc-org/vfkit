@@ -8,7 +8,7 @@ require (
 	github.com/Code-Hex/vz/v3 v3.6.0
 	github.com/cavaliergopher/grab/v3 v3.0.1
 	github.com/containers/common v0.62.3
-	github.com/crc-org/crc/v2 v2.49.0
+	github.com/crc-org/crc/v2 v2.50.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/kdomanski/iso9660 v0.4.0
 	github.com/pkg/term v1.1.0
@@ -68,7 +68,7 @@ require (
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	golang.org/x/arch v0.8.0 // indirect
-	golang.org/x/net v0.37.0 // indirect
+	golang.org/x/net v0.39.0 // indirect
 	golang.org/x/term v0.32.0 // indirect
 	golang.org/x/text v0.25.0 // indirect
 	google.golang.org/protobuf v1.36.5 // indirect
