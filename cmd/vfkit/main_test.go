@@ -70,6 +70,7 @@ func TestGenerateCloudInitImage(t *testing.T) {
 	iso, err := generateCloudInitImage([]string{
 		filepath.Join(assetsDir, "user-data"),
 		filepath.Join(assetsDir, "meta-data"),
+		filepath.Join(assetsDir, "network-config"),
 	})
 	require.NoError(t, err)
 

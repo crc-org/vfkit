@@ -289,8 +289,9 @@ func generateCloudInitImage(files []string) (string, error) {
 	}
 
 	configFiles := map[string]io.Reader{
-		"user-data": nil,
-		"meta-data": nil,
+		"user-data":      nil,
+		"meta-data":      nil,
+		"network-config": nil,
 	}
 
 	hasConfigFile := false
