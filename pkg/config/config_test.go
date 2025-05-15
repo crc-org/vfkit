@@ -64,7 +64,7 @@ func TestVirtualMachine_ValidateBlockDevices(t *testing.T) {
 	vm.Devices = append(vm.Devices, dev)
 	defer os.Remove(imagePath)
 
-	err = vm.ValidateDevices()
+	err = dev.Validate()
 	require.Error(t, err)
 	require.ErrorContains(t, err, "vfkit does not support qcow2 image format")
 }
