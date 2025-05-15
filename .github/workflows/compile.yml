@@ -43,6 +43,15 @@ jobs:
           go-version-file: go.mod
       - name: Build
         run: make
+
+      - name: Install qemu-img
+        run: |
+          brew update
+          brew install qemu
+
+      - name: Verify qemu-img is installed
+        run: qemu-img --version
+
       - name: Test
         if: matrix.os != 'macOS-14'
         run: make test

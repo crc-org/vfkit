@@ -1,6 +1,7 @@
 package config
 
 import (
+	"bytes"
 	"fmt"
 	"math"
 	"net"
@@ -11,7 +12,10 @@ import (
 )
 
 // The VirtioDevice interface is an interface which is implemented by all virtio devices.
-type VirtioDevice VMComponent
+type VirtioDevice interface {
+	VMComponent
+	Validate() error
+}
 
 const (
 	// Possible values for VirtioInput.InputType
@@ -25,6 +29,7 @@ const (
 	// Default VirtioGPU Resolution
 	defaultVirtioGPUResolutionWidth  = 800
 	defaultVirtioGPUResolutionHeight = 600
+	qcow2Header                      = "QFI\xfb"
 )
 
 // VirtioInput configures an input device, such as a keyboard or pointing device
@@ -144,6 +149,14 @@ func (v *VirtioBalloon) ToCmdLine() ([]string, error) {
 	return []string{"--device", "virtio-balloon"}, nil
 }
 
+func (v *VirtioBalloon) Validate() error {
+	return nil
+}
+
+func (v *DirectorySharingConfig) Validate() error {
+	return nil
+}
+
 type option struct {
 	key   string
 	value string
@@ -240,7 +253,7 @@ func VirtioSerialNewPty() (VirtioDevice, error) {
 	}, nil
 }
 
-func (dev *VirtioSerial) validate() error {
+func (dev *VirtioSerial) Validate() error {
 	if dev.LogFile != "" && dev.UsesStdio {
 		return fmt.Errorf("'logFilePath' and 'stdio' cannot be set at the same time")
 	}
@@ -258,7 +271,7 @@ func (dev *VirtioSerial) validate() error {
 }
 
 func (dev *VirtioSerial) ToCmdLine() ([]string, error) {
-	if err := dev.validate(); err != nil {
+	if err := dev.Validate(); err != nil {
 		return nil, err
 	}
 	switch {
@@ -290,7 +303,7 @@ func (dev *VirtioSerial) FromOptions(options []option) error {
 		}
 	}
 
-	return dev.validate()
+	return dev.Validate()
 }
 
 // VirtioInputNew creates a new input device for the virtual machine.
@@ -300,14 +313,14 @@ func VirtioInputNew(inputType string) (VirtioDevice, error) {
 	dev := &VirtioInput{
 		InputType: inputType,
 	}
-	if err := dev.validate(); err != nil {
+	if err := dev.Validate(); err != nil {
 		return nil, err
 	}
 
 	return dev, nil
 }
 
-func (dev *VirtioInput) validate() error {
+func (dev *VirtioInput) Validate() error {
 	if dev.InputType != VirtioInputPointingDevice && dev.InputType != VirtioInputKeyboardDevice {
 		return fmt.Errorf("unknown option for virtio-input devices: %s", dev.InputType)
 	}
@@ -316,7 +329,7 @@ func (dev *VirtioInput) validate() error {
 }
 
 func (dev *VirtioInput) ToCmdLine() ([]string, error) {
-	if err := dev.validate(); err != nil {
+	if err := dev.Validate(); err != nil {
 		return nil, err
 	}
 
@@ -335,7 +348,7 @@ func (dev *VirtioInput) FromOptions(options []option) error {
 			return fmt.Errorf("unknown option for virtio-input devices: %s", option.key)
 		}
 	}
-	return dev.validate()
+	return dev.Validate()
 }
 
 // VirtioGPUNew creates a new gpu device for the virtual machine.
@@ -351,7 +364,7 @@ func VirtioGPUNew() (VirtioDevice, error) {
 	}, nil
 }
 
-func (dev *VirtioGPU) validate() error {
+func (dev *VirtioGPU) Validate() error {
 	if dev.Height < 1 || dev.Width < 1 {
 		return fmt.Errorf("invalid dimensions for virtio-gpu device resolution: %dx%d", dev.Width, dev.Height)
 	}
@@ -360,7 +373,7 @@ func (dev *VirtioGPU) validate() error {
 }
 
 func (dev *VirtioGPU) ToCmdLine() ([]string, error) {
-	if err := dev.validate(); err != nil {
+	if err := dev.Validate(); err != nil {
 		return nil, err
 	}
 
@@ -394,7 +407,7 @@ func (dev *VirtioGPU) FromOptions(options []option) error {
 		dev.Height = defaultVirtioGPUResolutionHeight
 	}
 
-	return dev.validate()
+	return dev.Validate()
 }
 
 // VirtioNetNew creates a new network device for the virtual machine. It will
@@ -430,7 +443,7 @@ func (dev *VirtioNet) SetUnixSocketPath(path string) {
 	dev.Nat = false
 }
 
-func (dev *VirtioNet) validate() error {
+func (dev *VirtioNet) Validate() error {
 	if dev.Nat && dev.Socket != nil {
 		return fmt.Errorf("'nat' and 'fd' cannot be set at the same time")
 	}
@@ -448,7 +461,7 @@ func (dev *VirtioNet) validate() error {
 }
 
 func (dev *VirtioNet) ToCmdLine() ([]string, error) {
-	if err := dev.validate(); err != nil {
+	if err := dev.Validate(); err != nil {
 		return nil, err
 	}
 
@@ -497,7 +510,7 @@ func (dev *VirtioNet) FromOptions(options []option) error {
 		}
 	}
 
-	return dev.validate()
+	return dev.Validate()
 }
 
 // VirtioRngNew creates a new random number generator device to feed entropy
@@ -514,6 +527,10 @@ func (dev *VirtioRng) FromOptions(options []option) error {
 	if len(options) != 0 {
 		return fmt.Errorf("unknown options for virtio-rng devices: %s", options)
 	}
+	return nil
+}
+
+func (dev *VirtioRng) Validate() error {
 	return nil
 }
 
@@ -571,7 +588,10 @@ func (dev *VirtioBlk) FromOptions(options []option) error {
 		}
 	}
 
-	return dev.DiskStorageConfig.FromOptions(unhandledOpts)
+	if err := dev.DiskStorageConfig.FromOptions(unhandledOpts); err != nil {
+		return err
+	}
+	return dev.Validate()
 }
 
 func (dev *VirtioBlk) ToCmdLine() ([]string, error) {
@@ -586,6 +606,24 @@ func (dev *VirtioBlk) ToCmdLine() ([]string, error) {
 		cmdLine[1] = fmt.Sprintf("%s,deviceId=%s", cmdLine[1], dev.DeviceIdentifier)
 	}
 	return cmdLine, nil
+}
+
+func (dev *VirtioBlk) Validate() error {
+	imgPath := dev.ImagePath
+	file, err := os.Open(imgPath)
+	if err != nil {
+		return fmt.Errorf("failed to open file %s: %v", imgPath, err)
+	}
+	defer file.Close()
+	header := make([]byte, 4)
+	_, err = file.Read(header)
+	if err != nil {
+		return fmt.Errorf("failed to read the header of file %s: %v", imgPath, err)
+	}
+	if bytes.Equal(header, []byte(qcow2Header)) {
+		return fmt.Errorf("vfkit does not support qcow2 image format")
+	}
+	return nil
 }
 
 // VirtioVsockNew creates a new virtio-vsock device for 2-way communication
@@ -638,6 +676,10 @@ func (dev *VirtioVsock) FromOptions(options []option) error {
 			return fmt.Errorf("unknown option for virtio-vsock devices: %s", option.key)
 		}
 	}
+	return nil
+}
+
+func (dev *VirtioVsock) Validate() error {
 	return nil
 }
 
@@ -801,6 +843,10 @@ func (nbd *NetworkBlockDevice) FromOptions(options []option) error {
 	return nbd.NetworkBlockStorageConfig.FromOptions(unhandledOpts)
 }
 
+func (nbd *NetworkBlockDevice) Validate() error {
+	return nil
+}
+
 type USBMassStorage struct {
 	DiskStorageConfig
 }
@@ -871,6 +917,10 @@ func (config *DiskStorageConfig) FromOptions(options []option) error {
 			return fmt.Errorf("unknown option for %s devices: %s", config.DevName, option.key)
 		}
 	}
+	return nil
+}
+
+func (config *DiskStorageConfig) Validate() error {
 	return nil
 }
 
