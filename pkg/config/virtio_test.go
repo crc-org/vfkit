@@ -1,9 +1,13 @@
 package config
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -16,23 +20,51 @@ type virtioDevTest struct {
 	errorMsg         string
 }
 
+var testImagePath = filepath.Join(os.TempDir(), "vfkit_test_disk.img")
+
 var virtioDevTests = map[string]virtioDevTest{
 	"NewVirtioBlk": {
-		newDev: func() (VirtioDevice, error) { return VirtioBlkNew("/foo/bar") },
+		newDev: func() (VirtioDevice, error) {
+			testImage, err := os.Create(testImagePath)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create test image %s: %v", testImagePath, err)
+			}
+			if _, err := testImage.Write([]byte{'0', '0', '0', '0'}); err != nil {
+				testImage.Close()
+				return nil, fmt.Errorf("failed to write test image %s: %v", testImagePath, err)
+			}
+
+			if err := testImage.Close(); err != nil {
+				return nil, fmt.Errorf("failed to close test image: %w", err)
+			}
+			return VirtioBlkNew(testImagePath)
+		},
 		expectedDev: &VirtioBlk{
 			DiskStorageConfig: DiskStorageConfig{
 				StorageConfig: StorageConfig{
 					DevName: "virtio-blk",
 				},
-				ImagePath: "/foo/bar",
+				ImagePath: testImagePath,
 			},
 			DeviceIdentifier: "",
 		},
-		expectedCmdLine: []string{"--device", "virtio-blk,path=/foo/bar"},
+		expectedCmdLine: []string{"--device", fmt.Sprintf("virtio-blk,path=%s", testImagePath)},
 	},
 	"NewVirtioBlkWithDevId": {
 		newDev: func() (VirtioDevice, error) {
-			dev, err := VirtioBlkNew("/foo/bar")
+			testImage, err := os.Create(testImagePath)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create test image %s: %v", testImagePath, err)
+			}
+			if _, err := testImage.Write([]byte{'0', '0', '0', '0'}); err != nil {
+				testImage.Close()
+				return nil, fmt.Errorf("failed to write test image %s: %v", testImagePath, err)
+			}
+
+			if err := testImage.Close(); err != nil {
+				return nil, fmt.Errorf("failed to close test image: %w", err)
+			}
+			dev, err := VirtioBlkNew(testImagePath)
 			if err != nil {
 				return nil, err
 			}
@@ -44,12 +76,12 @@ var virtioDevTests = map[string]virtioDevTest{
 				StorageConfig: StorageConfig{
 					DevName: "virtio-blk",
 				},
-				ImagePath: "/foo/bar",
+				ImagePath: testImagePath,
 			},
 			DeviceIdentifier: "test",
 		},
-		expectedCmdLine:  []string{"--device", "virtio-blk,path=/foo/bar,deviceId=test"},
-		alternateCmdLine: []string{"--device", "virtio-blk,deviceId=test,path=/foo/bar"},
+		expectedCmdLine:  []string{"--device", fmt.Sprintf("virtio-blk,path=%s,deviceId=test", testImagePath)},
+		alternateCmdLine: []string{"--device", fmt.Sprintf("virtio-blk,deviceId=test,path=%s", testImagePath)},
 	},
 	"NewNVMe": {
 		newDev: func() (VirtioDevice, error) { return NVMExpressControllerNew("/foo/bar") },
@@ -296,6 +328,12 @@ func testErrorVirtioDev(t *testing.T, test *virtioDevTest) {
 }
 
 func TestVirtioDevices(t *testing.T) {
+	defer func() {
+		err := os.Remove(testImagePath)
+		if err != nil {
+			log.Warn("Failed to remove test image")
+		}
+	}()
 	t.Run("virtio-devices", func(t *testing.T) {
 		for name := range virtioDevTests {
 			t.Run(name, func(t *testing.T) {
@@ -307,6 +345,5 @@ func TestVirtioDevices(t *testing.T) {
 				}
 			})
 		}
-
 	})
 }
