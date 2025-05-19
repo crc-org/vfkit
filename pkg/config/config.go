@@ -250,7 +250,7 @@ func (vm *VirtualMachine) AddIgnitionFileFromCmdLine(cmdlineOpts string) error {
 	return nil
 }
 
-func TimeSyncNew(vsockPort uint) (VMComponent, error) {
+func TimeSyncNew(vsockPort uint) (VirtioDevice, error) {
 
 	if vsockPort > math.MaxUint32 {
 		return nil, fmt.Errorf("invalid vsock port: %d", vsockPort)
@@ -286,6 +286,10 @@ func (ts *TimeSync) FromOptions(options []option) error {
 		return fmt.Errorf("missing 'vsockPort' option for timesync parameter")
 	}
 
+	return nil
+}
+
+func (ts *TimeSync) Validate() error {
 	return nil
 }
 
