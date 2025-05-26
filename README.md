@@ -18,6 +18,13 @@ See https://github.com/crc-org/vfkit/blob/main/doc/usage.md
 - [Containers Plumbing 2023](https://crc.dev/blog/posts/2023-03-22-containers-plumbing/)
 - [FOSDEM 2023](https://fosdem.org/2023/schedule/event/govfkit/)
 
+### Adopters
+
+- [minikube](https://minikube.sigs.k8s.io/) 1.35.0 and newer - minikube quickly sets up a local Kubernetes cluster
+- [podman](https://podman.io/) 5.0 and newer - podman is a free software CLI tool to manage containers, pods and images
+- [crc](https://crc.dev/) - crc sets up local OpenShift or MicroShift clusters for development and testing purposes
+- [ovm](https://github.com/oomol-lab/ovm) - ovm is used by Oomol Studio to run linux containers on macOS
+
 ### Installation
 
 vfkit is available in brew:
