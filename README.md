@@ -18,6 +18,13 @@ See https://github.com/crc-org/vfkit/blob/main/doc/usage.md
 - [Containers Plumbing 2023](https://crc.dev/blog/posts/2023-03-22-containers-plumbing/)
 - [FOSDEM 2023](https://fosdem.org/2023/schedule/event/govfkit/)
 
+### Adopters
+
+- [minikube](https://minikube.sigs.k8s.io/) 1.35.0 and newer
+- [podman](https://podman.io/) 5.0 and newer
+- [crc](https://crc.dev/)
+- [ovm](https://github.com/oomol-lab/ovm)
+
 ### Installation
 
 vfkit is available in brew:
