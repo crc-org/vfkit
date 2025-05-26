@@ -288,6 +288,8 @@ This allows to connect to the export of the remote NBD server:
 
 The `--device virtio-net` option adds a network interface to the virtual machine. If it gets its IP address through DHCP, its IP can be found in `/var/db/dhcpd_leases` on the host.
 
+vfkit only supports NAT networking on its own. However, it integrates with [gvisor-tap-vsock](https://github.com/containers/gvisor-tap-vsock) for a user-mode networking stack, and [vmnet-helper](https://github.com/nirs/vmnet-helper) for shared/bridged/host networking through vmnet.
+
 #### Arguments
 - `mac`: optional argument to specify the MAC address of the VM. If it's omitted, a random MAC address will be used.
 - `fd`: file descriptor to attach to the guest network interface. The file descriptor must be a connected datagram socket. See [VZFileHandleNetworkDeviceAttachment](https://developer.apple.com/documentation/virtualization/vzfilehandlenetworkdeviceattachment?language=objc) for more details.
