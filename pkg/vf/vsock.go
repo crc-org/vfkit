@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"strconv"
 
-	"inet.af/tcpproxy"
+	"github.com/inetaf/tcpproxy"
 )
 
 func ExposeVsock(vm *VirtualMachine, port uint32, vsockPath string, listen bool) (io.Closer, error) {
