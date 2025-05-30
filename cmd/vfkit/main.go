@@ -289,8 +289,9 @@ func generateCloudInitImage(files []string) (string, error) {
 	}
 
 	configFiles := map[string]io.Reader{
-		"user-data": nil,
-		"meta-data": nil,
+		"user-data":      nil,
+		"meta-data":      nil,
+		"network-config": nil,
 	}
 
 	hasConfigFile := false
@@ -306,7 +307,9 @@ func generateCloudInitImage(files []string) (string, error) {
 
 		filename := filepath.Base(path)
 		if _, ok := configFiles[filename]; ok {
-			hasConfigFile = true
+			if filename == "user-data" || filename == "meta-data" {
+				hasConfigFile = true
+			}
 			configFiles[filename] = file
 		}
 	}
