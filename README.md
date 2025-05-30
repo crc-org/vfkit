@@ -1,12 +1,29 @@
-vfkit - Simple command line tool to start VMs through the macOS Virtualization framework
+vfkit - Command-line tool to start VMs on macOS
 ====
 
 ### Introduction
 
 vfkit offers a command-line interface to start virtual machines using the [macOS Virtualization framework](https://developer.apple.com/documentation/virtualization).
 It also provides a `github.com/crc-org/vfkit/pkg/config` go package.
-This package provides a native Go API to generate the vfkit command line.
+This package implements a native Go API to generate the vfkit command line.
 
+### Usage
+
+See https://github.com/crc-org/vfkit/blob/main/doc/usage.md
+
+
+### Presentations
+
+`vfkit` has been presented at a few conferences:
+- [Containers Plumbing 2023](https://crc.dev/blog/posts/2023-03-22-containers-plumbing/)
+- [FOSDEM 2023](https://fosdem.org/2023/schedule/event/govfkit/)
+
+### Adopters
+
+- [minikube](https://minikube.sigs.k8s.io/) 1.35.0 and newer
+- [podman](https://podman.io/) 5.0 and newer
+- [crc](https://crc.dev/)
+- [ovm](https://github.com/oomol-lab/ovm)
 
 ### Installation
 
@@ -20,19 +37,7 @@ brew install vfkit
 
 From the root direction of this repository, run `make`.
 
-### Usage
-
-See https://github.com/crc-org/vfkit/blob/main/doc/usage.md
-
-
-### Presentations
-
-`vfkit` has been presented at a few conferences:
-- [Containers Plumbing 2023](https://crc.dev/blog/posts/2023-03-22-containers-plumbing/)
-- [FOSDEM 2023](https://fosdem.org/2023/schedule/event/govfkit/)
-
-
-### Background
+### Technical background
 
 The work in this repository makes use of https://github.com/Code-Hex/vz which provides go bindings for macOS virtualization framework.
 The lifetime of virtual machines created using the virtualization framework is tied to the filetime of the process where they were created.
@@ -40,8 +45,7 @@ When using `Code-Hex/vz`, this means the virtual machine will be terminated at t
 Spawning a `vfkit` process gives more flexibility and more control over the lifetime of the virtual machine.
 
 
-The kernel must be uncompressed before use as no bootloader is used, as
-documented in https://www.kernel.org/doc/Documentation/arm64/booting.txt
+On Apple Silicon hardware (M1 CPUs and newer), when using `--bootloader linux`, the kernel must be uncompressed before use as no bootloader is used, as documented in https://www.kernel.org/doc/Documentation/arm64/booting.txt. vfkit will error out before starting if it detects a compressed kernel. When using `--bootloader efi`, there are no requirements on the kernel.
 
 ```
 3. Decompress the kernel image
