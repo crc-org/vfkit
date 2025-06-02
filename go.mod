@@ -10,6 +10,7 @@ require (
 	github.com/containers/common v0.62.3
 	github.com/crc-org/crc/v2 v2.51.0
 	github.com/gin-gonic/gin v1.10.0
+	github.com/inetaf/tcpproxy v0.0.0-20250222171855-c4b9df066048
 	github.com/kdomanski/iso9660 v0.4.0
 	github.com/pkg/term v1.1.0
 	github.com/prashantgupta24/mac-sleep-notifier v1.0.1
@@ -21,7 +22,6 @@ require (
 	golang.org/x/crypto v0.38.0
 	golang.org/x/mod v0.24.0
 	golang.org/x/sys v0.33.0
-	inet.af/tcpproxy v0.0.0-20231102063150-2862066fc2a9
 )
 
 require (
