@@ -7,7 +7,7 @@ import (
 )
 
 func TestExitHandlerCalled(t *testing.T) {
-	setupExitSignalHandling(false)
+	setupExitSignalHandling(nil)
 
 	ch := make(chan struct{})
 	RegisterExitHandler(func() {
