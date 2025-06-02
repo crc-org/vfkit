@@ -136,7 +136,8 @@ func runVFKit(vmConfig *config.VirtualMachine, opts *cmdline.Options) error {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
-	util.SetupExitSignalHandling()
+	exitChan := make(chan bool)
+	util.SetupExitSignalHandling(exitChan)
 
 	gpuDevs := vmConfig.VirtioGPUDevices()
 	if opts.UseGUI && len(gpuDevs) > 0 {
@@ -157,6 +158,28 @@ func runVFKit(vmConfig *config.VirtualMachine, opts *cmdline.Options) error {
 		}
 		srv.Start()
 	}
+	// Setup graceful shutdown handler on signal termination
+	// This goroutine will only be triggered when the application
+	// receives an SIGTERM,SIGINT or os.Interrupt signals
+	go func() {
+		<-exitChan // Blocks until signal handler sends termination signal
+		log.Debugf("shutting down...")
+		stopped, err := vfVM.RequestStop()
+		if err != nil {
+			log.Errorf("failed to shutdown VM: %v", err)
+		} else if !stopped {
+			log.Warnf("VM did not acknowledge stop request")
+		}
+		if err := waitForVMState(vfVM, vz.VirtualMachineStateStopped, time.After(5*time.Second)); err != nil {
+			log.Warnf("failed to wait for VM stop: %v, forcing stop", err)
+			if forceErr := vfVM.Stop(); forceErr != nil {
+				log.Errorf("failed to force stop VM: %v", forceErr)
+			}
+		} else {
+			log.Debugf("VM stopped gracefully")
+		}
+
+	}()
 	return runVirtualMachine(vmConfig, vfVM)
 }
 
