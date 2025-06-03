@@ -1,7 +1,7 @@
 # vfkit Command Line
 
 The `vfkit` executable can be used to create a virtual machine (VM) using macOS virtualization framework.
-The virtual machine will be terminated as soon as the `vfkit` process exits.
+The virtual machine will be started when `vfkit` starts and will be terminated as soon as the `vfkit` process exits.
 Its configuration can be specified through command line options.
 
 Specifying VM bootloader configuration is mandatory.
@@ -54,6 +54,21 @@ A bootloader is required to tell vfkit _how_ it should start the guest OS.
 
 `--bootloader linux` replaces the legacy `--kernel`, `--kernel-cmdline` and `--initrd` options.
 It allows to specify which kernel and initrd should be used when starting the VM.
+
+On Apple Silicon hardware (M1 CPUs and newer), when using `--bootloader linux`, the kernel must be uncompressed before use as documented in https://www.kernel.org/doc/Documentation/arm64/booting.txt. `vfkit` will exit with an error if it detects a compressed kernel when running on Apple silicon. There are no such requirements when using `--bootloader efi`.
+
+Excerpt from the kernel’s `booting.txt`:
+```
+3. Decompress the kernel image
+------------------------------
+
+Requirement: OPTIONAL
+
+The AArch64 kernel does not currently provide a decompressor and therefore
+requires decompression (gzip etc.) to be performed by the boot loader if a
+compressed Image target (e.g. Image.gz) is used.  For bootloaders that do not
+implement this requirement, the uncompressed Image target is available instead.
+```
 
 #### Arguments
 
@@ -272,6 +287,8 @@ This allows to connect to the export of the remote NBD server:
 #### Description
 
 The `--device virtio-net` option adds a network interface to the virtual machine. If it gets its IP address through DHCP, its IP can be found in `/var/db/dhcpd_leases` on the host.
+
+vfkit only supports NAT networking on its own. However, it integrates with [gvisor-tap-vsock](https://github.com/containers/gvisor-tap-vsock) for a user-mode networking stack, and [vmnet-helper](https://github.com/nirs/vmnet-helper) for shared/bridged/host networking through vmnet.
 
 #### Arguments
 - `mac`: optional argument to specify the MAC address of the VM. If it's omitted, a random MAC address will be used.
