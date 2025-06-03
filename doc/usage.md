@@ -312,6 +312,7 @@ This adds a virtio-net device to the VM, and redirects all the network traffic o
 This is useful in combination with usermode networking stacks such as [gvisor-tap-vsock](https://github.com/containers/gvisor-tap-vsock).
 
 See [this shell script](https://github.com/nirs/vmnet-helper/blob/main/examples/vfkit.sh) for an example of networking using `vmnet-helper`.
+See [this shell script](https://github.com/crc-org/vfkit/blob/main/contrib/scripts/start-gvproxy.sh) for an example of networking using `gvproxy`.
 
 
 ### Serial Port
