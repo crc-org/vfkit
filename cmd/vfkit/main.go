@@ -157,6 +157,13 @@ func runVFKit(vmConfig *config.VirtualMachine, opts *cmdline.Options) error {
 		}
 		srv.Start()
 	}
+	util.RegisterExitHandler(func() {
+		log.Debugf("exiting vfkit")
+		err := vfVM.Stop()
+		if err != nil {
+			log.Error(err)
+		}
+	})
 	return runVirtualMachine(vmConfig, vfVM)
 }
 
