@@ -23,7 +23,7 @@ set -exuo pipefail
 DISK_IMAGE="${1?Usage: $0 diskimage}"
 VM_NAME="$(basename ${DISK_IMAGE})"
 
-${GVPROXY} -mtu 1500 -ssh-port 2223 -listen-vfkit unixgram://$(pwd)/${VM_NAME}.sock  -log-file ${VM_NAME}.gvproxy.log --pid-file ${VM_NAME}.gvproxy.pid &
+${GVPROXY} --mtu 1500 --ssh-port 2223 --listen-vfkit unixgram://$(pwd)/${VM_NAME}.sock --log-file ${VM_NAME}.gvproxy.log --pid-file ${VM_NAME}.gvproxy.pid &
 
 TO_REMOVE="${VM_NAME}.sock ${VM_NAME}.gvproxy.pid ${VM_NAME}.overlay.img ${VM_NAME}.efistore.nvram"
 trap 'if [[ -f "${VM_NAME}.gvproxy.pid" ]]; then kill $(cat ${VM_NAME}.gvproxy.pid); fi; rm -f ${TO_REMOVE}' EXIT
