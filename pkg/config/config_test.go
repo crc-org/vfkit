@@ -1,6 +1,9 @@
 package config
 
 import (
+	"os"
+	"os/exec"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -43,4 +46,27 @@ func TestNetworkBlockDevice_NoDevice(t *testing.T) {
 
 	nbdItem := vm.NetworkBlockDevice("nbd2")
 	require.Nil(t, nbdItem)
+}
+
+func TestVirtualMachine_ValidateBlockDevices(t *testing.T) {
+	vm := &VirtualMachine{}
+
+	tmpDir := t.TempDir()
+	imagePath := filepath.Join(tmpDir, "disk.qcow2")
+	size := "1G"
+
+	cmd := exec.Command("qemu-img", "create", "-f", "qcow2", imagePath, size)
+	err := cmd.Run()
+
+	require.NoError(t, err)
+	defer os.Remove(imagePath)
+
+	dev, err := VirtioBlkNew(imagePath)
+	require.NoError(t, err)
+	vm.Devices = append(vm.Devices, dev)
+
+	err = dev.validate()
+	require.Error(t, err)
+
+	require.ErrorContains(t, err, "vfkit does not support qcow2 image format")
 }
