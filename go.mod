@@ -5,7 +5,7 @@ go 1.23.0
 toolchain go1.23.6
 
 require (
-	github.com/Code-Hex/vz/v3 v3.6.0
+	github.com/Code-Hex/vz/v3 v3.7.0
 	github.com/cavaliergopher/grab/v3 v3.0.1
 	github.com/containers/common v0.62.3
 	github.com/crc-org/crc/v2 v2.51.0
