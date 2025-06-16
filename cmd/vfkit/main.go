@@ -136,8 +136,6 @@ func runVFKit(vmConfig *config.VirtualMachine, opts *cmdline.Options) error {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 
-	util.SetupExitSignalHandling()
-
 	gpuDevs := vmConfig.VirtioGPUDevices()
 	if opts.UseGUI && len(gpuDevs) > 0 {
 		gpuDevs[0].UsesGUI = true
@@ -157,6 +155,26 @@ func runVFKit(vmConfig *config.VirtualMachine, opts *cmdline.Options) error {
 		}
 		srv.Start()
 	}
+
+	shutdownFunc := func() {
+		log.Debugf("shutting down...")
+		stopped, err := vfVM.RequestStop()
+		if err != nil {
+			log.Errorf("failed to shutdown VM: %v", err)
+		} else if !stopped {
+			log.Warnf("VM did not acknowledge stop request")
+		}
+		if err := waitForVMState(vfVM, vz.VirtualMachineStateStopped, time.After(5*time.Second)); err != nil {
+			log.Warnf("failed to wait for VM stop: %v, forcing stop", err)
+			if forceErr := vfVM.Stop(); forceErr != nil {
+				log.Errorf("failed to force stop VM: %v", forceErr)
+			}
+		} else {
+			log.Debugf("VM stopped gracefully")
+		}
+
+	}
+	util.SetupExitSignalHandling(shutdownFunc)
 	return runVirtualMachine(vmConfig, vfVM)
 }
 

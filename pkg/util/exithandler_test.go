@@ -7,7 +7,12 @@ import (
 )
 
 func TestExitHandlerCalled(t *testing.T) {
-	setupExitSignalHandling(false)
+	shutdownCalled := false
+	shutDownFunc := func() {
+		shutdownCalled = true
+		ExecuteExitHandlers()
+	}
+	setupExitSignalHandling(shutDownFunc)
 
 	ch := make(chan struct{})
 	RegisterExitHandler(func() {
@@ -23,6 +28,9 @@ func TestExitHandlerCalled(t *testing.T) {
 	select {
 	case <-ch:
 		// exit handler was called
+		if !shutdownCalled {
+			t.Errorf("exit handler was not called")
+		}
 	case <-time.After(5 * time.Second):
 		t.Errorf("Exit handler not called - timed out")
 	}
