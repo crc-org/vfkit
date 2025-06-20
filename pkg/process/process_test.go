@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"testing"
 	"time"
 
@@ -98,21 +97,14 @@ func build(t *testing.T, name string) (string, error) {
 		return "", err
 	}
 	out := filepath.Join(resolved, name)
-	if runtime.GOOS == "windows" {
-		out += ".exe"
-	}
 
 	t.Logf("Building %q", name)
 	cmd := exec.Command("go", "build", "-o", out, source)
-	cmd.Env = append(os.Environ(),
-		"GOOS="+runtime.GOOS,
-		"GOARCH="+runtime.GOARCH,
-	)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
 	if err := cmd.Run(); err != nil {
-		return "", err
+		t.Fatalf("Failed to build %q: %v", name, err)
 	}
 	return out, nil
 }
@@ -148,8 +140,7 @@ func getTestDataDir() (string, error) {
 		return "", err
 	}
 
-	projectRoot := filepath.Join(currentDir, "..")
-	return filepath.Join(projectRoot, "vf", "testdata"), nil
+	return filepath.Join(currentDir, "testdata"), nil
 }
 
 func waitForTermination(t *testing.T, cmd *exec.Cmd) {
