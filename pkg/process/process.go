@@ -80,8 +80,6 @@ func (p *Process) findProcess() (*process.Process, error) {
 		return nil, fmt.Errorf("cannot find process exe: %v", err)
 	}
 	if exe != p.ExecutablePath {
-		fmt.Println("HII", exe, p.ExecutablePath)
-
 		return nil, os.ErrNotExist
 	}
 	return proc, nil
