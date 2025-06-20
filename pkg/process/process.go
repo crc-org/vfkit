@@ -55,7 +55,7 @@ func (p *Process) FindProcess() (*process.Process, error) {
 		return nil, err
 	}
 
-	proc, err := process.NewProcess(int32(pid))
+	proc, err := process.NewProcess(pid)
 	if err != nil && err.Error() == "process does not exist" {
 		return nil, os.ErrNotExist
 	}

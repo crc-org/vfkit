@@ -23,6 +23,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"math"
 	"net"
 	"net/http"
 	"os"
@@ -35,6 +36,7 @@ import (
 	"github.com/Code-Hex/vz/v3"
 	"github.com/crc-org/vfkit/pkg/cmdline"
 	"github.com/crc-org/vfkit/pkg/config"
+	"github.com/crc-org/vfkit/pkg/process"
 	"github.com/crc-org/vfkit/pkg/rest"
 	restvf "github.com/crc-org/vfkit/pkg/rest/vf"
 	"github.com/crc-org/vfkit/pkg/vf"
@@ -100,6 +102,22 @@ func newVMConfiguration(opts *cmdline.Options) (*config.VirtualMachine, error) {
 		opts.Devices = append(opts.Devices, fmt.Sprintf("virtio-blk,path=%s", cloudInitISO))
 	}
 
+	if opts.PidFile != "" {
+		execPath, err := os.Executable()
+		if err != nil {
+			return nil, fmt.Errorf("could not determine executable path: %w", err)
+		}
+		vfProcess := process.New(os.Args[0], opts.PidFile, execPath)
+		currentPid := os.Getpid()
+		if currentPid < math.MinInt32 || currentPid > math.MaxInt32 {
+			return nil, fmt.Errorf("PID %d exceeds int32 range", currentPid)
+		}
+		err = vfProcess.WritePidFile(int32(currentPid))
+		if err != nil {
+			return nil, fmt.Errorf("could not write PID: %v", err)
+		}
+	}
+
 	if err := vmConfig.AddDevicesFromCmdLine(opts.Devices); err != nil {
 		return nil, err
 	}
@@ -107,7 +125,6 @@ func newVMConfiguration(opts *cmdline.Options) (*config.VirtualMachine, error) {
 	if err := vmConfig.AddIgnitionFileFromCmdLine(opts.IgnitionPath); err != nil {
 		return nil, fmt.Errorf("failed to add ignition file: %w", err)
 	}
-
 	return vmConfig, nil
 }
 
