@@ -2,7 +2,8 @@
 
 > This guide was tested on a **Fedora Cloud VM** running in `vfkit`.
 
-This guide walks you through building an uncompressed kernel (`vmlinux`) from `linux-next` and generating an initial RAM disk (initrd) using `dracut` on Fedora Cloud. This is especially useful for direct kernel boot on `vfkit` via `--bootloader linux` on ARM64 (Apple Silicon, etc.).
+- This guide walks you through building an uncompressed kernel (`vmlinux`) from `linux-next` and generating an initial RAM disk (initrd) using `dracut` on Fedora Cloud. This is especially useful for direct kernel boot on `vfkit` via `--bootloader linux` on ARM64 (Apple Silicon, etc.).
++ This guide walks you through building an uncompressed kernel (`Image`) from `linux-next` and generating an initial RAM disk (initrd) using `dracut` on Fedora Cloud. This is especially useful for direct kernel boot on `vfkit` via `--bootloader linux` on ARM64 (Apple Silicon, etc.).
 
 ## What is `linux-next`?
 
