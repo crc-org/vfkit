@@ -35,10 +35,20 @@ func NewVirtualMachine(vmConfig config.VirtualMachine) (*VirtualMachine, error) 
 		if err != nil {
 			return nil, err
 		}
+		if vmConfig.Nested {
+			return nil, fmt.Errorf("nested virtualization is not supported with the macOS bootloader")
+		}
 
 		vfConfig.SetPlatformVirtualMachineConfiguration(platformConfig)
 	} else {
+		platformConfig, err := NewGenericPlatformConfiguration(vmConfig)
+		if err != nil {
+			return nil, fmt.Errorf("error creating generic platform configuration: %v", err)
+		}
+
 		PlatformType = "linux"
+
+		vfConfig.SetPlatformVirtualMachineConfiguration(platformConfig)
 	}
 
 	return &VirtualMachine{
@@ -103,6 +113,27 @@ func NewVirtualMachineConfiguration(vmConfig *config.VirtualMachine) (*VirtualMa
 		VirtualMachineConfiguration: vzVMConfig,
 		config:                      vmConfig,
 	}, nil
+}
+
+func NewGenericPlatformConfiguration(vmConfig config.VirtualMachine) (vz.PlatformConfiguration, error) {
+	identifier, err := vz.NewGenericMachineIdentifier()
+	if err != nil {
+		return nil, fmt.Errorf("error generating vz identifier: %v", err)
+	}
+	platformConfig, err := vz.NewGenericPlatformConfiguration(
+		vz.WithGenericMachineIdentifier(identifier),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("error creating generic platform configuration: %w", err)
+	}
+
+	if vmConfig.Nested {
+		err = platformConfig.SetNestedVirtualizationEnabled(true)
+		if err != nil {
+			return nil, fmt.Errorf("error setting nested virtualization enabled: %w", err)
+		}
+	}
+	return platformConfig, nil
 }
 
 func (cfg *VirtualMachineConfiguration) toVz() (*vz.VirtualMachineConfiguration, error) {

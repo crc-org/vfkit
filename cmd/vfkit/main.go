@@ -81,6 +81,10 @@ func newVMConfiguration(opts *cmdline.Options) (*config.VirtualMachine, error) {
 		uint64(opts.MemoryMiB),
 		bootloader,
 	)
+	if opts.Nested && !vz.IsNestedVirtualizationSupported() {
+		return nil, fmt.Errorf("nested virtualization is not supported")
+	}
+	vmConfig.Nested = opts.Nested
 	log.Info("virtual machine parameters:")
 	log.Infof("\tvCPUs: %d", opts.Vcpus)
 	log.Infof("\tmemory: %d MiB", opts.MemoryMiB)

@@ -32,6 +32,7 @@ type VirtualMachine struct {
 	Devices    []VirtioDevice `json:"devices,omitempty"`
 	Timesync   *TimeSync      `json:"timesync,omitempty"`
 	Ignition   *Ignition      `json:"ignition,omitempty"`
+	Nested     bool           `json:"nested,omitempty"`
 }
 
 // TimeSync enables synchronization of the host time to the linux guest after the host was suspended.
@@ -110,6 +111,10 @@ func (vm *VirtualMachine) ToCmdLine() ([]string, error) {
 
 	if vm.Ignition != nil {
 		args = append(args, "--ignition", vm.Ignition.ConfigPath)
+	}
+
+	if vm.Nested {
+		args = append(args, "--nested")
 	}
 
 	return args, nil
