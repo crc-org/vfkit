@@ -231,7 +231,7 @@ var jsonStabilityTests = map[string]jsonStabilityTest{
 
 			return vm
 		},
-		skipFields:   []string{"Bootloader", "Devices", "Timesync", "Ignition"},
+		skipFields:   []string{"Bootloader", "Devices", "Timesync", "Ignition", "Nested"},
 		expectedJSON: `{"vcpus":3,"memoryBytes":3,"bootloader":{"kind":"linuxBootloader","vmlinuzPath":"/vmlinuz","kernelCmdLine":"console=hvc0","initrdPath":"/initrd"},"devices":[{"kind":"virtiorng"}],"timesync":{"vsockPort":1234}}`,
 	},
 	"RosettaShare": {
