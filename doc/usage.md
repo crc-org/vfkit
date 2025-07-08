@@ -11,12 +11,12 @@ Device configuration is optional, but most VM will need a disk image and a netwo
 
 - `--log-level`
 
-Set the log-level for VFKit.  Supported values are `debug`, `info`, and `error`.
+Set the log-level for VFKit. Supported values are `debug`, `info`, and `error`.
 
 - `--restful-uri`
 
-The URI (address) of the RESTful service.  By default it’s disabled.  Valid schemes are
-`tcp`, `none`, or `unix`.  In the case of unix, the "host" portion would be a path to where the unix domain socket will be stored. A scheme of `none` disables the RESTful service.
+The URI (address) of the RESTful service. By default it’s disabled. Valid schemes are
+`tcp`, `none`, or `unix`. In the case of unix, the "host" portion would be a path to where the unix domain socket will be stored. A scheme of `none` disables the RESTful service.
 
 ### Virtual Machine Resources
 
@@ -66,7 +66,7 @@ Requirement: OPTIONAL
 
 The AArch64 kernel does not currently provide a decompressor and therefore
 requires decompression (gzip etc.) to be performed by the boot loader if a
-compressed Image target (e.g. Image.gz) is used.  For bootloaders that do not
+compressed Image target (e.g. Image.gz) is used. For bootloaders that do not
 implement this requirement, the uncompressed Image target is available instead.
 ```
 
