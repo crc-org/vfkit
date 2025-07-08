@@ -74,7 +74,6 @@ func newVMConfiguration(opts *cmdline.Options) (*config.VirtualMachine, error) {
 
 	log.Debugf("parsed options: %+v", opts)
 	log.Debugf("boot parameters: %+v", bootloader)
-	log.Info()
 
 	vmConfig := config.NewVirtualMachine(
 		opts.Vcpus,
