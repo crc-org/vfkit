@@ -45,12 +45,14 @@ func downloadPuipui(destDir string) ([]string, error) {
 }
 
 func downloadFedora(destDir string) (string, error) {
-	const fedoraVersion = "40"
+	const fedoraVersion = "42"
 	arch := kernelArch()
-	release := "1.14"
-	buildString := fmt.Sprintf("%s-%s-%s", arch, fedoraVersion, release)
+	release := "1.1"
 
-	var fedoraURL = fmt.Sprintf("https://download.fedoraproject.org/pub/fedora/linux/releases/%s/Cloud/%s/images/Fedora-Cloud-Base-AmazonEC2.%s.raw.xz", fedoraVersion, arch, buildString)
+	baseURL := fmt.Sprintf("https://download.fedoraproject.org/pub/fedora/linux/releases/%s/Cloud/%s/images", fedoraVersion, arch)
+	fileName := fmt.Sprintf("Fedora-Cloud-Base-AmazonEC2-%s-%s.%s.raw.xz", fedoraVersion, release, arch)
+	fedoraURL := fmt.Sprintf("%s/%s", baseURL, fileName)
+	log.Infof("downloading %s", fedoraURL)
 
 	// https://github.com/cavaliergopher/grab/issues/104
 	grab.DefaultClient.UserAgent = "vfkit"
