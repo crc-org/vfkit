@@ -46,9 +46,9 @@ func downloadPuipui(destDir string) ([]string, error) {
 }
 
 func downloadFedora(destDir string) (string, error) {
-	const fedoraVersion = "42"
+	const fedoraVersion = "44"
 	arch := kernelArch()
-	release := "1.1"
+	release := "1.7"
 
 	baseURL := fmt.Sprintf("https://download.fedoraproject.org/pub/fedora/linux/releases/%s/Cloud/%s/images", fedoraVersion, arch)
 	fileName := fmt.Sprintf("Fedora-Cloud-Base-AmazonEC2-%s-%s.%s.raw.xz", fedoraVersion, release, arch)
