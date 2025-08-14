@@ -33,6 +33,7 @@ type VirtualMachine struct {
 	Timesync   *TimeSync      `json:"timesync,omitempty"`
 	Ignition   *Ignition      `json:"ignition,omitempty"`
 	Nested     bool           `json:"nested,omitempty"`
+	PidFile    string         `json:"pidFile,omitempty"`
 }
 
 // TimeSync enables synchronization of the host time to the linux guest after the host was suspended.
