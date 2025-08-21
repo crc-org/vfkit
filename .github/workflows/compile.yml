@@ -25,6 +25,7 @@ jobs:
         os:
         - macOS-13
         - macOS-14
+        - macOS-15
     steps:
       - name: Check out repository code
         uses: actions/checkout@v5
@@ -58,7 +59,7 @@ jobs:
       - name: vet
         run: go vet ./...
       - name: Upload vfkit artifact
-        if: matrix.os == 'macOS-14'
+        if: matrix.os == 'macOS-15'
         uses: actions/upload-artifact@v4
         with:
           name: Unsigned vfkit Universal Binary
