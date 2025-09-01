@@ -5,7 +5,6 @@ go 1.25.0
 require (
 	github.com/Code-Hex/vz/v3 v3.7.1
 	github.com/cavaliergopher/grab/v3 v3.0.1
-	github.com/containers/common v0.64.2
 	github.com/crc-org/crc/v2 v2.61.0
 	github.com/gin-gonic/gin v1.12.0
 	github.com/inetaf/tcpproxy v0.0.0-20250222171855-c4b9df066048
@@ -18,6 +17,7 @@ require (
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.11.1
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8
+	go.podman.io/common v0.67.1
 	golang.org/x/crypto v0.53.0
 	golang.org/x/mod v0.37.0
 	golang.org/x/sys v0.46.0
@@ -69,7 +69,6 @@ require (
 	github.com/ugorji/go/codec v1.3.1 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.mongodb.org/mongo-driver/v2 v2.5.0 // indirect
-	go.podman.io/common v0.67.1 // indirect
 	golang.org/x/arch v0.22.0 // indirect
 	golang.org/x/net v0.55.0 // indirect
 	golang.org/x/term v0.44.0 // indirect
