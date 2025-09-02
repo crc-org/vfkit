@@ -27,7 +27,7 @@ See https://github.com/crc-org/vfkit/blob/main/doc/usage.md
 
 ### Installation
 
-vfkit is available in brew:
+vfkit can be installed via [brew](https://brew.sh).
 
 ```
 brew install vfkit
