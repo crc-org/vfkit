@@ -1,4 +1,4 @@
-.PHONY: all build clean test
+.PHONY: all build clean test test-unit test-integration
 
 GIT_VERSION ?= $(shell git describe --always --dirty)
 CGO_CFLAGS=-mmacosx-version-min=11.0
@@ -11,8 +11,12 @@ include tools/tools.mk
 
 build: out/vfkit
 
-test: build
+test: test-unit test-integration
+
+test-unit:
 	@go test -v ./pkg/...
+
+test-integration: build
 	@go test -v -timeout 20m ./test
 
 clean:
