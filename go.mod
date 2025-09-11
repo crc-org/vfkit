@@ -6,7 +6,7 @@ require (
 	github.com/Code-Hex/vz/v3 v3.7.1
 	github.com/cavaliergopher/grab/v3 v3.0.1
 	github.com/containers/common v0.64.2
-	github.com/crc-org/crc/v2 v2.53.0
+	github.com/crc-org/crc/v2 v2.54.0
 	github.com/gin-gonic/gin v1.10.1
 	github.com/inetaf/tcpproxy v0.0.0-20250222171855-c4b9df066048
 	github.com/kdomanski/iso9660 v0.4.0
@@ -69,7 +69,7 @@ require (
 	golang.org/x/net v0.43.0 // indirect
 	golang.org/x/term v0.35.0 // indirect
 	golang.org/x/text v0.29.0 // indirect
-	google.golang.org/protobuf v1.36.6 // indirect
+	google.golang.org/protobuf v1.36.7 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
