@@ -14,7 +14,7 @@ build: out/vfkit
 test: test-unit test-integration
 
 test-unit:
-	@go test -v ./pkg/...
+	@go test -v ./pkg/... ./cmd/vfkit/...
 
 test-integration: build
 	@go test -v -timeout 20m ./test
