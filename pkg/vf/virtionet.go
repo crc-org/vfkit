@@ -88,8 +88,13 @@ func (dev *VirtioNet) connectUnixPath() error {
 	}
 
 	/* send vfkit magic so that the remote end can identify our connection attempt */
-	if _, err := conn.Write([]byte("VFKT")); err != nil {
-		return err
+	if dev.VfkitMagic {
+		if _, err := conn.Write([]byte("VFKT")); err != nil {
+			return err
+		}
+		log.Debugf("sent vfkit magic packet (VFKT)")
+	} else {
+		log.Debugf("skipping vfkit magic packet (disabled)")
 	}
 	log.Infof("local: %v remote: %v", conn.LocalAddr(), conn.RemoteAddr())
 
