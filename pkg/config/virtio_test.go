@@ -105,6 +105,49 @@ func TestVirtioDevices(t *testing.T) {
 			expectedCmdLine:  []string{"--device", fmt.Sprintf("virtio-blk,path=%s,deviceId=test", testImagePath)},
 			alternateCmdLine: []string{"--device", fmt.Sprintf("virtio-blk,deviceId=test,path=%s", testImagePath)},
 		},
+		"NewVirtioBlkWithType": {
+			newDev: func() (VirtioDevice, error) {
+				dev, err := getTestVirtioBlkDevice(testImagePath)
+				if err != nil {
+					return nil, err
+				}
+				dev.Type = DiskBackendBlockDevice
+				return dev, nil
+			},
+			expectedDev: &VirtioBlk{
+				DiskStorageConfig: DiskStorageConfig{
+					StorageConfig: StorageConfig{
+						DevName: "virtio-blk",
+					},
+					ImagePath: testImagePath,
+					Type:      DiskBackendBlockDevice,
+				},
+				DeviceIdentifier: "",
+			},
+			expectedCmdLine:  []string{"--device", fmt.Sprintf("virtio-blk,path=%s,type=dev", testImagePath)},
+			alternateCmdLine: []string{"--device", fmt.Sprintf("virtio-blk,type=dev,path=%s", testImagePath)},
+		},
+		"NewVirtioBlkWithDefaultType": {
+			newDev: func() (VirtioDevice, error) {
+				dev, err := getTestVirtioBlkDevice(testImagePath)
+				if err != nil {
+					return nil, err
+				}
+				dev.Type = DiskBackendDefault
+				return dev, nil
+			},
+			expectedDev: &VirtioBlk{
+				DiskStorageConfig: DiskStorageConfig{
+					StorageConfig: StorageConfig{
+						DevName: "virtio-blk",
+					},
+					ImagePath: testImagePath,
+					Type:      DiskBackendDefault,
+				},
+				DeviceIdentifier: "",
+			},
+			expectedCmdLine: []string{"--device", fmt.Sprintf("virtio-blk,path=%s", testImagePath)},
+		},
 		"NewNVMe": {
 			newDev: func() (VirtioDevice, error) { return NVMExpressControllerNew("/foo/bar") },
 			expectedDev: &NVMExpressController{
@@ -116,6 +159,27 @@ func TestVirtioDevices(t *testing.T) {
 				},
 			},
 			expectedCmdLine: []string{"--device", "nvme,path=/foo/bar"},
+		},
+		"NewNVMeWithType": {
+			newDev: func() (VirtioDevice, error) {
+				dev, err := NVMExpressControllerNew("/foo/bar")
+				if err != nil {
+					return nil, err
+				}
+				dev.Type = DiskBackendImage
+				return dev, nil
+			},
+			expectedDev: &NVMExpressController{
+				DiskStorageConfig: DiskStorageConfig{
+					StorageConfig: StorageConfig{
+						DevName: "nvme",
+					},
+					ImagePath: "/foo/bar",
+					Type:      DiskBackendImage,
+				},
+			},
+			expectedCmdLine:  []string{"--device", "nvme,path=/foo/bar,type=image"},
+			alternateCmdLine: []string{"--device", "nvme,type=image,path=/foo/bar"},
 		},
 		"NewVirtioFs": {
 			newDev: func() (VirtioDevice, error) { return VirtioFsNew("/foo/bar", "") },

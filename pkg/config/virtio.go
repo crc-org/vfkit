@@ -902,9 +902,32 @@ type StorageConfig struct {
 	ReadOnly bool   `json:"readOnly,omitempty"`
 }
 
+type DiskBackendType string
+
+const (
+	/// Normal disk images, like .img
+	DiskBackendImage DiskBackendType = "image"
+
+	/// Real block devices, like /dev/disk1s1
+	DiskBackendBlockDevice DiskBackendType = "dev"
+
+	/// If the value is empty, it defaults to image
+	DiskBackendDefault DiskBackendType = ""
+)
+
+func (typ DiskBackendType) IsValid() bool {
+	switch typ {
+	case DiskBackendImage, DiskBackendBlockDevice, DiskBackendDefault:
+		return true
+	default:
+		return false
+	}
+}
+
 type DiskStorageConfig struct {
 	StorageConfig
-	ImagePath string `json:"imagePath,omitempty"`
+	ImagePath string          `json:"imagePath,omitempty"`
+	Type      DiskBackendType `json:"type,omitempty"`
 }
 
 type NetworkBlockStorageConfig struct {
@@ -919,6 +942,10 @@ func (config *DiskStorageConfig) ToCmdLine() ([]string, error) {
 
 	value := fmt.Sprintf("%s,path=%s", config.DevName, config.ImagePath)
 
+	if config.Type != DiskBackendDefault {
+		value += fmt.Sprintf(",type=%s", string(config.Type))
+	}
+
 	if config.ReadOnly {
 		value += ",readonly"
 	}
@@ -930,6 +957,12 @@ func (config *DiskStorageConfig) FromOptions(options []option) error {
 		switch option.key {
 		case "path":
 			config.ImagePath = option.value
+		case "type":
+			typ := DiskBackendType(option.value)
+			if !typ.IsValid() {
+				return fmt.Errorf("unexpected value for disk 'type' option: %s", option.value)
+			}
+			config.Type = typ
 		case "readonly":
 			if option.value != "" {
 				return fmt.Errorf("unexpected value for virtio-blk 'readonly' option: %s", option.value)
