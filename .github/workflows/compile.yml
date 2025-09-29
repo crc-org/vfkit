@@ -18,13 +18,18 @@ jobs:
       - name: golangci-lint
         run: make lint
   build:
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
-        os:
-        - macOS-13
-        - macOS-14
+        # Test matrix covers multiple macOS versions and architectures:
+        # - macos-13: x86_64 runner, supports virtualization for integration tests
+        # - macos-14: arm64 (Apple Silicon) runner, unit tests only
+        # - macos-15: arm64 (Apple Silicon) runner, unit tests + artifact upload
+        runner:
+          - macos-13
+          - macos-14
+          - macos-15
     steps:
       - name: Check out repository code
         uses: actions/checkout@v5
@@ -48,18 +53,23 @@ jobs:
         run: |
           brew update
           brew install qemu
-
       - name: Verify qemu-img is installed
         run: qemu-img --version
+      - name: Unit tests
+        run: make test-unit
 
-      - name: Test
-        if: matrix.os != 'macOS-14'
-        run: make test
+      # Integration tests run only on macos-13 due to virtualization requirements
+      # NOTE: macos-13 runners will be deprecated by the end of 2025
+      # See: https://github.blog/changelog/2025-07-11-upcoming-changes-to-macos-hosted-runners-macos-latest-migration-and-xcode-support-policy-updates/#macos-13-is-closing-down
+      - name: Integration tests
+        if: matrix.runner == 'macos-13'
+        run: make test-integration
       - name: vet
         run: go vet ./...
       - name: Upload vfkit artifact
-        if: matrix.os == 'macOS-14'
+        if: matrix.runner == 'macos-15'
         uses: actions/upload-artifact@v4
         with:
           name: Unsigned vfkit Universal Binary
           path: "./out/vfkit"
+          if-no-files-found: error
