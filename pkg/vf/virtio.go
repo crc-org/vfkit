@@ -490,6 +490,38 @@ func (config *DiskStorageConfig) toVz() (vz.StorageDeviceAttachment, error) {
 	if config.ImagePath == "" {
 		return nil, fmt.Errorf("missing mandatory 'path' option for %s device", config.DevName)
 	}
+
+	var stat unix.Stat_t
+	err := unix.Lstat(config.ImagePath, &stat)
+
+	if err != nil {
+		return nil, fmt.Errorf("error stating file: %v", err)
+	}
+
+	mode := stat.Mode
+	if mode&unix.S_IFMT == unix.S_IFBLK {
+		var mode int
+		if config.ReadOnly {
+			mode = os.O_RDONLY
+		} else {
+			mode = os.O_RDWR
+		}
+
+		f, err := os.OpenFile(config.ImagePath, mode, 0)
+		if err != nil {
+			return nil, fmt.Errorf("error opening file: %v", err)
+		}
+
+		syncMode := vz.DiskSynchronizationModeFull
+		attachment, err := vz.NewDiskBlockDeviceStorageDeviceAttachment(f, config.ReadOnly, syncMode)
+		if err != nil {
+			_ = f.Close()
+			return nil, fmt.Errorf("error creating disk attachment: %v", err)
+		}
+
+		return attachment, nil
+	}
+
 	syncMode := vz.DiskImageSynchronizationModeFsync
 	caching := vz.DiskImageCachingModeCached
 	return vz.NewDiskImageStorageDeviceAttachmentWithCacheAndSync(config.ImagePath, config.ReadOnly, caching, syncMode)
