@@ -13,7 +13,7 @@ import (
 func TestAddIgnitionFile_MultipleOptions(t *testing.T) {
 	vm := &VirtualMachine{}
 	err := vm.AddIgnitionFileFromCmdLine("file1,file2")
-	assert.EqualError(t, err, "ignition only accept one option in command line argument")
+	assert.EqualError(t, err, "ignition only accepts one option in command line argument")
 }
 
 func TestAddIgnitionFile_OneOption(t *testing.T) {

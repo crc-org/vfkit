@@ -238,7 +238,7 @@ func (vm *VirtualMachine) AddIgnitionFileFromCmdLine(cmdlineOpts string) error {
 	}
 	opts := strings.Split(cmdlineOpts, ",")
 	if len(opts) != 1 {
-		return fmt.Errorf("ignition only accept one option in command line argument")
+		return fmt.Errorf("ignition only accepts one option in command line argument")
 	}
 
 	socketPath := filepath.Join(os.TempDir(), ignitionSocketName)
