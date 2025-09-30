@@ -277,14 +277,12 @@ func runVirtualMachine(vmConfig *config.VirtualMachine, vm *vf.VirtualMachine) e
 	return <-errCh
 }
 
-func startIgnitionProvisionerServer(ignitionReader io.Reader, ignitionSocketPath string) error {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
-		_, err := io.Copy(w, ignitionReader)
-		if err != nil {
-			log.Errorf("failed to serve ignition file: %v", err)
-		}
-	})
+func startIgnitionProvisionerServer(ignitionPath string, ignitionSocketPath string) error {
+	ignitionReader, err := os.Open(ignitionPath)
+	if err != nil {
+		return err
+	}
+	defer ignitionReader.Close()
 
 	listener, err := net.Listen("unix", ignitionSocketPath)
 	if err != nil {
@@ -301,14 +299,26 @@ func startIgnitionProvisionerServer(ignitionReader io.Reader, ignitionSocketPath
 		}
 	}()
 
+	return startIgnitionProvisionerServerInternal(ignitionReader, listener)
+}
+
+func startIgnitionProvisionerServerInternal(ignitionReader io.Reader, listener net.Listener) error {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
+		_, err := io.Copy(w, ignitionReader)
+		if err != nil {
+			log.Errorf("failed to serve ignition file: %v", err)
+		}
+	})
+
 	srv := &http.Server{
 		Handler:           mux,
-		Addr:              ignitionSocketPath,
+		Addr:              listener.Addr().String(),
 		ReadHeaderTimeout: 10 * time.Second,
 		IdleTimeout:       60 * time.Second,
 	}
 
-	log.Debugf("ignition socket: %s", ignitionSocketPath)
+	log.Debugf("ignition socket: %s", listener.Addr().String())
 	return srv.Serve(listener)
 }
 
