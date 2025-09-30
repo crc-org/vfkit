@@ -261,7 +261,7 @@ func TimeSyncNew(vsockPort uint) (VMComponent, error) {
 		return nil, fmt.Errorf("invalid vsock port: %d", vsockPort)
 	}
 	return &TimeSync{
-		VsockPort: uint32(vsockPort), //#nosec G115 -- was compared to math.MaxUint32
+		VsockPort: uint32(vsockPort),
 	}, nil
 }
 
@@ -281,7 +281,7 @@ func (ts *TimeSync) FromOptions(options []option) error {
 			if err != nil {
 				return err
 			}
-			ts.VsockPort = uint32(vsockPort) //#nosec G115 -- ParseUint(_, _, 32) guarantees no overflow
+			ts.VsockPort = uint32(vsockPort)
 		default:
 			return fmt.Errorf("unknown option for timesync parameter: %s", option.key)
 		}

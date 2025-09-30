@@ -621,7 +621,7 @@ func VirtioVsockNew(port uint, socketURL string, listen bool) (VirtioDevice, err
 		return nil, fmt.Errorf("invalid vsock port: %d", port)
 	}
 	return &VirtioVsock{
-		Port:      uint32(port), //#nosec G115 -- was compared to math.MaxUint32
+		Port:      uint32(port),
 		SocketURL: socketURL,
 		Listen:    listen,
 	}, nil
@@ -652,7 +652,7 @@ func (dev *VirtioVsock) FromOptions(options []option) error {
 			if err != nil {
 				return err
 			}
-			dev.Port = uint32(port) //#nosec G115 -- ParseUint(_, _, 32) guarantees no overflow
+			dev.Port = uint32(port)
 		case "listen":
 			dev.Listen = true
 		case "connect":
