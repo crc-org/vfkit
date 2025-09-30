@@ -51,18 +51,13 @@ func NewVirtualMachine(vmConfig config.VirtualMachine) (*VirtualMachine, error) 
 		vfConfig.SetPlatformVirtualMachineConfiguration(platformConfig)
 	}
 
-	return &VirtualMachine{
+	vm := &VirtualMachine{
 		vfConfig: vfConfig,
-	}, nil
-}
-
-func (vm *VirtualMachine) Start() error {
-	if vm.VirtualMachine == nil {
-		if err := vm.toVz(); err != nil {
-			return err
-		}
 	}
-	return vm.VirtualMachine.Start()
+	if err := vm.toVz(); err != nil {
+		return nil, err
+	}
+	return vm, nil
 }
 
 func (vm *VirtualMachine) toVz() error {
