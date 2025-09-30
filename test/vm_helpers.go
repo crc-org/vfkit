@@ -215,7 +215,7 @@ func (vm *testVM) AddDevice(t *testing.T, dev config.VirtioDevice) {
 }
 
 func (vm *testVM) AddIgnition(t *testing.T, ignConfigPath string) {
-	ign, err := config.IgnitionNew(ignConfigPath, "foo")
+	ign, err := config.IgnitionNew(ignConfigPath, "")
 	require.NoError(t, err)
 	vm.config.Ignition = ign
 }

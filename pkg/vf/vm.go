@@ -148,6 +148,17 @@ func (cfg *VirtualMachineConfiguration) toVz() (*vz.VirtualMachineConfiguration,
 		}
 	}
 
+	if cfg.config.Ignition != nil && cfg.config.Ignition.VsockPort != 0 {
+		// automatically add the vsock device we'll need for communication over VsockPort
+		vsockDev := VirtioVsock{
+			Port:   cfg.config.Ignition.VsockPort,
+			Listen: false,
+		}
+		if err := vsockDev.AddToVirtualMachineConfig(cfg); err != nil {
+			return nil, err
+		}
+	}
+
 	cfg.SetStorageDevicesVirtualMachineConfiguration(cfg.storageDevicesConfiguration)
 	cfg.SetDirectorySharingDevicesVirtualMachineConfiguration(cfg.directorySharingDevicesConfiguration)
 	cfg.SetPointingDevicesVirtualMachineConfiguration(cfg.pointingDevicesConfiguration)

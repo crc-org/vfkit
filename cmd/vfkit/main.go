@@ -197,13 +197,7 @@ func runVFKit(vmConfig *config.VirtualMachine, opts *cmdline.Options) error {
 func runVirtualMachine(vmConfig *config.VirtualMachine, vm *vf.VirtualMachine) error {
 	if vm.Config().Ignition != nil {
 		go func() {
-			file, err := os.Open(vmConfig.Ignition.ConfigPath)
-			if err != nil {
-				log.Error(err)
-			}
-			defer file.Close()
-			reader := file
-			if err := startIgnitionProvisionerServer(reader, vmConfig.Ignition.SocketPath); err != nil {
+			if err := startIgnitionProvisionerServer(vm, vmConfig.Ignition.ConfigPath, vmConfig.Ignition.VsockPort); err != nil {
 				log.Error(err)
 			}
 			log.Debug("ignition vsock server exited")
@@ -224,7 +218,7 @@ func runVirtualMachine(vmConfig *config.VirtualMachine, vm *vf.VirtualMachine) e
 		port := vsock.Port
 		socketURL := vsock.SocketURL
 		if socketURL == "" {
-			// the timesync code adds a vsock device without an associated URL.
+			// timesync and ignition add a vsock device without an associated URL.
 			continue
 		}
 		var listenStr string
@@ -277,21 +271,21 @@ func runVirtualMachine(vmConfig *config.VirtualMachine, vm *vf.VirtualMachine) e
 	return <-errCh
 }
 
-func startIgnitionProvisionerServer(ignitionPath string, ignitionSocketPath string) error {
-	ignitionReader, err := os.Open(ignitionPath)
+func startIgnitionProvisionerServer(vm *vf.VirtualMachine, configPath string, vsockPort uint32) error {
+	ignitionReader, err := os.Open(configPath)
 	if err != nil {
 		return err
 	}
 	defer ignitionReader.Close()
 
-	listener, err := net.Listen("unix", ignitionSocketPath)
+	vsockDevices := vm.SocketDevices()
+	if len(vsockDevices) != 1 {
+		return fmt.Errorf("VM has too many/not enough virtio-vsock devices (%d)", len(vsockDevices))
+	}
+	listener, err := vsockDevices[0].Listen(vsockPort)
 	if err != nil {
 		return err
 	}
-
-	util.RegisterExitHandler(func() {
-		os.Remove(ignitionSocketPath)
-	})
 
 	defer func() {
 		if err := listener.Close(); err != nil {
