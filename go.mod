@@ -12,7 +12,7 @@ require (
 	github.com/kdomanski/iso9660 v0.4.0
 	github.com/pkg/term v1.1.0
 	github.com/prashantgupta24/mac-sleep-notifier v1.0.1
-	github.com/shirou/gopsutil/v4 v4.25.8
+	github.com/shirou/gopsutil/v4 v4.25.9
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/pflag v1.0.10
@@ -33,7 +33,7 @@ require (
 	github.com/cloudwego/base64x v0.1.6 // indirect
 	github.com/crc-org/machine v0.0.0-20240926103419-a943b47fd48b // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
-	github.com/ebitengine/purego v0.8.4 // indirect
+	github.com/ebitengine/purego v0.9.0 // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
 	github.com/gin-contrib/sse v1.1.0 // indirect
