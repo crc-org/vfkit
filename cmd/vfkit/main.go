@@ -296,13 +296,10 @@ func startIgnitionProvisionerServer(vm *vf.VirtualMachine, configPath string, vs
 	return startIgnitionProvisionerServerInternal(ignitionReader, listener)
 }
 
-func startIgnitionProvisionerServerInternal(ignitionReader io.Reader, listener net.Listener) error {
+func startIgnitionProvisionerServerInternal(ignitionReader io.ReadSeeker, listener net.Listener) error {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
-		_, err := io.Copy(w, ignitionReader)
-		if err != nil {
-			log.Errorf("failed to serve ignition file: %v", err)
-		}
+	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
+		http.ServeContent(w, req, "", time.Time{}, ignitionReader)
 	})
 
 	srv := &http.Server{
