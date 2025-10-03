@@ -249,7 +249,7 @@ var jsonStabilityTests = map[string]jsonStabilityTest{
 	"VirtioNet": {
 		obj:          &VirtioNet{},
 		skipFields:   []string{"Socket"},
-		expectedJSON: `{"kind":"virtionet","nat":true,"unixSocketPath":"UnixSocketPath","macAddress":"00:11:22:33:44:55"}`,
+		expectedJSON: `{"kind":"virtionet","nat":true,"unixSocketPath":"UnixSocketPath","vfkitMagic":true,"macAddress":"00:11:22:33:44:55"}`,
 	},
 	"VirtioRNG": {
 		obj:          &VirtioRng{},
