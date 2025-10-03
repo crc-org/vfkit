@@ -64,7 +64,7 @@ jobs:
       # See:https://github.com/actions/runner-images/issues/13045
       - name: Integration tests
         if: matrix.runner == 'macos-15-intel'
-        run: make test-integration
+        run: go test -v -run "TestSSHAccess*" ./test && make test-integration
       - name: vet
         run: go vet ./...
       - name: Upload vfkit artifact

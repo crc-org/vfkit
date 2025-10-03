@@ -50,7 +50,7 @@ func retrySSHDial(errCh chan error, scheme string, address string, sshConfig *ss
 		err       error
 	)
 
-	timeout := time.After(10 * time.Second)
+	timeout := time.After(20 * time.Second)
 
 	for {
 		select {
