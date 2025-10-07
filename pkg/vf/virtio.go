@@ -490,9 +490,7 @@ func (config *DiskStorageConfig) toVz() (vz.StorageDeviceAttachment, error) {
 	if config.ImagePath == "" {
 		return nil, fmt.Errorf("missing mandatory 'path' option for %s device", config.DevName)
 	}
-	syncMode := vz.DiskImageSynchronizationModeFsync
-	caching := vz.DiskImageCachingModeCached
-	return vz.NewDiskImageStorageDeviceAttachmentWithCacheAndSync(config.ImagePath, config.ReadOnly, caching, syncMode)
+	return vz.NewDiskImageStorageDeviceAttachment(config.ImagePath, config.ReadOnly)
 }
 
 func (dev *USBMassStorage) toVz() (vz.StorageDeviceConfiguration, error) {
