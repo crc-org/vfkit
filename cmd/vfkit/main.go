@@ -121,6 +121,32 @@ func newVMConfiguration(opts *cmdline.Options) (*config.VirtualMachine, error) {
 		return nil, err
 	}
 
+	if opts.UseGUI {
+		if len(vmConfig.VirtioGPUDevices()) == 0 {
+			log.Warnf("--gui flag specified but no virtio-gpu device configured, automatically adding it")
+			dev, err := config.VirtioGPUNew()
+			if err != nil {
+				return nil, fmt.Errorf("failed to add virtio-gpu device: %w", err)
+			}
+			dev.(*config.VirtioGPU).UsesGUI = true
+			err = vmConfig.AddDevice(dev)
+			if err != nil {
+				return nil, fmt.Errorf("failed to add virtio-gpu device: %w", err)
+			}
+		}
+		if len(vmConfig.VirtioInputDevices()) == 0 {
+			log.Warnf("--gui flag specified but no virtio-input device configured, automatically adding it")
+			dev, err := config.VirtioInputNew(config.VirtioInputKeyboardDevice)
+			if err != nil {
+				return nil, fmt.Errorf("failed to add virtio-input device: %w", err)
+			}
+			err = vmConfig.AddDevice(dev)
+			if err != nil {
+				return nil, fmt.Errorf("failed to add virtio-input device: %w", err)
+			}
+		}
+	}
+
 	if err := vmConfig.AddIgnitionFileFromCmdLine(opts.IgnitionPath); err != nil {
 		return nil, fmt.Errorf("failed to add ignition file: %w", err)
 	}

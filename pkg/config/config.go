@@ -183,6 +183,16 @@ func (vm *VirtualMachine) VirtioVsockDevices() []*VirtioVsock {
 	return vsockDevs
 }
 
+func (vm *VirtualMachine) VirtioInputDevices() []*VirtioInput {
+	inputDevs := []*VirtioInput{}
+	for _, dev := range vm.Devices {
+		if inputDev, isVirtioInput := dev.(*VirtioInput); isVirtioInput {
+			inputDevs = append(inputDevs, inputDev)
+		}
+	}
+	return inputDevs
+}
+
 func (vm *VirtualMachine) NetworkBlockDevice(deviceID string) *NetworkBlockDevice {
 	for _, dev := range vm.Devices {
 		if nbdDev, isNbdDev := dev.(*NetworkBlockDevice); isNbdDev && nbdDev.DeviceIdentifier == deviceID {
