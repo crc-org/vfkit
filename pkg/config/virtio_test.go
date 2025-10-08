@@ -56,7 +56,10 @@ func testVirtioDev(t *testing.T, test *virtioDevTest) {
 
 func testErrorVirtioDev(t *testing.T, test *virtioDevTest) {
 	dev, err := test.newDev()
-	require.NoError(t, err)
+	if err != nil {
+		require.EqualError(t, err, test.errorMsg)
+		return
+	}
 
 	_, err = dev.ToCmdLine()
 	require.Error(t, err)
@@ -205,8 +208,9 @@ func TestVirtioDevices(t *testing.T) {
 			expectedDev: &VirtioNet{
 				Nat:            false,
 				UnixSocketPath: "/tmp/unix.sock",
+				VfkitMagic:     true,
 			},
-			expectedCmdLine: []string{"--device", "virtio-net,unixSocketPath=/tmp/unix.sock"},
+			expectedCmdLine: []string{"--device", "virtio-net,type=unixgram,path=/tmp/unix.sock,vfkitMagic=on"},
 		},
 		"NewVirtioNetWithMacAddress": {
 			newDev: func() (VirtioDevice, error) { return VirtioNetNew("00:11:22:33:44:55") },
@@ -307,6 +311,98 @@ func TestVirtioDevices(t *testing.T) {
 			newDev:          VirtioBalloonNew,
 			expectedDev:     &VirtioBalloon{},
 			expectedCmdLine: []string{"--device", "virtio-balloon"},
+		},
+		"VirtioNetWithVfkitMagicOff": {
+			newDev: func() (VirtioDevice, error) {
+				dev := &VirtioNet{
+					UnixSocketPath: "/tmp/test.sock",
+					VfkitMagic:     false,
+				}
+				return dev, nil
+			},
+			expectedDev: &VirtioNet{
+				UnixSocketPath: "/tmp/test.sock",
+				VfkitMagic:     false,
+			},
+			expectedCmdLine: []string{"--device", "virtio-net,type=unixgram,path=/tmp/test.sock,vfkitMagic=off"},
+		},
+		"VirtioNetWithVfkitMagicOn": {
+			newDev: func() (VirtioDevice, error) {
+				dev := &VirtioNet{
+					UnixSocketPath: "/tmp/test.sock",
+					VfkitMagic:     true,
+				}
+				return dev, nil
+			},
+			expectedDev: &VirtioNet{
+				UnixSocketPath: "/tmp/test.sock",
+				VfkitMagic:     true,
+			},
+			expectedCmdLine: []string{"--device", "virtio-net,type=unixgram,path=/tmp/test.sock,vfkitMagic=on"},
+		},
+		"VirtioNetDefaultVfkitMagic": {
+			newDev: func() (VirtioDevice, error) {
+				return deviceFromCmdLine("virtio-net,type=unixgram,path=/tmp/default.sock")
+			},
+			expectedDev: &VirtioNet{
+				UnixSocketPath: "/tmp/default.sock",
+				VfkitMagic:     true,
+			},
+			expectedCmdLine: []string{"--device", "virtio-net,type=unixgram,path=/tmp/default.sock,vfkitMagic=on"},
+		},
+		"VirtioNetUnixSocketPath": {
+			newDev: func() (VirtioDevice, error) {
+				return deviceFromCmdLine("virtio-net,unixSocketPath=/tmp/socket.sock")
+			},
+			expectedDev: &VirtioNet{
+				UnixSocketPath: "/tmp/socket.sock",
+				VfkitMagic:     true,
+			},
+			expectedCmdLine: []string{"--device", "virtio-net,type=unixgram,path=/tmp/socket.sock,vfkitMagic=on"},
+		},
+		"VirtioNetUnixSocketPathWithVfkitMagicOff": {
+			newDev: func() (VirtioDevice, error) {
+				return deviceFromCmdLine("virtio-net,unixSocketPath=/tmp/socket.sock,vfkitMagic=off")
+			},
+			expectedDev: &VirtioNet{
+				UnixSocketPath: "/tmp/socket.sock",
+				VfkitMagic:     false,
+			},
+			expectedCmdLine: []string{"--device", "virtio-net,type=unixgram,path=/tmp/socket.sock,vfkitMagic=off"},
+		},
+		"VirtioNetVfkitMagicInvalidValue": {
+			newDev: func() (VirtioDevice, error) {
+				return deviceFromCmdLine("virtio-net,unixSocketPath=/tmp/test.sock,vfkitMagic=foo")
+			},
+			errorMsg: "invalid value for vfkitMagic: foo (expected on/off)",
+		},
+		"VirtioNetInvalidTypeFoo": {
+			newDev: func() (VirtioDevice, error) {
+				return deviceFromCmdLine("virtio-net,type=foo")
+			},
+			errorMsg: "unsupported virtio-net type: foo (only 'unixgram' is supported)",
+		},
+		"VirtioNetTypeWithoutPath": {
+			newDev: func() (VirtioDevice, error) {
+				return deviceFromCmdLine("virtio-net,type=unixgram")
+			},
+			errorMsg: "'type' option requires 'path' to be specified",
+		},
+		"VirtioNetOffloadingInvalidValueOn": {
+			newDev: func() (VirtioDevice, error) {
+				return deviceFromCmdLine("virtio-net,type=unixgram,path=/tmp/test.sock,offloading=on")
+			},
+			errorMsg: "invalid value for offloading: on (only 'off' is supported)",
+		},
+		"VirtioNetOffloadingOff": {
+			newDev: func() (VirtioDevice, error) {
+				return deviceFromCmdLine("virtio-net,type=unixgram,path=/tmp/test.sock,offloading=off")
+			},
+			expectedDev: &VirtioNet{
+				UnixSocketPath: "/tmp/test.sock",
+				VfkitMagic:     true,
+			},
+			expectedCmdLine: []string{"--device", "virtio-net,type=unixgram,path=/tmp/test.sock,vfkitMagic=on"},
 		},
 	}
 	t.Run("virtio-devices", func(t *testing.T) {

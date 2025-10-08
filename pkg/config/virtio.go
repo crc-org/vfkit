@@ -6,6 +6,7 @@ import (
 	"math"
 	"net"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -103,6 +104,7 @@ type VirtioNet struct {
 	Socket *os.File `json:"socket,omitempty"`
 
 	UnixSocketPath string `json:"unixSocketPath,omitempty"`
+	VfkitMagic     bool   `json:"vfkitMagic,omitempty"`
 }
 
 // VirtioSerial configures the virtual machine serial ports.
@@ -430,6 +432,7 @@ func (dev *VirtioNet) SetSocket(file *os.File) {
 func (dev *VirtioNet) SetUnixSocketPath(path string) {
 	dev.UnixSocketPath = path
 	dev.Nat = false
+	dev.VfkitMagic = true // Enable vfkit magic by default for unix sockets
 }
 
 func (dev *VirtioNet) validate() error {
@@ -460,7 +463,13 @@ func (dev *VirtioNet) ToCmdLine() ([]string, error) {
 	case dev.Nat:
 		builder.WriteString(",nat")
 	case dev.UnixSocketPath != "":
-		fmt.Fprintf(&builder, ",unixSocketPath=%s", dev.UnixSocketPath)
+		builder.WriteString(",type=unixgram")
+		fmt.Fprintf(&builder, ",path=%s", dev.UnixSocketPath)
+		if dev.VfkitMagic {
+			builder.WriteString(",vfkitMagic=on")
+		} else {
+			builder.WriteString(",vfkitMagic=off")
+		}
 	default:
 		fmt.Fprintf(&builder, ",fd=%d", dev.Socket.Fd())
 	}
@@ -473,6 +482,15 @@ func (dev *VirtioNet) ToCmdLine() ([]string, error) {
 }
 
 func (dev *VirtioNet) FromOptions(options []option) error {
+	var hasType bool
+	var typeOnlyOptions []string // Options that require type to be specified
+
+	if slices.ContainsFunc(options, func(opt option) bool {
+		return opt.key == "path" || opt.key == "unixSocketPath"
+	}) {
+		dev.VfkitMagic = true
+	}
+
 	for _, option := range options {
 		switch option.key {
 		case "nat":
@@ -494,9 +512,36 @@ func (dev *VirtioNet) FromOptions(options []option) error {
 			dev.Socket = os.NewFile(uintptr(fd), "vfkit virtio-net socket")
 		case "unixSocketPath":
 			dev.UnixSocketPath = option.value
+		case "type":
+			if option.value != "unixgram" {
+				return fmt.Errorf("unsupported virtio-net type: %s (only 'unixgram' is supported)", option.value)
+			}
+			hasType = true
+		case "path":
+			dev.UnixSocketPath = option.value
+			typeOnlyOptions = append(typeOnlyOptions, option.key)
+		case "vfkitMagic":
+			if option.value != "on" && option.value != "off" {
+				return fmt.Errorf("invalid value for vfkitMagic: %s (expected on/off)", option.value)
+			}
+			dev.VfkitMagic = option.value == "on"
+		case "offloading":
+			if option.value != "off" {
+				return fmt.Errorf("invalid value for offloading: %s (only 'off' is supported)", option.value)
+			}
+			typeOnlyOptions = append(typeOnlyOptions, option.key)
 		default:
 			return fmt.Errorf("unknown option for virtio-net devices: %s", option.key)
 		}
+	}
+
+	// Validate type+path dependency and type-only options
+	if hasType && dev.UnixSocketPath == "" {
+		return fmt.Errorf("'type' option requires 'path' to be specified")
+	}
+
+	if !hasType && len(typeOnlyOptions) > 0 {
+		return fmt.Errorf("'%s' option requires 'type' to be specified", typeOnlyOptions[0])
 	}
 
 	return dev.validate()
