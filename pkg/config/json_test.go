@@ -4,20 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
-
-func contains(strings []string, val string) bool {
-	for _, str := range strings {
-		if val == str {
-			return true
-		}
-	}
-
-	return false
-}
 
 // This sets all the fields of the `obj` struct to non-empty values.
 // This will be used to test JSON serialization as extensively as possible to
@@ -34,7 +25,7 @@ func fillStruct(t *testing.T, obj interface{}, skipFields []string) {
 		fieldVal := val.FieldByIndex(e.Index)
 		typeName := val.Type().Name()
 
-		if contains(skipFields, field.Name) {
+		if slices.Contains(skipFields, field.Name) {
 			continue
 		}
 		switch fieldVal.Kind() {
