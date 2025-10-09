@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/crc-org/vfkit/pkg/cmdline"
+	"github.com/crc-org/vfkit/pkg/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -51,16 +53,6 @@ func TestStartIgnitionProvisionerServer(t *testing.T) {
 	body, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 	assert.Equal(t, ignitionData, body)
-}
-
-func getTestAssetsDir() (string, error) {
-	currentDir, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-
-	projectRoot := filepath.Join(currentDir, "../../")
-	return filepath.Join(projectRoot, "test", "assets"), nil
 }
 
 func TestGenerateCloudInitImage(t *testing.T) {
@@ -116,4 +108,108 @@ func TestGenerateCloudInitImageWithNoFile(t *testing.T) {
 	iso, err := generateCloudInitImage([]string{})
 	assert.Empty(t, iso)
 	require.NoError(t, err)
+}
+
+func TestGUIAutoAddsGPUAndInput(t *testing.T) {
+	opts := getTestVMOptions(t)
+	opts.UseGUI = true
+
+	vmConfig, err := newVMConfiguration(opts)
+	require.NoError(t, err)
+	require.NotNil(t, vmConfig)
+
+	gpuDevices := vmConfig.VirtioGPUDevices()
+	inputDevices := vmConfig.VirtioInputDevices()
+	require.Len(t, gpuDevices, 1)
+	assert.True(t, gpuDevices[0].UsesGUI)
+	require.Len(t, inputDevices, 1)
+	assert.Equal(t, inputDevices[0].InputType, config.VirtioInputKeyboardDevice)
+}
+
+func TestNoGUINoGPUAndInput(t *testing.T) {
+	opts := getTestVMOptions(t)
+	opts.UseGUI = false
+
+	vmConfig, err := newVMConfiguration(opts)
+	require.NoError(t, err)
+	require.NotNil(t, vmConfig)
+
+	gpuDevices := vmConfig.VirtioGPUDevices()
+	require.Len(t, gpuDevices, 0)
+
+	inputDevices := vmConfig.VirtioInputDevices()
+	require.Len(t, inputDevices, 0)
+}
+
+func TestGUIWithExistingGPUAndNoInput(t *testing.T) {
+	opts := getTestVMOptions(t)
+	opts.UseGUI = true
+	opts.Devices = []string{"virtio-gpu,width=1024,height=768"}
+
+	vmConfig, err := newVMConfiguration(opts)
+	require.NoError(t, err)
+	require.NotNil(t, vmConfig)
+
+	gpuDevices := vmConfig.VirtioGPUDevices()
+	require.Len(t, gpuDevices, 1)
+
+	inputDevices := vmConfig.VirtioInputDevices()
+	require.Len(t, inputDevices, 1)
+	assert.Equal(t, inputDevices[0].InputType, config.VirtioInputKeyboardDevice)
+}
+
+func TestGUIWithExistingGPUAndInput(t *testing.T) {
+	opts := getTestVMOptions(t)
+	opts.UseGUI = true
+	opts.Devices = []string{"virtio-gpu,width=1024,height=768", "virtio-input,keyboard"}
+
+	vmConfig, err := newVMConfiguration(opts)
+	require.NoError(t, err)
+	require.NotNil(t, vmConfig)
+
+	gpuDevices := vmConfig.VirtioGPUDevices()
+	require.Len(t, gpuDevices, 1)
+
+	inputDevices := vmConfig.VirtioInputDevices()
+	require.Len(t, inputDevices, 1)
+	assert.Equal(t, inputDevices[0].InputType, config.VirtioInputKeyboardDevice)
+}
+
+func TestGUIWithExistingInputAndNoGPU(t *testing.T) {
+	opts := getTestVMOptions(t)
+	opts.UseGUI = true
+	opts.Devices = []string{"virtio-input,keyboard"}
+
+	vmConfig, err := newVMConfiguration(opts)
+	require.NoError(t, err)
+	require.NotNil(t, vmConfig)
+
+	inputDevices := vmConfig.VirtioInputDevices()
+	require.Len(t, inputDevices, 1)
+	assert.Equal(t, inputDevices[0].InputType, config.VirtioInputKeyboardDevice)
+
+	gpuDevices := vmConfig.VirtioGPUDevices()
+	require.Len(t, gpuDevices, 1)
+	assert.True(t, gpuDevices[0].UsesGUI)
+}
+
+func getTestAssetsDir() (string, error) {
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+
+	projectRoot := filepath.Join(currentDir, "../../")
+	return filepath.Join(projectRoot, "test", "assets"), nil
+}
+
+func getTestVMOptions(t *testing.T) *cmdline.Options {
+	opts := &cmdline.Options{
+		Vcpus:     1,
+		MemoryMiB: 512,
+		Devices:   []string{},
+	}
+	err := opts.Bootloader.Set("efi")
+	require.NoError(t, err)
+	return opts
 }
