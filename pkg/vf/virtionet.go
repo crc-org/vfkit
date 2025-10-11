@@ -158,7 +158,7 @@ func (dev *VirtioNet) AddToVirtualMachineConfig(vmConfig *VirtualMachineConfigur
 		}
 	}
 
-	util.RegisterExitHandler(func() { _ = dev.Shutdown() })
+	util.RegisterExitHandler(dev.Shutdown)
 
 	netConfig, err := dev.toVz()
 	if err != nil {
@@ -170,17 +170,17 @@ func (dev *VirtioNet) AddToVirtualMachineConfig(vmConfig *VirtualMachineConfigur
 	return nil
 }
 
-func (dev *VirtioNet) Shutdown() error {
+func (dev *VirtioNet) Shutdown() {
 	if dev.localAddr != nil {
+		log.Debugf("Removing %s", dev.localAddr.Name)
 		if err := os.Remove(dev.localAddr.Name); err != nil {
-			return err
+			log.Errorf("failed to remove %s: %v", dev.localAddr.Name, err)
 		}
 	}
 	if dev.Socket != nil {
+		log.Debugf("Closing fd %v", dev.Socket.Fd())
 		if err := dev.Socket.Close(); err != nil {
-			return err
+			log.Errorf("failed to close fd %d: %v", dev.Socket.Fd(), err)
 		}
 	}
-
-	return nil
 }
