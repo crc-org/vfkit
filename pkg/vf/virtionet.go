@@ -106,7 +106,6 @@ func (dev *VirtioNet) connectUnixPath() error {
 	dev.Socket = fd
 	dev.localAddr = &localAddr
 	dev.UnixSocketPath = ""
-	util.RegisterExitHandler(func() { _ = dev.Shutdown() })
 	return nil
 }
 
@@ -153,6 +152,9 @@ func (dev *VirtioNet) AddToVirtualMachineConfig(vmConfig *VirtualMachineConfigur
 			return err
 		}
 	}
+
+	util.RegisterExitHandler(func() { _ = dev.Shutdown() })
+
 	netConfig, err := dev.toVz()
 	if err != nil {
 		return err
