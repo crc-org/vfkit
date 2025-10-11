@@ -98,12 +98,17 @@ func (dev *VirtioNet) connectUnixPath() error {
 	}
 	log.Infof("local: %v remote: %v", conn.LocalAddr(), conn.RemoteAddr())
 
-	fd, err := conn.File()
+	// This duplicates the connection fd, so we have to close the connection to
+	// ensure the network proxy detect when we close dupFd.
+	dupFd, err := conn.File()
 	if err != nil {
 		return err
 	}
+	if err := conn.Close(); err != nil {
+		return err
+	}
 
-	dev.Socket = fd
+	dev.Socket = dupFd
 	dev.localAddr = &localAddr
 	dev.UnixSocketPath = ""
 	return nil
