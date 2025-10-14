@@ -147,7 +147,10 @@ Various devices can be added to the virtual machines. They are all paravirtualiz
 
 #### Description
 
-The `--device virtio-blk` option adds a disk to the virtual machine. The disk is backed by an image file on the host machine. This file is a raw image file.
+The `--device virtio-blk` option adds a disk to the virtual machine. The disk can be backed either by a disk image file or by a host block device, depending on the type you choose:
+- type=image (default): uses a disk image file on the host machine (raw image file).
+- type=dev: attaches a host block device (for example, /dev/disk1 or /dev/disk1s1). Attaching a block device may require root privileges; use with care.
+
 See also [vz/CreateDiskImage](https://pkg.go.dev/github.com/Code-Hex/vz/v3#CreateDiskImage).
 
 #### Thin images
@@ -204,7 +207,8 @@ mkisofs -output seed.img -volid cidata -rock {user-data,meta-data}
 See https://cloudinit.readthedocs.io/en/latest/reference/datasources/nocloud.html#example-creating-a-disk for further details about how to create a disk image
 
 #### Arguments
-- `path`: the absolute path to the disk image file.
+- `path`: the absolute path to the disk image file or block device.
+- `type`: the backing type. Use `image` (default) for a disk image file, or `dev` to attach a host block device (for example, /dev/disk1 or /dev/disk1s1). Attaching a block device may require root privileges; use with care.
 - `deviceId`: `/dev/disk/by-id/` identifier to use for this device.
 
 #### Example
@@ -212,6 +216,11 @@ See https://cloudinit.readthedocs.io/en/latest/reference/datasources/nocloud.htm
 This adds a virtio-blk device to the VM which will be backed by the raw image at `/Users/virtuser/vfkit.img`:
 ```
 --device virtio-blk,path=/Users/virtuser/vfkit.img
+```
+
+Attach a host block device instead (may require root privileges):
+```
+--device virtio-blk,path=/dev/disk2,type=dev
 ```
 
 To also provide the cloud-init configuration you can add an additional virtio-blk device backed by an image containing the cloud-init configuration files

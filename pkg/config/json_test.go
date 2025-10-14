@@ -285,29 +285,32 @@ var jsonStabilityTests = map[string]jsonStabilityTest{
 		newObjectFunc: func(t *testing.T) any {
 			blk, err := VirtioBlkNew("")
 			require.NoError(t, err)
+			blk.Type = DiskBackendImage
 			return blk
 		},
 
-		skipFields:   []string{"DevName", "URI"},
-		expectedJSON: `{"kind":"virtioblk","devName":"virtio-blk","imagePath":"ImagePath","readOnly":true,"deviceIdentifier":"DeviceIdentifier"}`,
+		skipFields:   []string{"DevName", "URI", "Type"},
+		expectedJSON: `{"kind":"virtioblk","devName":"virtio-blk","imagePath":"ImagePath","readOnly":true,"type":"image","deviceIdentifier":"DeviceIdentifier"}`,
 	},
 	"USBMassStorage": {
 		newObjectFunc: func(t *testing.T) any {
 			usb, err := USBMassStorageNew("")
 			require.NoError(t, err)
+			usb.Type = DiskBackendImage
 			return usb
 		},
-		skipFields:   []string{"DevName", "URI"},
-		expectedJSON: `{"kind":"usbmassstorage","devName":"usb-mass-storage","imagePath":"ImagePath","readOnly":true}`,
+		skipFields:   []string{"DevName", "URI", "Type"},
+		expectedJSON: `{"kind":"usbmassstorage","devName":"usb-mass-storage","imagePath":"ImagePath","readOnly":true,"type":"image"}`,
 	},
 	"NVMExpressController": {
 		newObjectFunc: func(t *testing.T) any {
 			nvme, err := NVMExpressControllerNew("")
 			require.NoError(t, err)
+			nvme.Type = DiskBackendImage
 			return nvme
 		},
-		skipFields:   []string{"DevName", "URI"},
-		expectedJSON: `{"kind":"nvme","devName":"nvme","imagePath":"ImagePath","readOnly":true}`,
+		skipFields:   []string{"DevName", "URI", "Type"},
+		expectedJSON: `{"kind":"nvme","devName":"nvme","imagePath":"ImagePath","readOnly":true,"type":"image"}`,
 	},
 	"LinuxBootloader": {
 		obj:          &LinuxBootloader{},

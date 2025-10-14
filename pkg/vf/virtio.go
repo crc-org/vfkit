@@ -87,7 +87,16 @@ func (dev *VirtioBlk) AddToVirtualMachineConfig(vmConfig *VirtualMachineConfigur
 	if err != nil {
 		return err
 	}
-	log.Infof("Adding virtio-blk device (imagePath: %s)", dev.ImagePath)
+	var diskType string
+	if !dev.Type.IsValid() {
+		return fmt.Errorf("invalid disk type: %s", dev.Type)
+	}
+	if dev.Type == config.DiskBackendDefault {
+		diskType = string(config.DiskBackendImage)
+	} else {
+		diskType = string(dev.Type)
+	}
+	log.Infof("Adding virtio-blk device (imagePath: %s, type: %s)", dev.ImagePath, diskType)
 	vmConfig.storageDevicesConfiguration = append(vmConfig.storageDevicesConfiguration, storageDeviceConfig)
 
 	return nil
@@ -486,13 +495,54 @@ func AddToVirtualMachineConfig(vmConfig *VirtualMachineConfiguration, dev config
 	}
 }
 
-func (config *DiskStorageConfig) toVz() (vz.StorageDeviceAttachment, error) {
-	if config.ImagePath == "" {
-		return nil, fmt.Errorf("missing mandatory 'path' option for %s device", config.DevName)
+func (conf *DiskStorageConfig) toVz() (vz.StorageDeviceAttachment, error) {
+	switch conf.Type {
+	case config.DiskBackendImage, config.DiskBackendDefault:
+		if conf.ImagePath == "" {
+			return nil, fmt.Errorf("missing mandatory 'path' option for %s device", conf.DevName)
+		}
+		syncMode := vz.DiskImageSynchronizationModeFsync
+		caching := vz.DiskImageCachingModeCached
+		return vz.NewDiskImageStorageDeviceAttachmentWithCacheAndSync(conf.ImagePath, conf.ReadOnly, caching, syncMode)
+	case config.DiskBackendBlockDevice:
+		var stat unix.Stat_t
+		err := unix.Lstat(conf.ImagePath, &stat)
+
+		if err != nil {
+			return nil, fmt.Errorf("error stating file: %v", err)
+		}
+
+		mode := stat.Mode
+		if mode&unix.S_IFMT != unix.S_IFBLK {
+			return nil, fmt.Errorf("file %s is not a block device", conf.ImagePath)
+		}
+
+		var open_flags int
+		if conf.ReadOnly {
+			open_flags = os.O_RDONLY
+		} else {
+			open_flags = os.O_RDWR
+		}
+
+		f, err := os.OpenFile(conf.ImagePath, open_flags, 0)
+		if err != nil {
+			return nil, fmt.Errorf("error opening file: %v", err)
+		}
+
+		syncMode := vz.DiskSynchronizationModeFull
+		attachment, err := vz.NewDiskBlockDeviceStorageDeviceAttachment(f, conf.ReadOnly, syncMode)
+		if err != nil {
+			_ = f.Close()
+			return nil, fmt.Errorf("error creating disk attachment: %v", err)
+		}
+		util.RegisterExitHandler(func() {
+			f.Close()
+		})
+
+		return attachment, nil
+	default:
+		return nil, fmt.Errorf("unknown disk backend type: %v", conf.Type)
 	}
-	syncMode := vz.DiskImageSynchronizationModeFsync
-	caching := vz.DiskImageCachingModeCached
-	return vz.NewDiskImageStorageDeviceAttachmentWithCacheAndSync(config.ImagePath, config.ReadOnly, caching, syncMode)
 }
 
 func (dev *USBMassStorage) toVz() (vz.StorageDeviceConfiguration, error) {
