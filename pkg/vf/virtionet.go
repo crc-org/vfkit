@@ -98,15 +98,19 @@ func (dev *VirtioNet) connectUnixPath() error {
 	}
 	log.Infof("local: %v remote: %v", conn.LocalAddr(), conn.RemoteAddr())
 
-	fd, err := conn.File()
+	// This duplicates the connection fd, so we have to close the connection to
+	// ensure the network proxy detect when we close dupFd.
+	dupFd, err := conn.File()
 	if err != nil {
 		return err
 	}
+	if err := conn.Close(); err != nil {
+		return err
+	}
 
-	dev.Socket = fd
+	dev.Socket = dupFd
 	dev.localAddr = &localAddr
 	dev.UnixSocketPath = ""
-	util.RegisterExitHandler(func() { _ = dev.Shutdown() })
 	return nil
 }
 
@@ -153,6 +157,9 @@ func (dev *VirtioNet) AddToVirtualMachineConfig(vmConfig *VirtualMachineConfigur
 			return err
 		}
 	}
+
+	util.RegisterExitHandler(dev.Shutdown)
+
 	netConfig, err := dev.toVz()
 	if err != nil {
 		return err
@@ -163,17 +170,17 @@ func (dev *VirtioNet) AddToVirtualMachineConfig(vmConfig *VirtualMachineConfigur
 	return nil
 }
 
-func (dev *VirtioNet) Shutdown() error {
+func (dev *VirtioNet) Shutdown() {
 	if dev.localAddr != nil {
+		log.Debugf("Removing %s", dev.localAddr.Name)
 		if err := os.Remove(dev.localAddr.Name); err != nil {
-			return err
+			log.Errorf("failed to remove %s: %v", dev.localAddr.Name, err)
 		}
 	}
 	if dev.Socket != nil {
+		log.Debugf("Closing fd %v", dev.Socket.Fd())
 		if err := dev.Socket.Close(); err != nil {
-			return err
+			log.Errorf("failed to close fd %d: %v", dev.Socket.Fd(), err)
 		}
 	}
-
-	return nil
 }
