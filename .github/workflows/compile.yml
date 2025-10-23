@@ -52,7 +52,11 @@ jobs:
       - name: Install qemu-img
         run: |
           brew update
-          brew install qemu
+          if [ "$matrix.runner" == "macos-13" ]; then
+            brew install qemu@10.1.0
+          else
+            brew install qemu
+          fi
       - name: Verify qemu-img is installed
         run: qemu-img --version
       - name: Unit tests
