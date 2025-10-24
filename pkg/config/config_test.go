@@ -49,6 +49,9 @@ func TestNetworkBlockDevice_NoDevice(t *testing.T) {
 }
 
 func TestVirtualMachine_ValidateBlockDevices(t *testing.T) {
+	if os.Getenv("RUNNER_OS_VERSION") == "macos-13" {
+		t.Skip("Skipping test on macos-13 due to qemu-img not being available")
+	}
 	vm := &VirtualMachine{}
 
 	tmpDir := t.TempDir()

@@ -50,16 +50,16 @@ jobs:
         run: make
 
       - name: Install qemu-img
+        if: matrix.runner != 'macos-13'
         run: |
           brew update
-          if [ "$matrix.runner" == "macos-13" ]; then
-            brew install qemu@10.1.0
-          else
-            brew install qemu
-          fi
+          brew install qemu
       - name: Verify qemu-img is installed
+        if: matrix.runner != 'macos-13'
         run: qemu-img --version
       - name: Unit tests
+        env:
+          RUNNER_OS_VERSION: ${{ matrix.runner }}
         run: make test-unit
 
       # Integration tests run only on macos-13 due to virtualization requirements
