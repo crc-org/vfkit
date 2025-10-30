@@ -60,6 +60,16 @@ jobs:
       - name: Unit tests
         run: make test-unit
 
+      # Workaround: TestSSHAccess/tcp fails on the first attempt on macos-15-intel with:
+      # "timeout waiting for SSH: dial tcp 192.168.65.2:22: connect: no route to host"
+      # but succeeds on subsequent runs. Run it once with continue-on-error to prepare
+      # the environment before integration tests.
+      - name: Workaround for network issue
+        if: matrix.runner == 'macos-15-intel'
+        run: |-
+          go test -run TestSSHAccess/tcp ./test
+        continue-on-error: true
+
       # Integration tests run only on macos-15-intel due to virtualization requirements
       # macos-15-intel runners will be deprecated by August 2027
       # See:https://github.com/actions/runner-images/issues/13045
