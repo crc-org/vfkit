@@ -25,11 +25,13 @@ jobs:
         # Test matrix covers multiple macOS versions and architectures:
         # - macos-15-intel: x86_64 runner, supports virtualization for integration tests
         # - macos-14: arm64 (Apple Silicon) runner, unit tests only
-        # - macos-15: arm64 (Apple Silicon) runner, unit tests + artifact upload
+        # - macos-15: arm64 (Apple Silicon) runner, unit tests
+        # - macos-26: arm64 (Apple Silicon) runner, unit tests + artifact upload
         runner:
           - macos-15-intel
           - macos-14
           - macos-15
+          - macos-26
     steps:
       - name: Check out repository code
         uses: actions/checkout@v5
@@ -66,8 +68,8 @@ jobs:
         run: make test-integration
       - name: vet
         run: go vet ./...
-      - name: Upload vfkit artifact
-        if: matrix.runner == 'macos-15'
+      - name: Upload vfkit artifact (macos-26)
+        if: matrix.runner == 'macos-26'
         uses: actions/upload-artifact@v4
         with:
           name: Unsigned vfkit Universal Binary
