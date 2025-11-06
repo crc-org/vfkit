@@ -20,8 +20,8 @@ github.com/cloudwego/base64x v0.1.6/go.mod h1:OFcloc187FXDaYHvrNIjxSe8ncn0OOM8gE
 github.com/containers/common v0.64.2 h1:1xepE7QwQggUXxmyQ1Dbh6Cn0yd7ktk14sN3McSWf5I=
 github.com/containers/common v0.64.2/go.mod h1:o29GfYy4tefUuShm8mOn2AiL5Mpzdio+viHI7n24KJ4=
 github.com/cpuguy83/go-md2man/v2 v2.0.6/go.mod h1:oOW0eioCTA6cOiMLiUPZOpcVxMig6NIQQ7OS05n1F4g=
-github.com/crc-org/crc/v2 v2.55.0 h1:q+JdZegJXcS7rkPv0yctGdn3M386Xif7zRPH3bEdrfw=
-github.com/crc-org/crc/v2 v2.55.0/go.mod h1:fWlHX02mbnbXIQnLcQohvEMBzoujg9N8JlxxrctTlsI=
+github.com/crc-org/crc/v2 v2.55.1 h1:qZd2bj/6jjzrexv+owFe8JsCQq6Z1Nv9xWAjsrR2xR0=
+github.com/crc-org/crc/v2 v2.55.1/go.mod h1:fWlHX02mbnbXIQnLcQohvEMBzoujg9N8JlxxrctTlsI=
 github.com/crc-org/machine v0.0.0-20240926103419-a943b47fd48b h1:5577tKzQcPfd/i0dCekY32R9DUi677sNfhVLYKulBGM=
 github.com/crc-org/machine v0.0.0-20240926103419-a943b47fd48b/go.mod h1:trWeQimjfE3dJ8qWOxI4ePtYm13aecK42bf01s6h/Nc=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
