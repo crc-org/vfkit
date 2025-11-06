@@ -23,13 +23,15 @@ jobs:
       fail-fast: false
       matrix:
         # Test matrix covers multiple macOS versions and architectures:
-        # - macos-13: x86_64 runner, supports virtualization for integration tests
+        # - macos-15-intel: x86_64 runner, supports virtualization for integration tests
         # - macos-14: arm64 (Apple Silicon) runner, unit tests only
-        # - macos-15: arm64 (Apple Silicon) runner, unit tests + artifact upload
+        # - macos-15: arm64 (Apple Silicon) runner, unit tests
+        # - macos-26: arm64 (Apple Silicon) runner, unit tests + artifact upload
         runner:
-          - macos-13
+          - macos-15-intel
           - macos-14
           - macos-15
+          - macos-26
     steps:
       - name: Check out repository code
         uses: actions/checkout@v5
@@ -58,16 +60,26 @@ jobs:
       - name: Unit tests
         run: make test-unit
 
-      # Integration tests run only on macos-13 due to virtualization requirements
-      # NOTE: macos-13 runners will be deprecated by the end of 2025
-      # See: https://github.blog/changelog/2025-07-11-upcoming-changes-to-macos-hosted-runners-macos-latest-migration-and-xcode-support-policy-updates/#macos-13-is-closing-down
-      - name: Integration tests
-        if: matrix.runner == 'macos-13'
+      # Workaround: TestSSHAccess/tcp fails on the first attempt on macos-15-intel with:
+      # "timeout waiting for SSH: dial tcp 192.168.65.2:22: connect: no route to host"
+      # but succeeds on subsequent runs. Run it once with continue-on-error to prepare
+      # the environment before integration tests.
+      - name: Workaround for network issue
+        if: matrix.runner == 'macos-15-intel'
+        run: |-
+          go test -run TestSSHAccess/tcp ./test
+        continue-on-error: true
+
+      # Integration tests run only on macos-15-intel due to virtualization requirements
+      # macos-15-intel runners will be deprecated by August 2027
+      # See:https://github.com/actions/runner-images/issues/13045
+      - name: Integration tests (macos-15-intel)
+        if: matrix.runner == 'macos-15-intel'
         run: make test-integration
       - name: vet
         run: go vet ./...
-      - name: Upload vfkit artifact
-        if: matrix.runner == 'macos-15'
+      - name: Upload vfkit artifact (macos-26)
+        if: matrix.runner == 'macos-26'
         uses: actions/upload-artifact@v4
         with:
           name: Unsigned vfkit Universal Binary
