@@ -1,7 +1,7 @@
 .PHONY: all build clean test test-unit test-integration
 
 GIT_VERSION ?= $(shell git describe --always --dirty)
-CGO_CFLAGS=-mmacosx-version-min=11.0
+CGO_CFLAGS=-mmacosx-version-min=13.0
 VERSION_LDFLAGS=-X github.com/crc-org/vfkit/pkg/cmdline.gitVersion=$(GIT_VERSION)
 
 all: build
