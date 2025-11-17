@@ -161,36 +161,30 @@ func (vm *VirtualMachine) AddDevicesFromCmdLine(cmdlineOpts []string) error {
 	return nil
 }
 
-func (vm *VirtualMachine) VirtioGPUDevices() []*VirtioGPU {
-	gpuDevs := []*VirtioGPU{}
+func FilterDevices[V VMComponent](vm *VirtualMachine) []V {
+	devs := []V{}
 	for _, dev := range vm.Devices {
-		if gpuDev, isVirtioGPU := dev.(*VirtioGPU); isVirtioGPU {
-			gpuDevs = append(gpuDevs, gpuDev)
+		if dev, isV := dev.(V); isV {
+			devs = append(devs, dev)
 		}
 	}
+	return devs
+}
 
-	return gpuDevs
+func (vm *VirtualMachine) VirtioGPUDevices() []*VirtioGPU {
+	return FilterDevices[*VirtioGPU](vm)
 }
 
 func (vm *VirtualMachine) VirtioVsockDevices() []*VirtioVsock {
-	vsockDevs := []*VirtioVsock{}
-	for _, dev := range vm.Devices {
-		if vsockDev, isVirtioVsock := dev.(*VirtioVsock); isVirtioVsock {
-			vsockDevs = append(vsockDevs, vsockDev)
-		}
-	}
-
-	return vsockDevs
+	return FilterDevices[*VirtioVsock](vm)
 }
 
 func (vm *VirtualMachine) VirtioInputDevices() []*VirtioInput {
-	inputDevs := []*VirtioInput{}
-	for _, dev := range vm.Devices {
-		if inputDev, isVirtioInput := dev.(*VirtioInput); isVirtioInput {
-			inputDevs = append(inputDevs, inputDev)
-		}
-	}
-	return inputDevs
+	return FilterDevices[*VirtioInput](vm)
+}
+
+func (vm *VirtualMachine) VirtioNetDevices() []*VirtioNet {
+	return FilterDevices[*VirtioNet](vm)
 }
 
 func (vm *VirtualMachine) NetworkBlockDevice(deviceID string) *NetworkBlockDevice {
