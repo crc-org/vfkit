@@ -31,8 +31,9 @@ func kernelArch() string {
 	}
 }
 
+const puipuiVersion = "1.0.3"
+
 func downloadPuipui(destDir string) ([]string, error) {
-	const puipuiVersion = "0.0.1"
 	var puipuiURL = fmt.Sprintf("https://github.com/Code-Hex/puipui-linux/releases/download/v%s/puipui_linux_v%s_%s.tar.gz", puipuiVersion, puipuiVersion, kernelArch())
 
 	// https://github.com/cavaliergopher/grab/issues/104
@@ -179,7 +180,7 @@ func findKernel(files []string) (string, error) {
 }
 
 func (puipui *PuiPuiProvider) Fetch(destDir string) error {
-	log.Infof("downloading puipui to %s", destDir)
+	log.Infof("downloading puipui v%s to %s", puipuiVersion, destDir)
 	files, err := downloadPuipui(destDir)
 	if err != nil {
 		return err
