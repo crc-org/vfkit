@@ -51,18 +51,13 @@ func NewVirtualMachine(vmConfig config.VirtualMachine) (*VirtualMachine, error) 
 		vfConfig.SetPlatformVirtualMachineConfiguration(platformConfig)
 	}
 
-	return &VirtualMachine{
+	vm := &VirtualMachine{
 		vfConfig: vfConfig,
-	}, nil
-}
-
-func (vm *VirtualMachine) Start() error {
-	if vm.VirtualMachine == nil {
-		if err := vm.toVz(); err != nil {
-			return err
-		}
 	}
-	return vm.VirtualMachine.Start()
+	if err := vm.toVz(); err != nil {
+		return nil, err
+	}
+	return vm, nil
 }
 
 func (vm *VirtualMachine) toVz() error {
@@ -146,6 +141,17 @@ func (cfg *VirtualMachineConfiguration) toVz() (*vz.VirtualMachineConfiguration,
 		// automatically add the vsock device we'll need for communication over VsockPort
 		vsockDev := VirtioVsock{
 			Port:   cfg.config.Timesync.VsockPort,
+			Listen: false,
+		}
+		if err := vsockDev.AddToVirtualMachineConfig(cfg); err != nil {
+			return nil, err
+		}
+	}
+
+	if cfg.config.Ignition != nil && cfg.config.Ignition.VsockPort != 0 {
+		// automatically add the vsock device we'll need for communication over VsockPort
+		vsockDev := VirtioVsock{
+			Port:   cfg.config.Ignition.VsockPort,
 			Listen: false,
 		}
 		if err := vsockDev.AddToVirtualMachineConfig(cfg); err != nil {
