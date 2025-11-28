@@ -12,7 +12,7 @@ require (
 	github.com/kdomanski/iso9660 v0.4.0
 	github.com/pkg/term v1.1.0
 	github.com/prashantgupta24/mac-sleep-notifier v1.0.1
-	github.com/shirou/gopsutil/v4 v4.25.9
+	github.com/shirou/gopsutil/v4 v4.25.10
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/pflag v1.0.10
