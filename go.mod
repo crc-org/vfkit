@@ -1,12 +1,12 @@
 module github.com/crc-org/vfkit
 
-go 1.24.0
+go 1.24.2
 
 require (
 	github.com/Code-Hex/vz/v3 v3.7.1
 	github.com/cavaliergopher/grab/v3 v3.0.1
 	github.com/containers/common v0.64.2
-	github.com/crc-org/crc/v2 v2.56.0
+	github.com/crc-org/crc/v2 v2.57.0
 	github.com/gin-gonic/gin v1.11.0
 	github.com/inetaf/tcpproxy v0.0.0-20250222171855-c4b9df066048
 	github.com/kdomanski/iso9660 v0.4.0
@@ -67,6 +67,7 @@ require (
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.3.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
+	go.podman.io/common v0.66.0 // indirect
 	go.uber.org/mock v0.5.0 // indirect
 	golang.org/x/arch v0.20.0 // indirect
 	golang.org/x/net v0.47.0 // indirect
