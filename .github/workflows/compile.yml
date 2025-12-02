@@ -80,7 +80,7 @@ jobs:
         run: go vet ./...
       - name: Upload vfkit artifact (macos-26)
         if: matrix.runner == 'macos-26'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: Unsigned vfkit Universal Binary
           path: "./out/vfkit"
