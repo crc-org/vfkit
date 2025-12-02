@@ -92,7 +92,7 @@ func listenVsock(vm *VirtualMachine, port uint32, vsockPath string) (io.Closer, 
 			if len(socketDevices) != 1 {
 				return nil, fmt.Errorf("VM has too many/not enough virtio-vsock devices (%d)", len(socketDevices))
 			}
-			return socketDevices[0].Listen(uint32(port)) //#nosec G115 -- strconv.ParseUint(_, _, 32) guarantees no overflow
+			return socketDevices[0].Listen(uint32(port))
 		default:
 			return nil, fmt.Errorf("unexpected scheme '%s'", parsed.Scheme)
 		}

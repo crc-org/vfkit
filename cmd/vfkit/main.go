@@ -222,13 +222,7 @@ func runVFKit(vmConfig *config.VirtualMachine, opts *cmdline.Options) error {
 func runVirtualMachine(vmConfig *config.VirtualMachine, vm *vf.VirtualMachine) error {
 	if vm.Config().Ignition != nil {
 		go func() {
-			file, err := os.Open(vmConfig.Ignition.ConfigPath)
-			if err != nil {
-				log.Error(err)
-			}
-			defer file.Close()
-			reader := file
-			if err := startIgnitionProvisionerServer(reader, vmConfig.Ignition.SocketPath); err != nil {
+			if err := startIgnitionProvisionerServer(vm, vmConfig.Ignition.ConfigPath, vmConfig.Ignition.VsockPort); err != nil {
 				log.Error(err)
 			}
 			log.Debug("ignition vsock server exited")
@@ -249,7 +243,7 @@ func runVirtualMachine(vmConfig *config.VirtualMachine, vm *vf.VirtualMachine) e
 		port := vsock.Port
 		socketURL := vsock.SocketURL
 		if socketURL == "" {
-			// the timesync code adds a vsock device without an associated URL.
+			// timesync and ignition add a vsock device without an associated URL.
 			continue
 		}
 		var listenStr string
@@ -302,23 +296,21 @@ func runVirtualMachine(vmConfig *config.VirtualMachine, vm *vf.VirtualMachine) e
 	return <-errCh
 }
 
-func startIgnitionProvisionerServer(ignitionReader io.Reader, ignitionSocketPath string) error {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
-		_, err := io.Copy(w, ignitionReader)
-		if err != nil {
-			log.Errorf("failed to serve ignition file: %v", err)
-		}
-	})
-
-	listener, err := net.Listen("unix", ignitionSocketPath)
+func startIgnitionProvisionerServer(vm *vf.VirtualMachine, configPath string, vsockPort uint32) error {
+	ignitionReader, err := os.Open(configPath)
 	if err != nil {
 		return err
 	}
+	defer ignitionReader.Close()
 
-	util.RegisterExitHandler(func() {
-		os.Remove(ignitionSocketPath)
-	})
+	vsockDevices := vm.SocketDevices()
+	if len(vsockDevices) != 1 {
+		return fmt.Errorf("VM has too many/not enough virtio-vsock devices (%d)", len(vsockDevices))
+	}
+	listener, err := vsockDevices[0].Listen(vsockPort)
+	if err != nil {
+		return err
+	}
 
 	defer func() {
 		if err := listener.Close(); err != nil {
@@ -326,14 +318,23 @@ func startIgnitionProvisionerServer(ignitionReader io.Reader, ignitionSocketPath
 		}
 	}()
 
+	return startIgnitionProvisionerServerInternal(ignitionReader, listener)
+}
+
+func startIgnitionProvisionerServerInternal(ignitionReader io.ReadSeeker, listener net.Listener) error {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
+		http.ServeContent(w, req, "", time.Time{}, ignitionReader)
+	})
+
 	srv := &http.Server{
 		Handler:           mux,
-		Addr:              ignitionSocketPath,
+		Addr:              listener.Addr().String(),
 		ReadHeaderTimeout: 10 * time.Second,
 		IdleTimeout:       60 * time.Second,
 	}
 
-	log.Debugf("ignition socket: %s", ignitionSocketPath)
+	log.Debugf("ignition socket: %s", listener.Addr().String())
 	return srv.Serve(listener)
 }
 
