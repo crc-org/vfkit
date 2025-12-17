@@ -4,20 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
-
-func contains(strings []string, val string) bool {
-	for _, str := range strings {
-		if val == str {
-			return true
-		}
-	}
-
-	return false
-}
 
 // This sets all the fields of the `obj` struct to non-empty values.
 // This will be used to test JSON serialization as extensively as possible to
@@ -34,7 +25,7 @@ func fillStruct(t *testing.T, obj interface{}, skipFields []string) {
 		fieldVal := val.FieldByIndex(e.Index)
 		typeName := val.Type().Name()
 
-		if contains(skipFields, field.Name) {
+		if slices.Contains(skipFields, field.Name) {
 			continue
 		}
 		switch fieldVal.Kind() {
@@ -341,6 +332,55 @@ type jsonStabilityTest struct {
 	newObjectFunc func(*testing.T) any
 	skipFields    []string
 	expectedJSON  string
+}
+
+func testVirtioNetVfkitMagicJson(t *testing.T, vfkitMagic bool, useVfkitMagicDefault bool) {
+	const (
+		jsonVfkitMagicDefault = `{"vcpus":3,"memoryBytes":4194304000,"bootloader":{"kind":"linuxBootloader","vmlinuzPath":"/vmlinuz","initrdPath":"/initrd","kernelCmdLine":"console=hvc0"},"devices":[{"kind":"virtionet","nat":false,"unixSocketPath":"/some/path/to/socket","macAddress":"00:11:22:33:44:55"}]}`
+		jsonVfkitMagicFalse   = `{"vcpus":3,"memoryBytes":4194304000,"bootloader":{"kind":"linuxBootloader","vmlinuzPath":"/vmlinuz","initrdPath":"/initrd","kernelCmdLine":"console=hvc0"},"devices":[{"kind":"virtionet","nat":false,"unixSocketPath":"/some/path/to/socket","macAddress":"00:11:22:33:44:55","vfkitMagic":false}]}`
+		jsonVfkitMagicTrue    = `{"vcpus":3,"memoryBytes":4194304000,"bootloader":{"kind":"linuxBootloader","vmlinuzPath":"/vmlinuz","initrdPath":"/initrd","kernelCmdLine":"console=hvc0"},"devices":[{"kind":"virtionet","nat":false,"unixSocketPath":"/some/path/to/socket","macAddress":"00:11:22:33:44:55","vfkitMagic":true}]}`
+	)
+	var jsonStr string
+	var unmarshalledVM VirtualMachine
+
+	if useVfkitMagicDefault {
+		jsonStr = jsonVfkitMagicDefault
+	} else {
+		if vfkitMagic {
+			jsonStr = jsonVfkitMagicTrue
+		} else {
+			jsonStr = jsonVfkitMagicFalse
+		}
+	}
+	err := json.Unmarshal([]byte(jsonStr), &unmarshalledVM)
+	require.NoError(t, err)
+	netDevs := unmarshalledVM.VirtioNetDevices()
+	require.Len(t, netDevs, 1)
+	require.Equal(t, vfkitMagic, netDevs[0].VfkitMagic)
+
+	vm := newLinuxVM(t)
+	dev, err := VirtioNetNew("00:11:22:33:44:55")
+	require.NoError(t, err)
+	dev.SetUnixSocketPath("/some/path/to/socket")
+	if !useVfkitMagicDefault {
+		dev.VfkitMagic = vfkitMagic
+	}
+	err = vm.AddDevice(dev)
+	require.NoError(t, err)
+	require.Equal(t, vfkitMagic, dev.VfkitMagic)
+
+	require.Equal(t, *vm, unmarshalledVM)
+}
+
+func TestVirtioNetBackwardsCompat(t *testing.T) {
+	/* Check that the vfkitMagic default is true when deserializing json */
+	t.Run("VfkitMagicJsonDefault", func(t *testing.T) { testVirtioNetVfkitMagicJson(t, true, true) })
+
+	/* Check that the vfkitMagic default can be overridden */
+	t.Run("VfkitMagicJsonDefaultOverride", func(t *testing.T) { testVirtioNetVfkitMagicJson(t, false, false) })
+
+	/* Check that explicitly setting vfkitMagic to true works as expected */
+	t.Run("VfkitMagicJsonExplicitDefault", func(t *testing.T) { testVirtioNetVfkitMagicJson(t, true, false) })
 }
 
 func TestJSON(t *testing.T) {
