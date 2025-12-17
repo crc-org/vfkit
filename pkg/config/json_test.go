@@ -91,9 +91,10 @@ var jsonTests = map[string]jsonTest{
 			ignition, err := IgnitionNew("config", "socket")
 			require.NoError(t, err)
 			vm.Ignition = ignition
+			ignition.VsockPort = 0 // slight hack for the test to pass as VsockPort is not serialized
 			return vm
 		},
-		expectedJSON: `{"vcpus":3,"memoryBytes":4194304000,"bootloader":{"kind":"linuxBootloader","vmlinuzPath":"/vmlinuz","initrdPath":"/initrd","kernelCmdLine":"console=hvc0"}, "ignition":{"kind":"ignition","configPath":"config","socketPath":"socket"}}`,
+		expectedJSON: `{"vcpus":3,"memoryBytes":4194304000,"bootloader":{"kind":"linuxBootloader","vmlinuzPath":"/vmlinuz","initrdPath":"/initrd","kernelCmdLine":"console=hvc0"}, "ignition":{"kind":"ignition","configPath":"config"}}`,
 	},
 	"TestVirtioRNG": {
 		newVM: func(t *testing.T) *VirtualMachine {

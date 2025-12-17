@@ -444,3 +444,33 @@ func TestCloudInit(t *testing.T) {
 	log.Info("stopping vm")
 	vm.Stop(t)
 }
+
+// host listens over vsock, guest connects to the host
+func TestIgnition(t *testing.T) {
+	const ignTestData = "ignition config test\n"
+	puipuiProvider := NewPuipuiProvider()
+	log.Info("fetching os image")
+	err := puipuiProvider.Fetch(t.TempDir())
+	require.NoError(t, err)
+
+	vm := NewTestVM(t, puipuiProvider)
+	defer vm.Close(t)
+	require.NotNil(t, vm)
+
+	ignConfigPath := filepath.Join(t.TempDir(), "config.ign")
+	err = os.WriteFile(ignConfigPath, []byte(ignTestData), 0600)
+	require.NoError(t, err)
+	vm.AddIgnition(t, ignConfigPath)
+
+	vm.AddSSH(t, "tcp")
+
+	vm.Start(t)
+	vm.WaitForSSH(t)
+
+	output, err := vm.SSHCombinedOutput(t, "socat -T 2 TCP-LISTEN:8080 VSOCK-CONNECT:2:1024 >/dev/null & curl -q http://localhost:8080")
+	require.NoError(t, err)
+	require.Contains(t, string(output), ignTestData)
+
+	// time.Sleep(3600 * time.Second)
+	vm.Stop(t)
+}

@@ -23,10 +23,13 @@ func TestStartIgnitionProvisionerServer(t *testing.T) {
 	ignitionData := []byte("ignition configuration")
 	ignitionReader := bytes.NewReader(ignitionData)
 
+	listener, err := net.Listen("unix", socketPath)
+	require.NoError(t, err)
+	defer listener.Close()
+
 	// Start the server using the socket so that it can returns the ignition data
 	go func() {
-		err := startIgnitionProvisionerServer(ignitionReader, socketPath)
-		require.NoError(t, err)
+		_ = startIgnitionProvisionerServerInternal(ignitionReader, listener)
 	}()
 
 	// Wait for the socket file to be created before serving, up to 2 seconds
