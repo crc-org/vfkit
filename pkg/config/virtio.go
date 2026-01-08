@@ -475,7 +475,7 @@ func (dev *VirtioNet) ToCmdLine() ([]string, error) {
 	}
 
 	if len(dev.MacAddress) != 0 {
-		builder.WriteString(fmt.Sprintf(",mac=%s", dev.MacAddress))
+		fmt.Fprintf(&builder, ",mac=%s", dev.MacAddress)
 	}
 
 	return []string{"--device", builder.String()}, nil
