@@ -274,7 +274,7 @@ func TestVirtioDevices(t *testing.T) {
 				UnixSocketPath: "/tmp/unix.sock",
 				VfkitMagic:     true,
 			},
-			expectedCmdLine: []string{"--device", "virtio-net,type=unixgram,path=/tmp/unix.sock,vfkitMagic=on"},
+			expectedCmdLine: []string{"--device", "virtio-net,unixSocketPath=/tmp/unix.sock"},
 		},
 		"NewVirtioNetWithMacAddress": {
 			newDev: func() (VirtioDevice, error) { return VirtioNetNew("00:11:22:33:44:55") },
@@ -402,7 +402,7 @@ func TestVirtioDevices(t *testing.T) {
 				UnixSocketPath: "/tmp/test.sock",
 				VfkitMagic:     true,
 			},
-			expectedCmdLine: []string{"--device", "virtio-net,type=unixgram,path=/tmp/test.sock,vfkitMagic=on"},
+			expectedCmdLine: []string{"--device", "virtio-net,unixSocketPath=/tmp/test.sock"},
 		},
 		"VirtioNetDefaultVfkitMagic": {
 			newDev: func() (VirtioDevice, error) {
@@ -412,7 +412,7 @@ func TestVirtioDevices(t *testing.T) {
 				UnixSocketPath: "/tmp/default.sock",
 				VfkitMagic:     true,
 			},
-			expectedCmdLine: []string{"--device", "virtio-net,type=unixgram,path=/tmp/default.sock,vfkitMagic=on"},
+			expectedCmdLine: []string{"--device", "virtio-net,unixSocketPath=/tmp/default.sock"},
 		},
 		"VirtioNetUnixSocketPath": {
 			newDev: func() (VirtioDevice, error) {
@@ -422,7 +422,7 @@ func TestVirtioDevices(t *testing.T) {
 				UnixSocketPath: "/tmp/socket.sock",
 				VfkitMagic:     true,
 			},
-			expectedCmdLine: []string{"--device", "virtio-net,type=unixgram,path=/tmp/socket.sock,vfkitMagic=on"},
+			expectedCmdLine: []string{"--device", "virtio-net,unixSocketPath=/tmp/socket.sock"},
 		},
 		"VirtioNetUnixSocketPathWithVfkitMagicOff": {
 			newDev: func() (VirtioDevice, error) {
@@ -466,7 +466,7 @@ func TestVirtioDevices(t *testing.T) {
 				UnixSocketPath: "/tmp/test.sock",
 				VfkitMagic:     true,
 			},
-			expectedCmdLine: []string{"--device", "virtio-net,type=unixgram,path=/tmp/test.sock,vfkitMagic=on"},
+			expectedCmdLine: []string{"--device", "virtio-net,unixSocketPath=/tmp/test.sock"},
 		},
 	}
 	t.Run("virtio-devices", func(t *testing.T) {
