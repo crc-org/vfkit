@@ -477,7 +477,7 @@ func (dev *VirtioNet) ToCmdLine() ([]string, error) {
 			builder.WriteString(",vfkitMagic=off")
 		}
 	default:
-		fmt.Fprintf(&builder, ",fd=%d", dev.Socket.Fd())
+		fmt.Fprintf(&builder, ",fd=%d", dev.Socket.Fd()) // #nosec G705 -- CLI arg, not HTML
 	}
 
 	if len(dev.MacAddress) != 0 {
