@@ -515,6 +515,9 @@ func (dev *VirtioNet) FromOptions(options []option) error {
 			if err != nil {
 				return err
 			}
+			if fd < 0 || fd > math.MaxInt32 {
+				return fmt.Errorf("invalid file descriptor: %d", fd)
+			}
 			dev.Socket = os.NewFile(uintptr(fd), "vfkit virtio-net socket")
 		case "unixSocketPath":
 			dev.UnixSocketPath = option.value
