@@ -78,7 +78,7 @@ func uncompressFedora(fileName string, targetDir string) (string, error) {
 
 	xzCutName, _ := strings.CutSuffix(filepath.Base(file.Name()), ".xz")
 	outPath := filepath.Join(targetDir, xzCutName)
-	out, err := os.Create(outPath)
+	out, err := os.Create(outPath) // #nosec G703 -- file is created in a temporary directory
 	if err != nil {
 		return "", err
 	}

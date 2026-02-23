@@ -410,6 +410,7 @@ func createCloudInitISO(files map[string]io.Reader) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("unable to create temporary cloud-init ISO file: %w", err)
 	}
+	isoFileName := isoFile.Name()
 
 	defer func() {
 		if err := isoFile.Close(); err != nil {
@@ -419,7 +420,7 @@ func createCloudInitISO(files map[string]io.Reader) (string, error) {
 
 	// register handler to remove isoFile when exiting
 	util.RegisterExitHandler(func() {
-		os.Remove(isoFile.Name())
+		os.Remove(isoFileName)
 	})
 
 	err = writer.WriteTo(isoFile, "cidata")
