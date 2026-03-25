@@ -228,6 +228,24 @@ func TestVirtioDevices(t *testing.T) {
 			},
 			errorMsg: "unexpected value for disk 'sync' option: invalid (valid values: full, fsync, none)",
 		},
+		"NewVirtioBlkBlockDeviceWithCache": {
+			newDev: func() (VirtioDevice, error) {
+				return deviceFromCmdLine("virtio-blk,path=/dev/disk1,type=dev,cache=cached")
+			},
+			errorMsg: "cache mode is not supported for block devices (type=dev)",
+		},
+		"NewVirtioBlkBlockDeviceWithSync": {
+			newDev: func() (VirtioDevice, error) {
+				return deviceFromCmdLine("virtio-blk,path=/dev/disk1,type=dev,sync=full")
+			},
+			errorMsg: "sync mode is not supported for block devices (type=dev)",
+		},
+		"NewVirtioBlkBlockDeviceWithCacheAndSync": {
+			newDev: func() (VirtioDevice, error) {
+				return deviceFromCmdLine("virtio-blk,path=/dev/disk1,type=dev,cache=cached,sync=full")
+			},
+			errorMsg: "cache mode is not supported for block devices (type=dev)",
+		},
 		"NewNVMe": {
 			newDev: func() (VirtioDevice, error) { return NVMExpressControllerNew("/foo/bar") },
 			expectedDev: &NVMExpressController{
@@ -325,6 +343,18 @@ func TestVirtioDevices(t *testing.T) {
 			},
 			expectedCmdLine:  []string{"--device", "nvme,path=/foo/bar,cache=uncached,sync=full"},
 			alternateCmdLine: []string{"--device", "nvme,cache=uncached,sync=full,path=/foo/bar"},
+		},
+		"NewNVMeBlockDeviceWithCache": {
+			newDev: func() (VirtioDevice, error) {
+				return deviceFromCmdLine("nvme,path=/dev/disk1,type=dev,cache=cached")
+			},
+			errorMsg: "cache mode is not supported for block devices (type=dev)",
+		},
+		"NewNVMeBlockDeviceWithSync": {
+			newDev: func() (VirtioDevice, error) {
+				return deviceFromCmdLine("nvme,path=/dev/disk1,type=dev,sync=full")
+			},
+			errorMsg: "sync mode is not supported for block devices (type=dev)",
 		},
 		"NewVirtioFs": {
 			newDev: func() (VirtioDevice, error) { return VirtioFsNew("/foo/bar", "") },
@@ -526,6 +556,18 @@ func TestVirtioDevices(t *testing.T) {
 			},
 			expectedCmdLine:  []string{"--device", "usb-mass-storage,path=/foo/bar,cache=uncached,sync=full"},
 			alternateCmdLine: []string{"--device", "usb-mass-storage,cache=uncached,sync=full,path=/foo/bar"},
+		},
+		"NewUSBMassStorageBlockDeviceWithCache": {
+			newDev: func() (VirtioDevice, error) {
+				return deviceFromCmdLine("usb-mass-storage,path=/dev/disk1,type=dev,cache=cached")
+			},
+			errorMsg: "cache mode is not supported for block devices (type=dev)",
+		},
+		"NewUSBMassStorageBlockDeviceWithSync": {
+			newDev: func() (VirtioDevice, error) {
+				return deviceFromCmdLine("usb-mass-storage,path=/dev/disk1,type=dev,sync=full")
+			},
+			errorMsg: "sync mode is not supported for block devices (type=dev)",
 		},
 		"NewVirtioInputWithPointingDevice": {
 			newDev: func() (VirtioDevice, error) { return VirtioInputNew("pointing") },

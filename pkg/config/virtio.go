@@ -645,6 +645,12 @@ func (dev *VirtioBlk) ToCmdLine() ([]string, error) {
 }
 
 func (dev *VirtioBlk) validate() error {
+	// First validate the disk storage config (cache/sync mode constraints)
+	if err := dev.DiskStorageConfig.validate(); err != nil {
+		return err
+	}
+
+	// Then check for qcow2 images
 	imgPath := dev.ImagePath
 	file, err := os.Open(imgPath)
 	if err != nil {
@@ -1044,6 +1050,19 @@ func (config *DiskStorageConfig) FromOptions(options []option) error {
 			config.SynchronizationMode = mode
 		default:
 			return fmt.Errorf("unknown option for %s devices: %s", config.DevName, option.key)
+		}
+	}
+	return config.validate()
+}
+
+func (config *DiskStorageConfig) validate() error {
+	// Cache and sync modes are only supported for disk images, not block devices
+	if config.Type == DiskBackendBlockDevice {
+		if config.CachingMode != "" {
+			return fmt.Errorf("cache mode is not supported for block devices (type=dev)")
+		}
+		if config.SynchronizationMode != "" {
+			return fmt.Errorf("sync mode is not supported for block devices (type=dev)")
 		}
 	}
 	return nil
