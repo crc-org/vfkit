@@ -495,14 +495,43 @@ func AddToVirtualMachineConfig(vmConfig *VirtualMachineConfiguration, dev config
 	}
 }
 
+func toVzCachingMode(mode config.DiskImageCachingMode) vz.DiskImageCachingMode {
+	switch mode {
+	case config.CachingModeAutomatic:
+		return vz.DiskImageCachingModeAutomatic
+	case config.CachingModeCached:
+		return vz.DiskImageCachingModeCached
+	case config.CachingModeUncached:
+		return vz.DiskImageCachingModeUncached
+	default:
+		// Default to cached for backward compatibility
+		return vz.DiskImageCachingModeCached
+	}
+}
+
+func toVzSyncMode(mode config.DiskImageSynchronizationMode) vz.DiskImageSynchronizationMode {
+	switch mode {
+	case config.SyncModeFull:
+		return vz.DiskImageSynchronizationModeFull
+	case config.SyncModeFsync:
+		return vz.DiskImageSynchronizationModeFsync
+	case config.SyncModeNone:
+		return vz.DiskImageSynchronizationModeNone
+	default:
+		// Default to fsync for backward compatibility
+		return vz.DiskImageSynchronizationModeFsync
+	}
+}
+
 func (conf *DiskStorageConfig) toVz() (vz.StorageDeviceAttachment, error) {
 	switch conf.Type {
 	case config.DiskBackendImage, config.DiskBackendDefault:
 		if conf.ImagePath == "" {
 			return nil, fmt.Errorf("missing mandatory 'path' option for %s device", conf.DevName)
 		}
-		syncMode := vz.DiskImageSynchronizationModeFsync
-		caching := vz.DiskImageCachingModeCached
+		// Use user-specified modes if provided, otherwise use defaults for backward compatibility
+		syncMode := toVzSyncMode(conf.SynchronizationMode)
+		caching := toVzCachingMode(conf.CachingMode)
 		return vz.NewDiskImageStorageDeviceAttachmentWithCacheAndSync(conf.ImagePath, conf.ReadOnly, caching, syncMode)
 	case config.DiskBackendBlockDevice:
 		var stat unix.Stat_t

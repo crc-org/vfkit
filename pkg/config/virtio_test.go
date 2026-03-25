@@ -148,6 +148,86 @@ func TestVirtioDevices(t *testing.T) {
 			},
 			expectedCmdLine: []string{"--device", fmt.Sprintf("virtio-blk,path=%s", testImagePath)},
 		},
+		"NewVirtioBlkWithCacheMode": {
+			newDev: func() (VirtioDevice, error) {
+				dev, err := getTestVirtioBlkDevice(testImagePath)
+				if err != nil {
+					return nil, err
+				}
+				dev.CachingMode = CachingModeUncached
+				return dev, nil
+			},
+			expectedDev: &VirtioBlk{
+				DiskStorageConfig: DiskStorageConfig{
+					StorageConfig: StorageConfig{
+						DevName: "virtio-blk",
+					},
+					ImagePath:   testImagePath,
+					CachingMode: CachingModeUncached,
+				},
+				DeviceIdentifier: "",
+			},
+			expectedCmdLine:  []string{"--device", fmt.Sprintf("virtio-blk,path=%s,cache=uncached", testImagePath)},
+			alternateCmdLine: []string{"--device", fmt.Sprintf("virtio-blk,cache=uncached,path=%s", testImagePath)},
+		},
+		"NewVirtioBlkWithSyncMode": {
+			newDev: func() (VirtioDevice, error) {
+				dev, err := getTestVirtioBlkDevice(testImagePath)
+				if err != nil {
+					return nil, err
+				}
+				dev.SynchronizationMode = SyncModeFull
+				return dev, nil
+			},
+			expectedDev: &VirtioBlk{
+				DiskStorageConfig: DiskStorageConfig{
+					StorageConfig: StorageConfig{
+						DevName: "virtio-blk",
+					},
+					ImagePath:           testImagePath,
+					SynchronizationMode: SyncModeFull,
+				},
+				DeviceIdentifier: "",
+			},
+			expectedCmdLine:  []string{"--device", fmt.Sprintf("virtio-blk,path=%s,sync=full", testImagePath)},
+			alternateCmdLine: []string{"--device", fmt.Sprintf("virtio-blk,sync=full,path=%s", testImagePath)},
+		},
+		"NewVirtioBlkWithCacheAndSyncMode": {
+			newDev: func() (VirtioDevice, error) {
+				dev, err := getTestVirtioBlkDevice(testImagePath)
+				if err != nil {
+					return nil, err
+				}
+				dev.CachingMode = CachingModeUncached
+				dev.SynchronizationMode = SyncModeFull
+				return dev, nil
+			},
+			expectedDev: &VirtioBlk{
+				DiskStorageConfig: DiskStorageConfig{
+					StorageConfig: StorageConfig{
+						DevName: "virtio-blk",
+					},
+					ImagePath:           testImagePath,
+					CachingMode:         CachingModeUncached,
+					SynchronizationMode: SyncModeFull,
+				},
+				DeviceIdentifier: "",
+			},
+			expectedCmdLine:  []string{"--device", fmt.Sprintf("virtio-blk,path=%s,cache=uncached,sync=full", testImagePath)},
+			alternateCmdLine: []string{"--device", fmt.Sprintf("virtio-blk,cache=uncached,sync=full,path=%s", testImagePath)},
+		},
+		"NewVirtioBlkWithInvalidCacheMode": {
+			newDev: func() (VirtioDevice, error) {
+				return deviceFromCmdLine(fmt.Sprintf("virtio-blk,path=%s,cache=invalid", testImagePath))
+			},
+			errorMsg: "unexpected value for disk 'cache' option: invalid (valid values: automatic, cached, uncached)",
+		},
+		"NewVirtioBlkWithInvalidSyncMode": {
+			newDev: func() (VirtioDevice, error) {
+				return deviceFromCmdLine(fmt.Sprintf("virtio-blk,path=%s,sync=invalid", testImagePath))
+			},
+			errorMsg: "unexpected value for disk 'sync' option: invalid (valid values: full, fsync, none)",
+		},
 		"NewNVMe": {
 			newDev: func() (VirtioDevice, error) { return NVMExpressControllerNew("/foo/bar") },
 			expectedDev: &NVMExpressController{

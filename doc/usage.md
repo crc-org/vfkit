@@ -210,6 +210,14 @@ See https://cloudinit.readthedocs.io/en/latest/reference/datasources/nocloud.htm
 - `path`: the absolute path to the disk image file or block device.
 - `type`: the backing type. Use `image` (default) for a disk image file, or `dev` to attach a host block device (for example, /dev/disk1 or /dev/disk1s1). Attaching a block device may require root privileges; use with care.
 - `deviceId`: `/dev/disk/by-id/` identifier to use for this device.
+- `cache`: disk image caching mode. Valid values:
+  - `automatic` (default): allows the virtualization framework to automatically determine whether to enable data caching
+  - `cached`: enables data caching
+  - `uncached`: disables data caching
+- `sync`: disk image synchronization mode. Valid values:
+  - `full`: synchronizes data to the permanent storage holding the disk image
+  - `fsync` (default): synchronizes data to the drive using the system's best-effort synchronization mode
+  - `none`: disables data synchronization with the permanent storage
 
 #### Example
 
@@ -223,12 +231,22 @@ Attach a host block device instead (may require root privileges):
 --device virtio-blk,path=/dev/disk2,type=dev
 ```
 
+For ephemeral VMs where data persistence is not critical (maximize performance):
+```
+--device virtio-blk,path=/Users/virtuser/vfkit.img,cache=cached,sync=none
+```
+
+For database or critical workloads (maximize data safety):
+```
+--device virtio-blk,path=/Users/virtuser/vfkit.img,cache=uncached,sync=full
+```
+
 To also provide the cloud-init configuration you can add an additional virtio-blk device backed by an image containing the cloud-init configuration files
 ```
 --device virtio-blk,path=/Users/virtuser/cloudinit.img
 ```
 
-If you prefer to use the automatic ISO creation 
+If you prefer to use the automatic ISO creation
 ```
 --cloud-init /Users/virtuser/user-data,/Users/virtuser/meta-data
 ```
