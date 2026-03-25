@@ -260,12 +260,30 @@ The `--device nvme` option adds a NVMe device to the virtual machine. The disk i
 
 #### Arguments
 - `path`: the absolute path to the disk image file.
+- `cache`: disk image caching mode. Valid values:
+  - `automatic` (default): allows the virtualization framework to automatically determine whether to enable data caching
+  - `cached`: enables data caching
+  - `uncached`: disables data caching
+- `sync`: disk image synchronization mode. Valid values:
+  - `full`: synchronizes data to the permanent storage holding the disk image
+  - `fsync` (default): synchronizes data to the drive using the system's best-effort synchronization mode
+  - `none`: disables data synchronization with the permanent storage
 
 #### Example
 
 This adds a NVMe device to the VM which will be backed by the disk image at `/Users/virtuser/image.img`:
 ```
 --device nvme,path=/Users/virtuser/image.img
+```
+
+For high-performance ephemeral storage:
+```
+--device nvme,path=/Users/virtuser/image.img,cache=cached,sync=none
+```
+
+For database or critical workloads:
+```
+--device nvme,path=/Users/virtuser/image.img,cache=uncached,sync=full
 ```
 
 
@@ -278,12 +296,30 @@ The `--device usb-mass-storage` option adds a USB mass storage device to the vir
 #### Arguments
 - `path`: the absolute path to the disk image file.
 - `readonly`: if specified the device will be read only.
+- `cache`: disk image caching mode. Valid values:
+  - `automatic` (default): allows the virtualization framework to automatically determine whether to enable data caching
+  - `cached`: enables data caching
+  - `uncached`: disables data caching
+- `sync`: disk image synchronization mode. Valid values:
+  - `full`: synchronizes data to the permanent storage holding the disk image
+  - `fsync` (default): synchronizes data to the drive using the system's best-effort synchronization mode
+  - `none`: disables data synchronization with the permanent storage
 
 #### Example
 
 This adds a read only USB mass storage device to the VM which will be backed by the ISO image at `/Users/virtuser/distro.iso`:
 ```
 --device usb-mass-storage,path=/Users/virtuser/distro.iso,readonly
+```
+
+For a read-only device with caching enabled:
+```
+--device usb-mass-storage,path=/Users/virtuser/distro.iso,readonly,cache=cached
+```
+
+For a writable device with full data safety:
+```
+--device usb-mass-storage,path=/Users/virtuser/data.img,cache=uncached,sync=full
 ```
 
 ### Network Block Device

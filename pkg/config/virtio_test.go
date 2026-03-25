@@ -261,6 +261,71 @@ func TestVirtioDevices(t *testing.T) {
 			expectedCmdLine:  []string{"--device", "nvme,path=/foo/bar,type=image"},
 			alternateCmdLine: []string{"--device", "nvme,type=image,path=/foo/bar"},
 		},
+		"NewNVMeWithCacheMode": {
+			newDev: func() (VirtioDevice, error) {
+				dev, err := NVMExpressControllerNew("/foo/bar")
+				if err != nil {
+					return nil, err
+				}
+				dev.CachingMode = CachingModeUncached
+				return dev, nil
+			},
+			expectedDev: &NVMExpressController{
+				DiskStorageConfig: DiskStorageConfig{
+					StorageConfig: StorageConfig{
+						DevName: "nvme",
+					},
+					ImagePath:   "/foo/bar",
+					CachingMode: CachingModeUncached,
+				},
+			},
+			expectedCmdLine:  []string{"--device", "nvme,path=/foo/bar,cache=uncached"},
+			alternateCmdLine: []string{"--device", "nvme,cache=uncached,path=/foo/bar"},
+		},
+		"NewNVMeWithSyncMode": {
+			newDev: func() (VirtioDevice, error) {
+				dev, err := NVMExpressControllerNew("/foo/bar")
+				if err != nil {
+					return nil, err
+				}
+				dev.SynchronizationMode = SyncModeFull
+				return dev, nil
+			},
+			expectedDev: &NVMExpressController{
+				DiskStorageConfig: DiskStorageConfig{
+					StorageConfig: StorageConfig{
+						DevName: "nvme",
+					},
+					ImagePath:           "/foo/bar",
+					SynchronizationMode: SyncModeFull,
+				},
+			},
+			expectedCmdLine:  []string{"--device", "nvme,path=/foo/bar,sync=full"},
+			alternateCmdLine: []string{"--device", "nvme,sync=full,path=/foo/bar"},
+		},
+		"NewNVMeWithCacheAndSyncMode": {
+			newDev: func() (VirtioDevice, error) {
+				dev, err := NVMExpressControllerNew("/foo/bar")
+				if err != nil {
+					return nil, err
+				}
+				dev.CachingMode = CachingModeUncached
+				dev.SynchronizationMode = SyncModeFull
+				return dev, nil
+			},
+			expectedDev: &NVMExpressController{
+				DiskStorageConfig: DiskStorageConfig{
+					StorageConfig: StorageConfig{
+						DevName: "nvme",
+					},
+					ImagePath:           "/foo/bar",
+					CachingMode:         CachingModeUncached,
+					SynchronizationMode: SyncModeFull,
+				},
+			},
+			expectedCmdLine:  []string{"--device", "nvme,path=/foo/bar,cache=uncached,sync=full"},
+			alternateCmdLine: []string{"--device", "nvme,cache=uncached,sync=full,path=/foo/bar"},
+		},
 		"NewVirtioFs": {
 			newDev: func() (VirtioDevice, error) { return VirtioFsNew("/foo/bar", "") },
 			expectedDev: &VirtioFs{
@@ -396,6 +461,71 @@ func TestVirtioDevices(t *testing.T) {
 				},
 			},
 			expectedCmdLine: []string{"--device", "usb-mass-storage,path=/foo/bar,readonly"},
+		},
+		"NewUSBMassStorageWithCacheMode": {
+			newDev: func() (VirtioDevice, error) {
+				dev, err := USBMassStorageNew("/foo/bar")
+				if err != nil {
+					return nil, err
+				}
+				dev.CachingMode = CachingModeCached
+				return dev, nil
+			},
+			expectedDev: &USBMassStorage{
+				DiskStorageConfig: DiskStorageConfig{
+					StorageConfig: StorageConfig{
+						DevName: "usb-mass-storage",
+					},
+					ImagePath:   "/foo/bar",
+					CachingMode: CachingModeCached,
+				},
+			},
+			expectedCmdLine:  []string{"--device", "usb-mass-storage,path=/foo/bar,cache=cached"},
+			alternateCmdLine: []string{"--device", "usb-mass-storage,cache=cached,path=/foo/bar"},
+		},
+		"NewUSBMassStorageWithSyncMode": {
+			newDev: func() (VirtioDevice, error) {
+				dev, err := USBMassStorageNew("/foo/bar")
+				if err != nil {
+					return nil, err
+				}
+				dev.SynchronizationMode = SyncModeNone
+				return dev, nil
+			},
+			expectedDev: &USBMassStorage{
+				DiskStorageConfig: DiskStorageConfig{
+					StorageConfig: StorageConfig{
+						DevName: "usb-mass-storage",
+					},
+					ImagePath:           "/foo/bar",
+					SynchronizationMode: SyncModeNone,
+				},
+			},
+			expectedCmdLine:  []string{"--device", "usb-mass-storage,path=/foo/bar,sync=none"},
+			alternateCmdLine: []string{"--device", "usb-mass-storage,sync=none,path=/foo/bar"},
+		},
+		"NewUSBMassStorageWithCacheAndSyncMode": {
+			newDev: func() (VirtioDevice, error) {
+				dev, err := USBMassStorageNew("/foo/bar")
+				if err != nil {
+					return nil, err
+				}
+				dev.CachingMode = CachingModeUncached
+				dev.SynchronizationMode = SyncModeFull
+				return dev, nil
+			},
+			expectedDev: &USBMassStorage{
+				DiskStorageConfig: DiskStorageConfig{
+					StorageConfig: StorageConfig{
+						DevName: "usb-mass-storage",
+					},
+					ImagePath:           "/foo/bar",
+					CachingMode:         CachingModeUncached,
+					SynchronizationMode: SyncModeFull,
+				},
+			},
+			expectedCmdLine:  []string{"--device", "usb-mass-storage,path=/foo/bar,cache=uncached,sync=full"},
+			alternateCmdLine: []string{"--device", "usb-mass-storage,cache=uncached,sync=full,path=/foo/bar"},
 		},
 		"NewVirtioInputWithPointingDevice": {
 			newDev: func() (VirtioDevice, error) { return VirtioInputNew("pointing") },
