@@ -210,14 +210,19 @@ See https://cloudinit.readthedocs.io/en/latest/reference/datasources/nocloud.htm
 - `path`: the absolute path to the disk image file or block device.
 - `type`: the backing type. Use `image` (default) for a disk image file, or `dev` to attach a host block device (for example, /dev/disk1 or /dev/disk1s1). Attaching a block device may require root privileges; use with care.
 - `deviceId`: `/dev/disk/by-id/` identifier to use for this device.
-- `cache`: disk image caching mode. Valid values:
+- `cache`: disk image caching mode (only for `type=image`, not supported for block devices). Valid values:
   - `automatic` (default): allows the virtualization framework to automatically determine whether to enable data caching
   - `cached`: enables data caching
   - `uncached`: disables data caching
-- `sync`: disk image synchronization mode. Valid values:
-  - `full`: synchronizes data to the permanent storage holding the disk image
-  - `fsync` (default): synchronizes data to the drive using the system's best-effort synchronization mode
-  - `none`: disables data synchronization with the permanent storage
+- `sync`: synchronization mode. Valid values differ by backing type:
+  - For disk images (`type=image`):
+    - `full`: synchronizes data to the permanent storage
+    - `fsync` (default): synchronizes data using the system's best-effort synchronization mode
+    - `none`: disables data synchronization
+  - For block devices (`type=dev`):
+    - `full` (default): synchronizes data to the permanent storage
+    - `none`: disables data synchronization
+    - Note: `fsync` is not supported for block devices
 
 #### Example
 
@@ -229,6 +234,11 @@ This adds a virtio-blk device to the VM which will be backed by the raw image at
 Attach a host block device instead (may require root privileges):
 ```
 --device virtio-blk,path=/dev/disk2,type=dev
+```
+
+Block device with sync mode disabled for maximum performance:
+```
+--device virtio-blk,path=/dev/disk2,type=dev,sync=none
 ```
 
 For ephemeral VMs where data persistence is not critical (maximize performance):
@@ -259,15 +269,21 @@ If you prefer to use the automatic ISO creation
 The `--device nvme` option adds a NVMe device to the virtual machine. The disk is backed by an image file on the host machine. This file is a raw image file.
 
 #### Arguments
-- `path`: the absolute path to the disk image file.
-- `cache`: disk image caching mode. Valid values:
+- `path`: the absolute path to the disk image file or block device.
+- `type`: the backing type. Use `image` (default) for a disk image file, or `dev` to attach a host block device. Attaching a block device may require root privileges; use with care.
+- `cache`: disk image caching mode (only for `type=image`, not supported for block devices). Valid values:
   - `automatic` (default): allows the virtualization framework to automatically determine whether to enable data caching
   - `cached`: enables data caching
   - `uncached`: disables data caching
-- `sync`: disk image synchronization mode. Valid values:
-  - `full`: synchronizes data to the permanent storage holding the disk image
-  - `fsync` (default): synchronizes data to the drive using the system's best-effort synchronization mode
-  - `none`: disables data synchronization with the permanent storage
+- `sync`: synchronization mode. Valid values differ by backing type:
+  - For disk images (`type=image`):
+    - `full`: synchronizes data to the permanent storage
+    - `fsync` (default): synchronizes data using the system's best-effort synchronization mode
+    - `none`: disables data synchronization
+  - For block devices (`type=dev`):
+    - `full` (default): synchronizes data to the permanent storage
+    - `none`: disables data synchronization
+    - Note: `fsync` is not supported for block devices
 
 #### Example
 
@@ -294,16 +310,22 @@ For database or critical workloads:
 The `--device usb-mass-storage` option adds a USB mass storage device to the virtual machine. The disk is backed by an image file on the host machine. This file is a raw image file or an ISO image.
 
 #### Arguments
-- `path`: the absolute path to the disk image file.
+- `path`: the absolute path to the disk image file or block device.
+- `type`: the backing type. Use `image` (default) for a disk image file, or `dev` to attach a host block device. Attaching a block device may require root privileges; use with care.
 - `readonly`: if specified the device will be read only.
-- `cache`: disk image caching mode. Valid values:
+- `cache`: disk image caching mode (only for `type=image`, not supported for block devices). Valid values:
   - `automatic` (default): allows the virtualization framework to automatically determine whether to enable data caching
   - `cached`: enables data caching
   - `uncached`: disables data caching
-- `sync`: disk image synchronization mode. Valid values:
-  - `full`: synchronizes data to the permanent storage holding the disk image
-  - `fsync` (default): synchronizes data to the drive using the system's best-effort synchronization mode
-  - `none`: disables data synchronization with the permanent storage
+- `sync`: synchronization mode. Valid values differ by backing type:
+  - For disk images (`type=image`):
+    - `full`: synchronizes data to the permanent storage
+    - `fsync` (default): synchronizes data using the system's best-effort synchronization mode
+    - `none`: disables data synchronization
+  - For block devices (`type=dev`):
+    - `full` (default): synchronizes data to the permanent storage
+    - `none`: disables data synchronization
+    - Note: `fsync` is not supported for block devices
 
 #### Example
 
@@ -320,6 +342,11 @@ For a read-only device with caching enabled:
 For a writable device with full data safety:
 ```
 --device usb-mass-storage,path=/Users/virtuser/data.img,cache=uncached,sync=full
+```
+
+When using a block device, you can specify the sync mode (cache is not supported):
+```
+--device usb-mass-storage,path=/dev/disk2,type=dev,sync=none
 ```
 
 ### Network Block Device

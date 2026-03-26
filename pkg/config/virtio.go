@@ -650,7 +650,12 @@ func (dev *VirtioBlk) validate() error {
 		return err
 	}
 
-	// Then check for qcow2 images
+	// Skip qcow2 check for block devices (they can't be qcow2 format)
+	if dev.Type == DiskBackendBlockDevice {
+		return nil
+	}
+
+	// Then check for qcow2 images (only for disk image files)
 	imgPath := dev.ImagePath
 	file, err := os.Open(imgPath)
 	if err != nil {
@@ -1056,13 +1061,15 @@ func (config *DiskStorageConfig) FromOptions(options []option) error {
 }
 
 func (config *DiskStorageConfig) validate() error {
-	// Cache and sync modes are only supported for disk images, not block devices
+	// Validate options for block devices (type=dev)
 	if config.Type == DiskBackendBlockDevice {
+		// Cache mode is not supported for block devices
 		if config.CachingMode != "" {
 			return fmt.Errorf("cache mode is not supported for block devices (type=dev)")
 		}
-		if config.SynchronizationMode != "" {
-			return fmt.Errorf("sync mode is not supported for block devices (type=dev)")
+		// Block devices only support 'full' and 'none' sync modes, not 'fsync'
+		if config.SynchronizationMode == SyncModeFsync {
+			return fmt.Errorf("sync mode 'fsync' is not supported for block devices (type=dev), use 'full' or 'none'")
 		}
 	}
 	return nil

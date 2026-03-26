@@ -523,6 +523,19 @@ func toVzSyncMode(mode config.DiskImageSynchronizationMode) vz.DiskImageSynchron
 	}
 }
 
+func toVzBlockDeviceSyncMode(mode config.DiskImageSynchronizationMode) vz.DiskSynchronizationMode {
+	switch mode {
+	case config.SyncModeFull:
+		return vz.DiskSynchronizationModeFull
+	case config.SyncModeNone:
+		return vz.DiskSynchronizationModeNone
+	default:
+		// Default to full for backward compatibility
+		// Note: fsync is not supported for block devices and should be caught by validation
+		return vz.DiskSynchronizationModeFull
+	}
+}
+
 func (conf *DiskStorageConfig) toVz() (vz.StorageDeviceAttachment, error) {
 	switch conf.Type {
 	case config.DiskBackendImage, config.DiskBackendDefault:
@@ -558,7 +571,8 @@ func (conf *DiskStorageConfig) toVz() (vz.StorageDeviceAttachment, error) {
 			return nil, fmt.Errorf("error opening file: %v", err)
 		}
 
-		syncMode := vz.DiskSynchronizationModeFull
+		// Use user-specified sync mode if provided, otherwise use full for backward compatibility
+		syncMode := toVzBlockDeviceSyncMode(conf.SynchronizationMode)
 		attachment, err := vz.NewDiskBlockDeviceStorageDeviceAttachment(f, conf.ReadOnly, syncMode)
 		if err != nil {
 			_ = f.Close()

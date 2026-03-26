@@ -234,11 +234,45 @@ func TestVirtioDevices(t *testing.T) {
 			},
 			errorMsg: "cache mode is not supported for block devices (type=dev)",
 		},
-		"NewVirtioBlkBlockDeviceWithSync": {
+		"NewVirtioBlkBlockDeviceWithSyncFull": {
 			newDev: func() (VirtioDevice, error) {
 				return deviceFromCmdLine("virtio-blk,path=/dev/disk1,type=dev,sync=full")
 			},
-			errorMsg: "sync mode is not supported for block devices (type=dev)",
+			expectedDev: &VirtioBlk{
+				DiskStorageConfig: DiskStorageConfig{
+					StorageConfig: StorageConfig{
+						DevName: "virtio-blk",
+					},
+					ImagePath:           "/dev/disk1",
+					Type:                DiskBackendBlockDevice,
+					SynchronizationMode: SyncModeFull,
+				},
+			},
+			expectedCmdLine:  []string{"--device", "virtio-blk,path=/dev/disk1,type=dev,sync=full"},
+			alternateCmdLine: []string{"--device", "virtio-blk,type=dev,sync=full,path=/dev/disk1"},
+		},
+		"NewVirtioBlkBlockDeviceWithSyncNone": {
+			newDev: func() (VirtioDevice, error) {
+				return deviceFromCmdLine("virtio-blk,path=/dev/disk1,type=dev,sync=none")
+			},
+			expectedDev: &VirtioBlk{
+				DiskStorageConfig: DiskStorageConfig{
+					StorageConfig: StorageConfig{
+						DevName: "virtio-blk",
+					},
+					ImagePath:           "/dev/disk1",
+					Type:                DiskBackendBlockDevice,
+					SynchronizationMode: SyncModeNone,
+				},
+			},
+			expectedCmdLine:  []string{"--device", "virtio-blk,path=/dev/disk1,type=dev,sync=none"},
+			alternateCmdLine: []string{"--device", "virtio-blk,type=dev,sync=none,path=/dev/disk1"},
+		},
+		"NewVirtioBlkBlockDeviceWithSyncFsyncError": {
+			newDev: func() (VirtioDevice, error) {
+				return deviceFromCmdLine("virtio-blk,path=/dev/disk1,type=dev,sync=fsync")
+			},
+			errorMsg: "sync mode 'fsync' is not supported for block devices (type=dev), use 'full' or 'none'",
 		},
 		"NewVirtioBlkBlockDeviceWithCacheAndSync": {
 			newDev: func() (VirtioDevice, error) {
@@ -350,11 +384,45 @@ func TestVirtioDevices(t *testing.T) {
 			},
 			errorMsg: "cache mode is not supported for block devices (type=dev)",
 		},
-		"NewNVMeBlockDeviceWithSync": {
+		"NewNVMeBlockDeviceWithSyncFull": {
 			newDev: func() (VirtioDevice, error) {
 				return deviceFromCmdLine("nvme,path=/dev/disk1,type=dev,sync=full")
 			},
-			errorMsg: "sync mode is not supported for block devices (type=dev)",
+			expectedDev: &NVMExpressController{
+				DiskStorageConfig: DiskStorageConfig{
+					StorageConfig: StorageConfig{
+						DevName: "nvme",
+					},
+					ImagePath:           "/dev/disk1",
+					Type:                DiskBackendBlockDevice,
+					SynchronizationMode: SyncModeFull,
+				},
+			},
+			expectedCmdLine:  []string{"--device", "nvme,path=/dev/disk1,type=dev,sync=full"},
+			alternateCmdLine: []string{"--device", "nvme,type=dev,sync=full,path=/dev/disk1"},
+		},
+		"NewNVMeBlockDeviceWithSyncNone": {
+			newDev: func() (VirtioDevice, error) {
+				return deviceFromCmdLine("nvme,path=/dev/disk1,type=dev,sync=none")
+			},
+			expectedDev: &NVMExpressController{
+				DiskStorageConfig: DiskStorageConfig{
+					StorageConfig: StorageConfig{
+						DevName: "nvme",
+					},
+					ImagePath:           "/dev/disk1",
+					Type:                DiskBackendBlockDevice,
+					SynchronizationMode: SyncModeNone,
+				},
+			},
+			expectedCmdLine:  []string{"--device", "nvme,path=/dev/disk1,type=dev,sync=none"},
+			alternateCmdLine: []string{"--device", "nvme,type=dev,sync=none,path=/dev/disk1"},
+		},
+		"NewNVMeBlockDeviceWithSyncFsyncError": {
+			newDev: func() (VirtioDevice, error) {
+				return deviceFromCmdLine("nvme,path=/dev/disk1,type=dev,sync=fsync")
+			},
+			errorMsg: "sync mode 'fsync' is not supported for block devices (type=dev), use 'full' or 'none'",
 		},
 		"NewVirtioFs": {
 			newDev: func() (VirtioDevice, error) { return VirtioFsNew("/foo/bar", "") },
@@ -563,11 +631,45 @@ func TestVirtioDevices(t *testing.T) {
 			},
 			errorMsg: "cache mode is not supported for block devices (type=dev)",
 		},
-		"NewUSBMassStorageBlockDeviceWithSync": {
+		"NewUSBMassStorageBlockDeviceWithSyncFull": {
 			newDev: func() (VirtioDevice, error) {
 				return deviceFromCmdLine("usb-mass-storage,path=/dev/disk1,type=dev,sync=full")
 			},
-			errorMsg: "sync mode is not supported for block devices (type=dev)",
+			expectedDev: &USBMassStorage{
+				DiskStorageConfig: DiskStorageConfig{
+					StorageConfig: StorageConfig{
+						DevName: "usb-mass-storage",
+					},
+					ImagePath:           "/dev/disk1",
+					Type:                DiskBackendBlockDevice,
+					SynchronizationMode: SyncModeFull,
+				},
+			},
+			expectedCmdLine:  []string{"--device", "usb-mass-storage,path=/dev/disk1,type=dev,sync=full"},
+			alternateCmdLine: []string{"--device", "usb-mass-storage,type=dev,sync=full,path=/dev/disk1"},
+		},
+		"NewUSBMassStorageBlockDeviceWithSyncNone": {
+			newDev: func() (VirtioDevice, error) {
+				return deviceFromCmdLine("usb-mass-storage,path=/dev/disk1,type=dev,sync=none")
+			},
+			expectedDev: &USBMassStorage{
+				DiskStorageConfig: DiskStorageConfig{
+					StorageConfig: StorageConfig{
+						DevName: "usb-mass-storage",
+					},
+					ImagePath:           "/dev/disk1",
+					Type:                DiskBackendBlockDevice,
+					SynchronizationMode: SyncModeNone,
+				},
+			},
+			expectedCmdLine:  []string{"--device", "usb-mass-storage,path=/dev/disk1,type=dev,sync=none"},
+			alternateCmdLine: []string{"--device", "usb-mass-storage,type=dev,sync=none,path=/dev/disk1"},
+		},
+		"NewUSBMassStorageBlockDeviceWithSyncFsyncError": {
+			newDev: func() (VirtioDevice, error) {
+				return deviceFromCmdLine("usb-mass-storage,path=/dev/disk1,type=dev,sync=fsync")
+			},
+			errorMsg: "sync mode 'fsync' is not supported for block devices (type=dev), use 'full' or 'none'",
 		},
 		"NewVirtioInputWithPointingDevice": {
 			newDev: func() (VirtioDevice, error) { return VirtioInputNew("pointing") },
