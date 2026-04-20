@@ -645,6 +645,17 @@ func (dev *VirtioBlk) ToCmdLine() ([]string, error) {
 }
 
 func (dev *VirtioBlk) validate() error {
+	// First validate the disk storage config (cache/sync mode constraints)
+	if err := dev.DiskStorageConfig.validate(); err != nil {
+		return err
+	}
+
+	// Skip qcow2 check for block devices (they can't be qcow2 format)
+	if dev.Type == DiskBackendBlockDevice {
+		return nil
+	}
+
+	// Then check for qcow2 images (only for disk image files)
 	imgPath := dev.ImagePath
 	file, err := os.Open(imgPath)
 	if err != nil {
@@ -930,10 +941,57 @@ func (typ DiskBackendType) IsValid() bool {
 	}
 }
 
+// DiskImageCachingMode describes the disk image caching mode.
+// See: https://developer.apple.com/documentation/virtualization/vzdiskimagecachingmode
+type DiskImageCachingMode string
+
+const (
+	// CachingModeAutomatic allows the virtualization framework to automatically
+	// determine whether to enable data caching.
+	CachingModeAutomatic DiskImageCachingMode = "automatic"
+	// CachingModeCached enables data caching.
+	CachingModeCached DiskImageCachingMode = "cached"
+	// CachingModeUncached disables data caching.
+	CachingModeUncached DiskImageCachingMode = "uncached"
+)
+
+func (mode DiskImageCachingMode) IsValid() bool {
+	switch mode {
+	case CachingModeAutomatic, CachingModeCached, CachingModeUncached, "":
+		return true
+	default:
+		return false
+	}
+}
+
+// DiskImageSynchronizationMode describes the disk image synchronization mode.
+// See: https://developer.apple.com/documentation/virtualization/vzdiskimagesynchronizationmode
+type DiskImageSynchronizationMode string
+
+const (
+	// SyncModeFull synchronizes data to the permanent storage holding the disk image.
+	SyncModeFull DiskImageSynchronizationMode = "full"
+	// SyncModeFsync synchronizes data to the drive using the system's best-effort synchronization mode.
+	SyncModeFsync DiskImageSynchronizationMode = "fsync"
+	// SyncModeNone disables data synchronization with the permanent storage.
+	SyncModeNone DiskImageSynchronizationMode = "none"
+)
+
+func (mode DiskImageSynchronizationMode) IsValid() bool {
+	switch mode {
+	case SyncModeFull, SyncModeFsync, SyncModeNone, "":
+		return true
+	default:
+		return false
+	}
+}
+
 type DiskStorageConfig struct {
 	StorageConfig
-	ImagePath string          `json:"imagePath,omitempty"`
-	Type      DiskBackendType `json:"type,omitempty"`
+	ImagePath           string                       `json:"imagePath,omitempty"`
+	Type                DiskBackendType              `json:"type,omitempty"`
+	CachingMode         DiskImageCachingMode         `json:"cachingMode,omitempty"`
+	SynchronizationMode DiskImageSynchronizationMode `json:"synchronizationMode,omitempty"`
 }
 
 type NetworkBlockStorageConfig struct {
@@ -955,6 +1013,15 @@ func (config *DiskStorageConfig) ToCmdLine() ([]string, error) {
 	if config.ReadOnly {
 		value += ",readonly"
 	}
+
+	if config.CachingMode != "" {
+		value += fmt.Sprintf(",cache=%s", string(config.CachingMode))
+	}
+
+	if config.SynchronizationMode != "" {
+		value += fmt.Sprintf(",sync=%s", string(config.SynchronizationMode))
+	}
+
 	return []string{"--device", value}, nil
 }
 
@@ -974,8 +1041,35 @@ func (config *DiskStorageConfig) FromOptions(options []option) error {
 				return fmt.Errorf("unexpected value for virtio-blk 'readonly' option: %s", option.value)
 			}
 			config.ReadOnly = true
+		case "cache":
+			mode := DiskImageCachingMode(option.value)
+			if !mode.IsValid() {
+				return fmt.Errorf("unexpected value for disk 'cache' option: %s (valid values: automatic, cached, uncached)", option.value)
+			}
+			config.CachingMode = mode
+		case "sync":
+			mode := DiskImageSynchronizationMode(option.value)
+			if !mode.IsValid() {
+				return fmt.Errorf("unexpected value for disk 'sync' option: %s (valid values: full, fsync, none)", option.value)
+			}
+			config.SynchronizationMode = mode
 		default:
 			return fmt.Errorf("unknown option for %s devices: %s", config.DevName, option.key)
+		}
+	}
+	return config.validate()
+}
+
+func (config *DiskStorageConfig) validate() error {
+	// Validate options for block devices (type=dev)
+	if config.Type == DiskBackendBlockDevice {
+		// Cache mode is not supported for block devices
+		if config.CachingMode != "" {
+			return fmt.Errorf("cache mode is not supported for block devices (type=dev)")
+		}
+		// Block devices only support 'full' and 'none' sync modes, not 'fsync'
+		if config.SynchronizationMode == SyncModeFsync {
+			return fmt.Errorf("sync mode 'fsync' is not supported for block devices (type=dev), use 'full' or 'none'")
 		}
 	}
 	return nil
