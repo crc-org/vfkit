@@ -281,7 +281,7 @@ var jsonStabilityTests = map[string]jsonStabilityTest{
 			return blk
 		},
 
-		skipFields:   []string{"DevName", "URI", "Type"},
+		skipFields:   []string{"DevName", "URI", "Type", "CachingMode", "SynchronizationMode"},
 		expectedJSON: `{"kind":"virtioblk","devName":"virtio-blk","imagePath":"ImagePath","readOnly":true,"type":"image","deviceIdentifier":"DeviceIdentifier"}`,
 	},
 	"USBMassStorage": {
@@ -291,7 +291,7 @@ var jsonStabilityTests = map[string]jsonStabilityTest{
 			usb.Type = DiskBackendImage
 			return usb
 		},
-		skipFields:   []string{"DevName", "URI", "Type"},
+		skipFields:   []string{"DevName", "URI", "Type", "CachingMode", "SynchronizationMode"},
 		expectedJSON: `{"kind":"usbmassstorage","devName":"usb-mass-storage","imagePath":"ImagePath","readOnly":true,"type":"image"}`,
 	},
 	"NVMExpressController": {
@@ -301,7 +301,7 @@ var jsonStabilityTests = map[string]jsonStabilityTest{
 			nvme.Type = DiskBackendImage
 			return nvme
 		},
-		skipFields:   []string{"DevName", "URI", "Type"},
+		skipFields:   []string{"DevName", "URI", "Type", "CachingMode", "SynchronizationMode"},
 		expectedJSON: `{"kind":"nvme","devName":"nvme","imagePath":"ImagePath","readOnly":true,"type":"image"}`,
 	},
 	"LinuxBootloader": {
