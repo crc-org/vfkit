@@ -18,6 +18,9 @@ var rootCmd = &cobra.Command{
 	Long: `A hypervisor written in Go using Apple's Virtualization framework to run virtual machines.
                 Complete documentation is available at https://github.com/crc-org/vfkit`,
 	RunE: func(_ *cobra.Command, _ []string) error {
+		// if vfkit stop execution by itself, i.e. when VM stops by guest OS
+		// we need to call ExecuteExitHandlers to clean up
+		defer util.ExecuteExitHandlers()
 		if len(opts.LogLevel) > 0 {
 			ll, err := getLogLevel()
 			if err != nil {
@@ -25,13 +28,13 @@ var rootCmd = &cobra.Command{
 			}
 			logrus.SetLevel(ll)
 		}
+		if err := util.CleanupStaleCloudInitISO(); err != nil {
+			logrus.Warnf("failed to cleanup stale cloud-init ISO: %v", err)
+		}
 		vmConfig, err := newVMConfiguration(opts)
 		if err != nil {
 			return err
 		}
-		// if vfkit stop execution by itself, i.e. when VM stops by guest OS
-		// we need to call ExecuteExitHandlers to clean up
-		defer util.ExecuteExitHandlers()
 		return runVFKit(vmConfig, opts)
 	},
 	Version: cmdline.Version(),
