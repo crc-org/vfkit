@@ -77,18 +77,24 @@ func uncompressFedora(fileName string, targetDir string) (string, error) {
 	}
 
 	xzCutName, _ := strings.CutSuffix(filepath.Base(file.Name()), ".xz")
-	outPath := filepath.Join(targetDir, xzCutName)
-	out, err := os.Create(outPath)
+	root, err := os.OpenRoot(targetDir)
 	if err != nil {
 		return "", err
 	}
+	defer root.Close()
+
+	out, err := root.Create(xzCutName)
+	if err != nil {
+		return "", err
+	}
+	defer out.Close()
 
 	_, err = io.Copy(out, reader)
 	if err != nil {
 		return "", err
 	}
 
-	return outPath, nil
+	return out.Name(), nil
 }
 
 type OsProvider interface {
