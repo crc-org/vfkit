@@ -46,9 +46,9 @@ func downloadPuipui(destDir string) ([]string, error) {
 }
 
 func downloadFedora(destDir string) (string, error) {
-	const fedoraVersion = "42"
+	const fedoraVersion = "44"
 	arch := kernelArch()
-	release := "1.1"
+	release := "1.7"
 
 	baseURL := fmt.Sprintf("https://download.fedoraproject.org/pub/fedora/linux/releases/%s/Cloud/%s/images", fedoraVersion, arch)
 	fileName := fmt.Sprintf("Fedora-Cloud-Base-AmazonEC2-%s-%s.%s.raw.xz", fedoraVersion, release, arch)
@@ -77,18 +77,24 @@ func uncompressFedora(fileName string, targetDir string) (string, error) {
 	}
 
 	xzCutName, _ := strings.CutSuffix(filepath.Base(file.Name()), ".xz")
-	outPath := filepath.Join(targetDir, xzCutName)
-	out, err := os.Create(outPath)
+	root, err := os.OpenRoot(targetDir)
 	if err != nil {
 		return "", err
 	}
+	defer root.Close()
+
+	out, err := root.Create(xzCutName)
+	if err != nil {
+		return "", err
+	}
+	defer out.Close()
 
 	_, err = io.Copy(out, reader)
 	if err != nil {
 		return "", err
 	}
 
-	return outPath, nil
+	return out.Name(), nil
 }
 
 type OsProvider interface {

@@ -419,7 +419,7 @@ func createCloudInitISO(files map[string]io.Reader) (string, error) {
 
 	// register handler to remove isoFile when exiting
 	util.RegisterExitHandler(func() {
-		os.Remove(isoFile.Name())
+		os.Remove(isoFile.Name()) //#nosec G703 -- filename is created in `CreateCloudInitISOFile` but only from constants and random strings, no user-controlled strings
 	})
 
 	err = writer.WriteTo(isoFile, "cidata")
