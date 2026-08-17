@@ -17,7 +17,7 @@ require (
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.11.1
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8
-	go.podman.io/common v0.69.0
+	go.podman.io/common v0.69.1
 	golang.org/x/crypto v0.55.0
 	golang.org/x/mod v0.39.0
 	golang.org/x/sys v0.47.0
