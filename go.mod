@@ -18,7 +18,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8
 	go.podman.io/common v0.69.0
-	golang.org/x/crypto v0.54.0
+	golang.org/x/crypto v0.55.0
 	golang.org/x/mod v0.39.0
 	golang.org/x/sys v0.47.0
 )
@@ -72,7 +72,7 @@ require (
 	golang.org/x/arch v0.22.0 // indirect
 	golang.org/x/net v0.57.0 // indirect
 	golang.org/x/term v0.45.0 // indirect
-	golang.org/x/text v0.40.0 // indirect
+	golang.org/x/text v0.41.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
