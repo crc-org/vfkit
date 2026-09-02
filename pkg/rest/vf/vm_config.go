@@ -11,10 +11,18 @@ import (
 
 type VzVirtualMachine struct {
 	*vf.VirtualMachine
+	storageController storageController
 }
 
 func NewVzVirtualMachine(vm *vf.VirtualMachine) *VzVirtualMachine {
-	return &VzVirtualMachine{vm}
+	return &VzVirtualMachine{VirtualMachine: vm, storageController: vm}
+}
+
+type storageController interface {
+	HotpluggedStorageDevices() []vf.HotpluggedStorageDevice
+	HotplugNBDStorageDevice(id string, spec vf.NBDStorageDevice) (bool, error)
+	HotplugRawStorageDevice(id string, spec vf.RawStorageDevice) (bool, error)
+	DetachHotpluggedStorageDevice(id string) (bool, error)
 }
 
 // Inspect returns information about the virtual machine like hw resources

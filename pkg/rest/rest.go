@@ -3,9 +3,12 @@ package rest
 import (
 	"errors"
 	"fmt"
+	"net"
+	"net/http"
 	"net/url"
 	"os"
 	"syscall"
+	"time"
 
 	"github.com/crc-org/vfkit/pkg/util"
 	"github.com/gin-gonic/gin"
@@ -67,21 +70,67 @@ type VFKitService struct {
 
 // Start initiates the already configured gin service
 func (v *VFKitService) Start() {
+	var listener net.Listener
+	if v.Scheme == Unix {
+		// Bind synchronously, before the VM starts creating files, because
+		// the umask change in newUnixListener is process-wide.
+		unixListener, err := newUnixListener(v.Path)
+		if err != nil {
+			logrus.Fatal(err)
+		}
+		listener = unixListener
+		util.RegisterExitHandler(func() { os.Remove(v.Path) })
+	}
 	go func() {
 		var err error
 		switch v.Scheme {
 		case TCP:
 			err = v.router.Run(v.Host)
 		case Unix:
-			util.RegisterExitHandler(func() { os.Remove(v.Path) })
-			err = v.router.RunUnix(v.Path)
+			err = v.serveUnix(listener)
 		}
 		logrus.Fatal(err)
 	}()
 }
 
-// NewServer creates a new restful service
-func NewServer(inspector VirtualMachineInspector, stateHandler VirtualMachineStateHandler, endpoint string) (*VFKitService, error) {
+// newUnixListener binds the REST socket with owner-only permissions. The
+// umask is narrowed while the socket is bound so that it is never reachable
+// with wider permissions; the explicit chmod covers filesystems that do not
+// apply the umask to sockets.
+func newUnixListener(path string) (net.Listener, error) {
+	oldMask := syscall.Umask(0077)
+	listener, err := net.Listen("unix", path)
+	syscall.Umask(oldMask)
+	if err != nil {
+		return nil, err
+	}
+	if err := os.Chmod(path, 0600); err != nil {
+		_ = listener.Close()
+		_ = os.Remove(path)
+		return nil, fmt.Errorf("could not restrict unix socket permissions: %w", err)
+	}
+	return listener, nil
+}
+
+func (v *VFKitService) serveUnix(listener net.Listener) error {
+	defer listener.Close()
+	defer os.Remove(v.Path)
+	server := &http.Server{
+		Handler:           v.router,
+		ReadHeaderTimeout: 5 * time.Second,
+	}
+	return server.Serve(listener)
+}
+
+// NewServer creates a new restful service. storageHandler may be nil; storage
+// endpoints are only served on unix endpoints, so it is ignored with a warning
+// for TCP endpoints.
+func NewServer(
+	inspector VirtualMachineInspector,
+	stateHandler VirtualMachineStateHandler,
+	endpoint string,
+	storageHandler VirtualMachineStorageHandler,
+) (*VFKitService, error) {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 	ep, err := NewEndpoint(endpoint)
@@ -101,6 +150,15 @@ func NewServer(inspector VirtualMachineInspector, stateHandler VirtualMachineSta
 	r.GET("/vm/state", stateHandler.GetVMState)
 	r.POST("/vm/state", stateHandler.SetVMState)
 	r.GET("/vm/inspect", inspector.Inspect)
+	if storageHandler != nil {
+		if ep.Scheme == Unix {
+			r.GET("/vm/storage", storageHandler.ListStorageDevices)
+			r.PUT("/vm/storage/:id", storageHandler.AttachStorageDevice)
+			r.DELETE("/vm/storage/:id", storageHandler.DetachStorageDevice)
+		} else {
+			logrus.Warn("storage hotplug endpoints are only served on unix REST endpoints, not registering /vm/storage")
+		}
+	}
 	return &s, nil
 }
 
@@ -111,6 +169,12 @@ type VirtualMachineInspector interface {
 type VirtualMachineStateHandler interface {
 	GetVMState(c *gin.Context)
 	SetVMState(c *gin.Context)
+}
+
+type VirtualMachineStorageHandler interface {
+	ListStorageDevices(c *gin.Context)
+	AttachStorageDevice(c *gin.Context)
+	DetachStorageDevice(c *gin.Context)
 }
 
 // parseRestfulURI validates the input URI and returns an URL object
