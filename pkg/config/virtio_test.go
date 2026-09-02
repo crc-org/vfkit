@@ -69,6 +69,11 @@ func testErrorVirtioDev(t *testing.T, test *virtioDevTest) {
 func TestVirtioDevices(t *testing.T) {
 	testImagePath := filepath.Join(t.TempDir(), "test.img")
 	var virtioDevTests = map[string]virtioDevTest{
+		"NewUSBXHCIController": {
+			newDev:          USBXHCIControllerNew,
+			expectedDev:     &USBXHCIController{},
+			expectedCmdLine: []string{"--device", "usb-xhci"},
+		},
 		"NewVirtioBlk": {
 			newDev: func() (VirtioDevice, error) {
 				return getTestVirtioBlkDevice(testImagePath)
@@ -481,4 +486,56 @@ func TestVirtioDevices(t *testing.T) {
 			})
 		}
 	})
+}
+
+func TestValidateNBDURI(t *testing.T) {
+	valid := []string{
+		"nbd://192.168.64.4:10809/export",
+		"nbds://nbd.example.com/export",
+		"nbd://[::1]:10809/export",
+		"nbd://host/path%20with%20spaces",
+		"nbd+unix:///export?socket=/var/run/nbd.sock",
+		"nbds+unix:///export?socket=/var/run/nbd.sock",
+	}
+	for _, uri := range valid {
+		assert.NoError(t, ValidateNBDURI(uri), uri)
+	}
+
+	invalid := map[string]string{
+		"":                      "'uri' must be specified",
+		"https://example.com/x": "invalid scheme",
+		"nbd://":                "must specify a host",
+		"nbd:relative":          "must specify a host",
+		"nbd://host:0/x":        "invalid port",
+		"nbd://host:65536/x":    "invalid port",
+		"nbd://ho\"st/x":        "invalid character",
+		"nbd://ho<st>/x":        "invalid character",
+		"nbd://host/a b":        "invalid character",
+		"nbd://hôst/x":          "invalid character",
+		"nbd+unix:relative":     "must be of the form",
+		"nbd+unix:///":          "must be of the form",
+		"nbd+unix:///?socket=":  "must be of the form",
+		"nbds+unix:///":         "must be of the form",
+		"nbds+unix:///?socket=": "must be of the form",
+	}
+	for uri, message := range invalid {
+		err := ValidateNBDURI(uri)
+		require.Error(t, err, uri)
+		assert.Contains(t, err.Error(), message, uri)
+	}
+}
+
+func TestParseNBDSynchronizationMode(t *testing.T) {
+	mode, err := ParseNBDSynchronizationMode("full")
+	require.NoError(t, err)
+	assert.Equal(t, SynchronizationFullMode, mode)
+
+	mode, err = ParseNBDSynchronizationMode("none")
+	require.NoError(t, err)
+	assert.Equal(t, SynchronizationNoneMode, mode)
+
+	_, err = ParseNBDSynchronizationMode("")
+	require.Error(t, err)
+	_, err = ParseNBDSynchronizationMode("Full")
+	require.Error(t, err)
 }

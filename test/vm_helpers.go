@@ -3,6 +3,7 @@ package test
 import (
 	"fmt"
 	"net"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -19,6 +20,15 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/ssh"
 )
+
+func unixHTTPClient(socketPath string) *http.Client {
+	transport := &http.Transport{
+		Dial: func(_, _ string) (net.Conn, error) {
+			return net.Dial("unix", socketPath)
+		},
+	}
+	return &http.Client{Transport: transport}
+}
 
 func retryIPFromMAC(errCh chan error, macAddress string) (string, error) {
 	var (

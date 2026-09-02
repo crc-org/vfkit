@@ -27,6 +27,7 @@ const (
 	vfGpu          vmComponentKind = "virtiogpu"
 	vfInput        vmComponentKind = "virtioinput"
 	usbMassStorage vmComponentKind = "usbmassstorage"
+	usbXHCI        vmComponentKind = "usbxhci"
 	nvme           vmComponentKind = "nvme"
 	rosetta        vmComponentKind = "rosetta"
 	ignition       vmComponentKind = "ignition"
@@ -185,6 +186,10 @@ func unmarshalDevice(rawMsg json.RawMessage) (VirtioDevice, error) {
 		dev = &newDevice
 	case usbMassStorage:
 		var newDevice USBMassStorage
+		err = json.Unmarshal(rawMsg, &newDevice)
+		dev = &newDevice
+	case usbXHCI:
+		var newDevice USBXHCIController
 		err = json.Unmarshal(rawMsg, &newDevice)
 		dev = &newDevice
 	case vfNbd:
@@ -410,6 +415,17 @@ func (dev *USBMassStorage) MarshalJSON() ([]byte, error) {
 	return json.Marshal(devWithKind{
 		jsonKind:       kind(usbMassStorage),
 		USBMassStorage: *dev,
+	})
+}
+
+func (dev *USBXHCIController) MarshalJSON() ([]byte, error) {
+	type devWithKind struct {
+		jsonKind
+		USBXHCIController
+	}
+	return json.Marshal(devWithKind{
+		jsonKind:          kind(usbXHCI),
+		USBXHCIController: *dev,
 	})
 }
 

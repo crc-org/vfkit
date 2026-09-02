@@ -170,18 +170,21 @@ var jsonTests = map[string]jsonTest{
 			usb, err := USBMassStorageNew("/usbmassstorage")
 			require.NoError(t, err)
 			usb.SetReadOnly(true)
+			// XHCI controller for runtime USB hotplug
+			xhci, err := USBXHCIControllerNew()
+			require.NoError(t, err)
 			// rosetta
 			rosetta, err := RosettaShareNew("vz-rosetta")
 			require.NoError(t, err)
 			// NBD
 			nbd, err := NetworkBlockDeviceNew("uri", 1, SynchronizationFullMode)
 			require.NoError(t, err)
-			err = vm.AddDevices(fs, usb, rosetta, nbd)
+			err = vm.AddDevices(fs, usb, xhci, rosetta, nbd)
 			require.NoError(t, err)
 
 			return vm
 		},
-		expectedJSON: `{"vcpus":3,"memoryBytes":4194304000,"bootloader":{"kind":"linuxBootloader","vmlinuzPath":"/vmlinuz","initrdPath":"/initrd","kernelCmdLine":"console=hvc0"},"devices":[{"kind":"virtioserial","logFile":"/virtioserial"},{"kind":"virtioinput","inputType":"keyboard"},{"kind":"virtiogpu","usesGUI":false,"width":800,"height":600},{"kind":"virtionet","nat":true,"macAddress":"00:11:22:33:44:55"},{"kind":"virtiorng"},{"kind":"virtioblk","devName":"virtio-blk","imagePath":"/virtioblk"},{"kind":"virtiosock","port":1234,"socketURL":"/virtiovsock"},{"kind":"virtiofs","mountTag":"tag","sharedDir":"/virtiofs"},{"kind":"usbmassstorage","devName":"usb-mass-storage","imagePath":"/usbmassstorage","readOnly":true},{"kind":"rosetta","mountTag":"vz-rosetta","installRosetta":false,"ignoreIfMissing":false},{"kind":"nbd", "devName":"nbd", "uri":"uri", "DeviceIdentifier":"", "SynchronizationMode":"full","Timeout":1000000}]}`,
+		expectedJSON: `{"vcpus":3,"memoryBytes":4194304000,"bootloader":{"kind":"linuxBootloader","vmlinuzPath":"/vmlinuz","initrdPath":"/initrd","kernelCmdLine":"console=hvc0"},"devices":[{"kind":"virtioserial","logFile":"/virtioserial"},{"kind":"virtioinput","inputType":"keyboard"},{"kind":"virtiogpu","usesGUI":false,"width":800,"height":600},{"kind":"virtionet","nat":true,"macAddress":"00:11:22:33:44:55"},{"kind":"virtiorng"},{"kind":"virtioblk","devName":"virtio-blk","imagePath":"/virtioblk"},{"kind":"virtiosock","port":1234,"socketURL":"/virtiovsock"},{"kind":"virtiofs","mountTag":"tag","sharedDir":"/virtiofs"},{"kind":"usbmassstorage","devName":"usb-mass-storage","imagePath":"/usbmassstorage","readOnly":true},{"kind":"usbxhci"},{"kind":"rosetta","mountTag":"vz-rosetta","installRosetta":false,"ignoreIfMissing":false},{"kind":"nbd", "devName":"nbd", "uri":"uri", "DeviceIdentifier":"", "SynchronizationMode":"full","Timeout":1000000}]}`,
 	},
 }
 
@@ -293,6 +296,10 @@ var jsonStabilityTests = map[string]jsonStabilityTest{
 		},
 		skipFields:   []string{"DevName", "URI", "Type"},
 		expectedJSON: `{"kind":"usbmassstorage","devName":"usb-mass-storage","imagePath":"ImagePath","readOnly":true,"type":"image"}`,
+	},
+	"USBXHCIController": {
+		obj:          &USBXHCIController{},
+		expectedJSON: `{"kind":"usbxhci"}`,
 	},
 	"NVMExpressController": {
 		newObjectFunc: func(t *testing.T) any {

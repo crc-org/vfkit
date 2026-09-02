@@ -2,7 +2,6 @@ package vf
 
 import (
 	"fmt"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -386,21 +385,7 @@ func (dev *NetworkBlockDevice) toVz() (vz.StorageDeviceConfiguration, error) {
 }
 
 func (dev *NetworkBlockDevice) validateNbdURI(uri string) error {
-	if uri == "" {
-		return fmt.Errorf("'uri' must be specified")
-	}
-
-	parsed, err := url.Parse(uri)
-	if err != nil {
-		return fmt.Errorf("error: %w", err)
-	}
-
-	// The format specified by https://github.com/NetworkBlockDevice/nbd/blob/master/doc/uri.md
-	if parsed.Scheme != "nbd" && parsed.Scheme != "nbds" && parsed.Scheme != "nbd+unix" && parsed.Scheme != "nbds+unix" {
-		return fmt.Errorf("invalid scheme: %s. Expected one of: 'nbd', 'nbds', 'nbd+unix', or 'nbds+unix'", parsed.Scheme)
-	}
-
-	return nil
+	return config.ValidateNBDURI(uri)
 }
 
 func (dev *NetworkBlockDevice) validateNbdDeviceIdentifier(deviceID string) error {
@@ -420,7 +405,11 @@ func (dev *NetworkBlockDevice) validateNbdDeviceIdentifier(deviceID string) erro
 }
 
 func (dev *NetworkBlockDevice) SynchronizationModeVZ() vz.DiskSynchronizationMode {
-	if dev.SynchronizationMode == config.SynchronizationNoneMode {
+	return nbdSynchronizationModeVZ(dev.SynchronizationMode)
+}
+
+func nbdSynchronizationModeVZ(mode config.NBDSynchronizationMode) vz.DiskSynchronizationMode {
+	if mode == config.SynchronizationNoneMode {
 		return vz.DiskSynchronizationModeNone
 	}
 	return vz.DiskSynchronizationModeFull
@@ -463,6 +452,8 @@ func ListenNetworkBlockDevices(vm *VirtualMachine) error {
 
 func AddToVirtualMachineConfig(vmConfig *VirtualMachineConfiguration, dev config.VirtioDevice) error {
 	switch d := dev.(type) {
+	case *config.USBXHCIController:
+		return (*USBXHCIController)(d).AddToVirtualMachineConfig(vmConfig)
 	case *config.USBMassStorage:
 		return (*USBMassStorage)(d).AddToVirtualMachineConfig(vmConfig)
 	case *config.VirtioBlk:
@@ -568,3 +559,17 @@ func (dev *USBMassStorage) AddToVirtualMachineConfig(vmConfig *VirtualMachineCon
 type DiskStorageConfig config.DiskStorageConfig
 
 type USBMassStorage config.USBMassStorage
+
+type USBXHCIController config.USBXHCIController
+
+func (dev *USBXHCIController) AddToVirtualMachineConfig(vmConfig *VirtualMachineConfiguration) error {
+	if len(vmConfig.usbControllersConfiguration) != 0 {
+		return fmt.Errorf("only one usb-xhci controller can be configured")
+	}
+	controller, err := vz.NewXHCIControllerConfiguration()
+	if err != nil {
+		return fmt.Errorf("could not create usb-xhci controller: %w", err)
+	}
+	vmConfig.usbControllersConfiguration = append(vmConfig.usbControllersConfiguration, controller)
+	return nil
+}

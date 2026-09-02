@@ -1,6 +1,7 @@
 package test
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -281,12 +282,7 @@ var pciidVersionedTests = map[int]map[string]pciidTest{
 }
 
 func restInspect(t *testing.T, vm *testVM) *config.VirtualMachine {
-	tr := &http.Transport{
-		Dial: func(_, _ string) (conn net.Conn, err error) {
-			return net.Dial("unix", vm.restSocketPath)
-		},
-	}
-	client := &http.Client{Transport: tr}
+	client := unixHTTPClient(vm.restSocketPath)
 	resp, err := client.Get("http://vfkit/vm/inspect")
 	require.NoError(t, err)
 	defer resp.Body.Close()
@@ -385,6 +381,108 @@ func checkPCIDevice(t *testing.T, vm *testVM, vendorID, deviceID int) {
 	require.Regexp(t, re, string(lspci))
 }
 
+func testHotplugRawUSBStorage(t *testing.T, vm *testVM) {
+	const diskSize = 16 * 1024 * 1024
+	diskPath := filepath.Join(t.TempDir(), "hotplug.raw")
+	disk, err := os.OpenFile(diskPath, os.O_CREATE|os.O_EXCL|os.O_RDWR, 0600)
+	require.NoError(t, err)
+	require.NoError(t, disk.Truncate(diskSize))
+	_, err = disk.WriteAt([]byte("host-created-disk"), 0)
+	require.NoError(t, err)
+	require.NoError(t, disk.Close())
+
+	client := unixHTTPClient(vm.restSocketPath)
+	t.Cleanup(client.CloseIdleConnections)
+	attached := false
+	t.Cleanup(func() {
+		if !attached {
+			return
+		}
+		request, cleanupErr := http.NewRequest(http.MethodDelete, "http://vfkit/vm/storage/scratch", nil)
+		if !assert.NoError(t, cleanupErr) {
+			return
+		}
+		response, cleanupErr := client.Do(request)
+		if !assert.NoError(t, cleanupErr) {
+			return
+		}
+		response.Body.Close()
+		assert.Equal(t, http.StatusNoContent, response.StatusCode)
+	})
+	requestBody := bytes.NewBufferString(fmt.Sprintf(
+		`{"backend":"raw","path":%q,"readOnly":false}`,
+		diskPath,
+	))
+	request, err := http.NewRequest(http.MethodPut, "http://vfkit/vm/storage/scratch", requestBody)
+	require.NoError(t, err)
+	request.Header.Set("Content-Type", "application/json")
+	response, err := client.Do(request)
+	require.NoError(t, err)
+	response.Body.Close()
+	require.Equal(t, http.StatusCreated, response.StatusCode)
+	attached = true
+
+	deviceOutput, err := vm.SSHCombinedOutput(t, `
+for attempt in $(seq 1 100); do
+  for size in /sys/block/sd*/size; do
+    [ -e "$size" ] || continue
+    if [ "$(cat "$size")" = "32768" ]; then
+      basename "$(dirname "$size")"
+      exit 0
+    fi
+  done
+  sleep 0.1
+	done
+	exit 1`)
+	if err != nil {
+		diagnostics, diagnosticsErr := vm.SSHCombinedOutput(t, `
+echo '--- kernel ---'
+uname -a
+echo '--- block devices ---'
+ls -la /sys/block
+echo '--- usb devices ---'
+find /sys/bus/usb/devices -maxdepth 2 -type f -name product -exec sh -c 'echo "$1: $(cat "$1")"' _ {} \;
+echo '--- modules ---'
+cat /proc/modules
+echo '--- dmesg ---'
+dmesg | tail -100`)
+		require.NoError(t, err, "%s\n%s\ndiagnostics error: %v", string(deviceOutput), string(diagnostics), diagnosticsErr)
+	}
+	deviceName := string(bytes.TrimSpace(deviceOutput))
+	require.Regexp(t, `^sd[a-z]+$`, deviceName)
+
+	contents, err := vm.SSHCombinedOutput(t, fmt.Sprintf(
+		"sudo dd if=/dev/%s bs=1 count=17 2>/dev/null",
+		deviceName,
+	))
+	require.NoError(t, err)
+	require.Equal(t, "host-created-disk", string(contents))
+
+	_, err = vm.SSHCombinedOutput(t, fmt.Sprintf(
+		"printf guest-wrote-data | sudo dd of=/dev/%s bs=1 seek=4096 conv=notrunc 2>/dev/null && sync",
+		deviceName,
+	))
+	require.NoError(t, err)
+
+	request, err = http.NewRequest(http.MethodDelete, "http://vfkit/vm/storage/scratch", nil)
+	require.NoError(t, err)
+	response, err = client.Do(request)
+	require.NoError(t, err)
+	response.Body.Close()
+	require.Equal(t, http.StatusNoContent, response.StatusCode)
+	attached = false
+
+	_, err = vm.SSHCombinedOutput(t, fmt.Sprintf(
+		"for attempt in $(seq 1 100); do [ ! -e /sys/block/%s ] && exit 0; sleep 0.1; done; exit 1",
+		deviceName,
+	))
+	require.NoError(t, err)
+
+	diskContents, err := os.ReadFile(diskPath)
+	require.NoError(t, err)
+	require.Equal(t, "guest-wrote-data", string(diskContents[4096:4096+len("guest-wrote-data")]))
+}
+
 func TestCloudInit(t *testing.T) {
 	if err := macOSAvailable(13); err != nil {
 		t.Log("Skipping TestCloudInit test")
@@ -397,7 +495,7 @@ func TestCloudInit(t *testing.T) {
 	require.NoError(t, err)
 
 	// set efi bootloader
-	fedoraProvider.efiVariableStorePath = "efi-variable-store"
+	fedoraProvider.efiVariableStorePath = filepath.Join(tempDir, "efi-variable-store")
 	fedoraProvider.createVariableStore = true
 
 	vm := NewTestVM(t, fedoraProvider)
@@ -433,6 +531,13 @@ func TestCloudInit(t *testing.T) {
 	vm.AddDevice(t, dev)
 	log.Infof("shared disk: %s - cloud-init", dev.DevName)
 
+	hotplugSupported := macOSAvailable(15) == nil
+	if hotplugSupported {
+		xhci, xhciErr := config.USBXHCIControllerNew()
+		require.NoError(t, xhciErr)
+		vm.AddDevice(t, xhci)
+	}
+
 	vm.Start(t)
 	vm.WaitForSSH(t)
 
@@ -440,6 +545,11 @@ func TestCloudInit(t *testing.T) {
 	require.NoError(t, err)
 	log.Infof("executed whoami - output: %s", string(data))
 	require.Equal(t, "vfkituser\n", string(data))
+	if hotplugSupported {
+		t.Run("hotplug-raw-usb-storage", func(t *testing.T) {
+			testHotplugRawUSBStorage(t, vm)
+		})
+	}
 
 	log.Info("stopping vm")
 	vm.Stop(t)
