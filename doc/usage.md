@@ -73,7 +73,7 @@ implement this requirement, the uncompressed Image target is available instead.
 #### Arguments
 
 - `kernel`: path to the kernel to use to start the virtual machine. The kernel *must* be uncompressed or the VM will hang when trying to start. See [the kernel documentation](https://www.kernel.org/doc/Documentation/arm64/booting.txt) for more details.
-- `initrd`: path to the initrd file to use when starting the virtual machine.
+- `initrd`: optional path to the initrd file to use when starting the virtual machine. Omit it when the kernel can boot without an initrd; explicitly supplied paths must exist.
 - `cmdline`: kernel command line to use when starting the virtual machine.
 
 #### Example
@@ -131,7 +131,7 @@ See [the kernel documentation](https://www.kernel.org/doc/Documentation/arm64/bo
 
 - `--initrd`
 
-Path to the initrd file to use when starting the virtual machine.
+Optional path to the initrd file to use when starting the virtual machine. Omit this option to boot without an initrd.
 
 - `--kernel-cmdline`
 
