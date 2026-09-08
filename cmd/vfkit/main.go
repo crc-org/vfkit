@@ -57,6 +57,9 @@ func newLegacyBootloader(opts *cmdline.Options) config.Bootloader {
 }
 
 func newBootloaderConfiguration(opts *cmdline.Options) (config.Bootloader, error) {
+	if opts.InitrdPath != "" && opts.VmlinuzPath == "" {
+		return nil, fmt.Errorf("--initrd requires --kernel")
+	}
 	legacyBootloader := newLegacyBootloader(opts)
 
 	if legacyBootloader != nil {
