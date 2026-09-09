@@ -1,6 +1,6 @@
 module github.com/crc-org/vfkit
 
-go 1.25.9
+go 1.26.0
 
 require (
 	github.com/Code-Hex/vz/v3 v3.7.1
@@ -19,7 +19,7 @@ require (
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8
 	go.podman.io/common v0.69.0
 	golang.org/x/crypto v0.55.0
-	golang.org/x/mod v0.39.0
+	golang.org/x/mod v0.41.0
 	golang.org/x/sys v0.47.0
 )
 
