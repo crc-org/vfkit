@@ -1,6 +1,7 @@
 package test
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -282,7 +283,7 @@ var pciidVersionedTests = map[int]map[string]pciidTest{
 
 func restInspect(t *testing.T, vm *testVM) *config.VirtualMachine {
 	tr := &http.Transport{
-		Dial: func(_, _ string) (conn net.Conn, err error) {
+		DialContext: func(_ context.Context, _, _ string) (conn net.Conn, err error) {
 			return net.Dial("unix", vm.restSocketPath)
 		},
 	}
