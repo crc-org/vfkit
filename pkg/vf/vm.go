@@ -16,7 +16,8 @@ import (
 
 type VirtualMachine struct {
 	*vz.VirtualMachine
-	vfConfig *VirtualMachineConfiguration
+	vfConfig       *VirtualMachineConfiguration
+	storageHotplug *storageHotplugManager
 }
 
 var PlatformType string
@@ -57,6 +58,7 @@ func NewVirtualMachine(vmConfig config.VirtualMachine) (*VirtualMachine, error) 
 	if err := vm.toVz(); err != nil {
 		return nil, err
 	}
+	vm.storageHotplug = newStorageHotplugManager(&vzStorageHotplugBackend{vm: vm.VirtualMachine})
 	return vm, nil
 }
 
@@ -91,6 +93,7 @@ type VirtualMachineConfiguration struct {
 	serialPortsConfiguration             []*vz.VirtioConsoleDeviceSerialPortConfiguration
 	socketDevicesConfiguration           []vz.SocketDeviceConfiguration
 	consolePortsConfiguration            []*vz.VirtioConsolePortConfiguration
+	usbControllersConfiguration          []vz.USBControllerConfiguration
 }
 
 func NewVirtualMachineConfiguration(vmConfig *config.VirtualMachine) (*VirtualMachineConfiguration, error) {
@@ -167,6 +170,7 @@ func (cfg *VirtualMachineConfiguration) toVz() (*vz.VirtualMachineConfiguration,
 	cfg.SetNetworkDevicesVirtualMachineConfiguration(cfg.networkDevicesConfiguration)
 	cfg.SetEntropyDevicesVirtualMachineConfiguration(cfg.entropyDevicesConfiguration)
 	cfg.SetSerialPortsVirtualMachineConfiguration(cfg.serialPortsConfiguration)
+	cfg.SetUSBControllersVirtualMachineConfiguration(cfg.usbControllersConfiguration)
 
 	if len(cfg.consolePortsConfiguration) > 0 {
 		consoleDeviceConfiguration, err := vz.NewVirtioConsoleDeviceConfiguration()

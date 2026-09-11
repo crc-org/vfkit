@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"net"
+	"net/url"
 	"os"
 	"slices"
 	"strconv"
@@ -124,6 +125,72 @@ const (
 	SynchronizationNoneMode NBDSynchronizationMode = "none"
 )
 
+// DefaultNBDTimeout is the NBD connection timeout used when none is specified.
+const DefaultNBDTimeout = 15 * time.Second
+
+// ParseNBDSynchronizationMode converts the user-facing "full"/"none" value into
+// an NBDSynchronizationMode.
+func ParseNBDSynchronizationMode(value string) (NBDSynchronizationMode, error) {
+	switch NBDSynchronizationMode(value) {
+	case SynchronizationFullMode:
+		return SynchronizationFullMode, nil
+	case SynchronizationNoneMode:
+		return SynchronizationNoneMode, nil
+	default:
+		return "", fmt.Errorf("invalid sync mode: %s, must be 'full' or 'none'", value)
+	}
+}
+
+// ValidateNBDURI checks that uri is a well-formed NBD URI, as specified by
+// https://github.com/NetworkBlockDevice/nbd/blob/master/doc/uri.md, that the
+// Virtualization framework can use. Characters outside the RFC 3986 URI
+// character set are rejected up front because the framework raises an
+// uncatchable exception instead of returning an error for such URIs.
+func ValidateNBDURI(uri string) error {
+	if uri == "" {
+		return fmt.Errorf("'uri' must be specified")
+	}
+	for i := 0; i < len(uri); i++ {
+		if !isURIByte(uri[i]) {
+			return fmt.Errorf("invalid character %q in 'uri', percent-encode it", uri[i])
+		}
+	}
+
+	parsed, err := url.Parse(uri)
+	if err != nil {
+		return fmt.Errorf("error: %w", err)
+	}
+
+	switch parsed.Scheme {
+	case "nbd", "nbds":
+		if parsed.Opaque != "" || parsed.Hostname() == "" {
+			return fmt.Errorf("'uri' must specify a host: %s://<host>[:<port>]/<export>", parsed.Scheme)
+		}
+		if port := parsed.Port(); port != "" {
+			if n, err := strconv.Atoi(port); err != nil || n < 1 || n > 65535 {
+				return fmt.Errorf("invalid port in 'uri': %s", port)
+			}
+		}
+	case "nbd+unix", "nbds+unix":
+		if parsed.Opaque != "" || parsed.Query().Get("socket") == "" {
+			return fmt.Errorf("'uri' must be of the form %s:///<export>?socket=<path>", parsed.Scheme)
+		}
+	default:
+		return fmt.Errorf("invalid scheme: %s. Expected one of: 'nbd', 'nbds', 'nbd+unix', or 'nbds+unix'", parsed.Scheme)
+	}
+
+	return nil
+}
+
+// isURIByte reports whether c may appear unescaped in an RFC 3986 URI.
+func isURIByte(c byte) bool {
+	switch {
+	case c >= 'a' && c <= 'z', c >= 'A' && c <= 'Z', c >= '0' && c <= '9':
+		return true
+	}
+	return strings.IndexByte("-._~:/?#[]@!$&'()*+,;=%", c) >= 0
+}
+
 type NetworkBlockDevice struct {
 	NetworkBlockStorageConfig
 	DeviceIdentifier    string
@@ -132,6 +199,25 @@ type NetworkBlockDevice struct {
 }
 
 type VirtioBalloon struct{}
+
+// USBXHCIController configures an XHCI controller for runtime USB hotplug.
+// The controller is available on macOS 15 and newer.
+type USBXHCIController struct{}
+
+func USBXHCIControllerNew() (VirtioDevice, error) {
+	return &USBXHCIController{}, nil
+}
+
+func (dev *USBXHCIController) FromOptions(options []option) error {
+	if len(options) != 0 {
+		return fmt.Errorf("unknown options for usb-xhci devices: %s", options)
+	}
+	return nil
+}
+
+func (dev *USBXHCIController) ToCmdLine() ([]string, error) {
+	return []string{"--device", "usb-xhci"}, nil
+}
 
 func VirtioBalloonNew() (VirtioDevice, error) {
 	return &VirtioBalloon{}, nil
@@ -203,6 +289,8 @@ func deviceFromCmdLine(deviceOpts string) (VirtioDevice, error) {
 		dev = &VirtioVsock{}
 	case "usb-mass-storage":
 		dev = usbMassStorageNewEmpty()
+	case "usb-xhci":
+		dev = &USBXHCIController{}
 	case "virtio-input":
 		dev = &VirtioInput{}
 	case "virtio-gpu":
@@ -808,8 +896,8 @@ func networkBlockDeviceNewEmpty() *NetworkBlockDevice {
 			},
 		},
 		DeviceIdentifier:    "",
-		Timeout:             time.Duration(15000 * time.Millisecond), // set a default timeout to 15s
-		SynchronizationMode: SynchronizationFullMode,                 // default mode to full
+		Timeout:             DefaultNBDTimeout,
+		SynchronizationMode: SynchronizationFullMode, // default mode to full
 	}
 }
 
@@ -862,14 +950,11 @@ func (nbd *NetworkBlockDevice) FromOptions(options []option) error {
 			}
 			nbd.Timeout = time.Duration(timeoutMS) * time.Millisecond
 		case "sync":
-			switch option.value {
-			case string(SynchronizationFullMode):
-				nbd.SynchronizationMode = SynchronizationFullMode
-			case string(SynchronizationNoneMode):
-				nbd.SynchronizationMode = SynchronizationNoneMode
-			default:
-				return fmt.Errorf("invalid sync mode: %s, must be 'full' or 'none'", option.value)
+			mode, err := ParseNBDSynchronizationMode(option.value)
+			if err != nil {
+				return err
 			}
+			nbd.SynchronizationMode = mode
 		default:
 			unhandledOpts = append(unhandledOpts, option)
 		}

@@ -290,6 +290,21 @@ This allows to connect to the export of the remote NBD server:
 --device nbd,uri=nbd://192.168.64.4:11111/export,deviceId=nbd1,timeout=3000
 ```
 
+### Runtime USB storage hotplug
+
+The `--device usb-xhci` option adds the XHCI controller required for runtime
+USB hotplug. This option requires macOS 15 or newer. It does not attach a USB
+device by itself.
+
+Runtime storage control also requires the REST service to use a Unix-domain
+socket. TCP REST endpoints intentionally do not expose storage operations: with
+a TCP `--restful-uri`, vfkit starts normally and logs a warning instead of
+serving the storage endpoints.
+
+```bash
+--device usb-xhci --restful-uri unix:///tmp/vfkit.sock
+```
+
 
 ### Networking
 
@@ -526,6 +541,10 @@ None
 
 To interact with the RESTful API, append a valid scheme to your base command: `--restful-uri tcp://localhost:8081`.
 
+Unix-domain sockets (`--restful-uri unix:///path/to/vfkit.sock`) are created
+with owner-only (`0600`) permissions, so only the user running vfkit can use
+the API.
+
 ### Get the virtual machine's state
 
 Obtain the state of the virtual machine that is being run by vfkit.
@@ -563,6 +582,83 @@ GET /vm/inspect
 ```
 
 Response: `{ "cpus": uint, "memory": uint64, "devices": []config.VirtIODevice }`
+
+The response describes the configuration the virtual machine was started with.
+Storage devices attached at runtime are listed by `GET /vm/storage` instead.
+
+### Manage runtime storage
+
+Runtime storage endpoints are available only when vfkit starts with both
+`--device usb-xhci` and a Unix-domain `--restful-uri`. The device identifier
+must start with a letter or digit, may otherwise contain only letters, digits,
+`.`, `_`, or `-`, and can be at most 255 characters long.
+
+Attach an NBD-backed USB mass-storage device:
+
+```HTTP
+PUT /vm/storage/cache
+Content-Type: application/json
+
+{
+  "backend": "nbd",
+  "uri": "nbd://192.168.64.4:10809/export",
+  "timeoutMilliseconds": 15000,
+  "synchronizationMode": "full",
+  "readOnly": false
+}
+```
+
+The NBD URI must use the `nbd`, `nbds`, `nbd+unix`, or `nbds+unix` scheme,
+include a host (and, if given, a port between 1 and 65535) for `nbd` and
+`nbds`, and contain only RFC 3986 URI characters; percent-encode anything else.
+`timeoutMilliseconds` defaults to 15000 and must be between 1 and 600000;
+`synchronizationMode` defaults to `full`.
+
+Attach a USB mass-storage device backed by a local raw disk image:
+
+```HTTP
+PUT /vm/storage/scratch
+Content-Type: application/json
+
+{
+  "backend": "raw",
+  "path": "/var/tmp/scratch.raw",
+  "readOnly": false
+}
+```
+
+Raw disk paths must be absolute. The target must be a regular file whose size
+is a positive multiple of 512 bytes.
+
+The first successful request returns `HTTP 201`. Repeating the same request is
+an idempotent no-op and returns `HTTP 200`. Requests with unknown fields,
+malformed NBD URIs, or raw disk images that do not satisfy the rules above
+return `HTTP 400`. Reusing an identifier with a different configuration, or
+sending a request while an attach or detach for the same identifier is still
+in progress, returns `HTTP 409`.
+
+List hotplugged devices without exposing their NBD URIs or raw disk paths:
+
+```HTTP
+GET /vm/storage
+```
+
+Response: `{ "devices": [ { "id": string, "backend": "nbd"|"raw", "readOnly": bool, "state": string } ] }`
+
+`state` is `attached` for raw-backed devices. NBD-backed devices report
+`connecting` until the NBD client connects, then `connected` or `disconnected`
+as the connection changes; the guest sees I/O errors while disconnected and
+the client reconnects automatically.
+
+Detach a device:
+
+```HTTP
+DELETE /vm/storage/cache
+```
+
+Detach is idempotent and returns `HTTP 204` whether or not the identifier is
+currently attached. A device that the virtualization framework no longer
+reports as attached is dropped from the list and also returns `HTTP 204`.
 
 ## Enabling a Graphical User Interface
 

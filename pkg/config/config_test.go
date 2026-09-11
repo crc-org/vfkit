@@ -47,6 +47,15 @@ func TestNetworkBlockDevice_NoDevice(t *testing.T) {
 	require.Nil(t, nbdItem)
 }
 
+func TestUSBXHCIControllerDevices(t *testing.T) {
+	vm := &VirtualMachine{}
+	xhci, err := USBXHCIControllerNew()
+	require.NoError(t, err)
+	require.NoError(t, vm.AddDevice(xhci))
+
+	assert.Equal(t, []*USBXHCIController{{}}, vm.USBXHCIControllerDevices())
+}
+
 func TestVirtualMachine_ValidateBlockDevices(t *testing.T) {
 	vm := &VirtualMachine{}
 
