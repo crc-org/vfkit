@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"net"
 	"net/http"
@@ -43,7 +44,7 @@ func TestStartIgnitionProvisionerServer(t *testing.T) {
 	// Make a request to the server
 	client := http.Client{
 		Transport: &http.Transport{
-			Dial: func(_, _ string) (net.Conn, error) {
+			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
 				return net.Dial("unix", socketPath)
 			},
 		},
