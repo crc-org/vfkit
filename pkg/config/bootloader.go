@@ -39,8 +39,9 @@ type MacOSBootloader struct {
 
 // NewLinuxBootloader creates a new bootloader to start a VM with the file at
 // vmlinuzPath as the kernel, kernelCmdLine as the kernel command line, and the
-// file at initrdPath as the initrd. On ARM64, the kernel must be uncompressed
-// otherwise the VM will fail to boot.
+// file at initrdPath as the optional initrd. Leave initrdPath empty to boot without
+// an initrd. On ARM64, the kernel must be uncompressed otherwise the VM will fail
+// to boot.
 func NewLinuxBootloader(vmlinuzPath, kernelCmdLine, initrdPath string) *LinuxBootloader {
 	return &LinuxBootloader{
 		VmlinuzPath:   vmlinuzPath,
@@ -72,10 +73,9 @@ func (bootloader *LinuxBootloader) ToCmdLine() ([]string, error) {
 	}
 	args = append(args, "--kernel", bootloader.VmlinuzPath)
 
-	if bootloader.InitrdPath == "" {
-		return nil, fmt.Errorf("missing initrd path")
+	if bootloader.InitrdPath != "" {
+		args = append(args, "--initrd", bootloader.InitrdPath)
 	}
-	args = append(args, "--initrd", bootloader.InitrdPath)
 
 	if bootloader.KernelCmdLine == "" {
 		return nil, fmt.Errorf("missing kernel command line")
