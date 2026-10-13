@@ -56,11 +56,13 @@ func toVzLinuxBootloader(bootloader *config.LinuxBootloader) (vz.BootLoader, err
 		}
 	}
 
-	return vz.NewLinuxBootLoader(
-		bootloader.VmlinuzPath,
+	opts := []vz.LinuxBootLoaderOption{
 		vz.WithCommandLine(bootloader.KernelCmdLine),
-		vz.WithInitrd(bootloader.InitrdPath),
-	)
+	}
+	if bootloader.InitrdPath != "" {
+		opts = append(opts, vz.WithInitrd(bootloader.InitrdPath))
+	}
+	return vz.NewLinuxBootLoader(bootloader.VmlinuzPath, opts...)
 }
 
 func toVzEFIBootloader(bootloader *config.EFIBootloader) (vz.BootLoader, error) {
