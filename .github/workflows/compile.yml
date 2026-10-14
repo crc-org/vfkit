@@ -23,14 +23,14 @@ jobs:
       fail-fast: false
       matrix:
         # Test matrix covers multiple macOS versions and architectures:
-        # - macos-15-intel: x86_64 runner, supports virtualization for integration tests
         # - macos-15: arm64 (Apple Silicon) runner, unit tests
         # - macos-26: arm64 (Apple Silicon) runner, unit tests
+        # - macos-26-intel: x86_64 runner, supports virtualization for integration tests
         # - macos-27: arm64 (Apple Silicon) runner, unit tests + artifact upload
         runner:
-          - macos-15-intel
           - macos-15
           - macos-26
+          - macos-26-intel
           - macos-27
     steps:
       - name: Check out repository code
@@ -60,21 +60,21 @@ jobs:
       - name: Unit tests
         run: make test-unit
 
-      # Workaround: TestSSHAccess/tcp fails on the first attempt on macos-15-intel with:
+      # Workaround: TestSSHAccess/tcp fails on the first attempt on macos-26-intel with:
       # "timeout waiting for SSH: dial tcp 192.168.65.2:22: connect: no route to host"
       # but succeeds on subsequent runs. Run it once with continue-on-error to prepare
       # the environment before integration tests.
       - name: Workaround for network issue
-        if: matrix.runner == 'macos-15-intel'
+        if: matrix.runner == 'macos-26-intel'
         run: |-
           go test -run TestSSHAccess/tcp ./test
         continue-on-error: true
 
-      # Integration tests run only on macos-15-intel due to virtualization requirements
-      # macos-15-intel runners will be deprecated by August 2027
-      # See:https://github.com/actions/runner-images/issues/13045
-      - name: Integration tests (macos-15-intel)
-        if: matrix.runner == 'macos-15-intel'
+      # Integration tests run only on macos-26-intel due to virtualization requirements
+      # macos-26-intel runners may be deprecated in the second half of 2028
+      # See: https://github.com/actions/runner-images/issues/13739#issuecomment-3971668146
+      - name: Integration tests (macos-26-intel)
+        if: matrix.runner == 'macos-26-intel'
         run: make test-integration
       - name: vet
         run: go vet ./...
