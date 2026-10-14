@@ -16,7 +16,7 @@ The project is tested on:
 - macOS 26 (Tahoe) - Intel x86_64
 - macOS 27 (Golden Gate) - Apple Silicon
 
-Integration tests with virtualization are run on **macos-26-intel** runners, as virtualization is not supported on Apple Silicon runners in GitHub Actions. These Intel runners may be deprecated in the second half of 2028. See: [actions/runner-images#13739](https://github.com/actions/runner-images/issues/13045)
+Integration tests with virtualization are run on **macos-26-intel** runners, as virtualization is not supported on Apple Silicon runners in GitHub Actions. These Intel runners may be deprecated in the second half of 2028. See: [actions/runner-images#13739](https://github.com/actions/runner-images/issues/13739)
 
 ## Supported Architectures
 

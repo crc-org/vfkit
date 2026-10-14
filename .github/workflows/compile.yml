@@ -26,12 +26,12 @@ jobs:
         # - macos-15: arm64 (Apple Silicon) runner, unit tests
         # - macos-26: arm64 (Apple Silicon) runner, unit tests
         # - macos-26-intel: x86_64 runner, supports virtualization for integration tests
-        # - macos-27: arm64 (Apple Silicon) runner, unit tests + artifact upload
+        # - xcode-27: arm64 (Apple Silicon) runner, unit tests + artifact upload
         runner:
           - macos-15
           - macos-26
           - macos-26-intel
-          - macos-27
+          - xcode-27
     steps:
       - name: Check out repository code
         uses: actions/checkout@v7
@@ -73,7 +73,7 @@ jobs:
       - name: vet
         run: go vet ./...
       - name: Upload vfkit artifact (macos-27)
-        if: matrix.runner == 'macos-27'
+        if: matrix.runner == 'xcode-27'
         uses: actions/upload-artifact@v7
         with:
           name: Unsigned vfkit Universal Binary
