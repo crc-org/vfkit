@@ -1,8 +1,6 @@
 package config
 
 import (
-	"os"
-	"os/exec"
 	"path/filepath"
 	"testing"
 
@@ -50,15 +48,7 @@ func TestNetworkBlockDevice_NoDevice(t *testing.T) {
 func TestVirtualMachine_ValidateBlockDevices(t *testing.T) {
 	vm := &VirtualMachine{}
 
-	tmpDir := t.TempDir()
-	imagePath := filepath.Join(tmpDir, "disk.qcow2")
-	size := "1G"
-
-	cmd := exec.Command("qemu-img", "create", "-f", "qcow2", imagePath, size)
-	err := cmd.Run()
-
-	require.NoError(t, err)
-	defer os.Remove(imagePath)
+	imagePath := filepath.Join("testdata", "disk.qcow2")
 
 	dev, err := VirtioBlkNew(imagePath)
 	require.NoError(t, err)
