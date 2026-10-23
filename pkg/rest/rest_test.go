@@ -2,11 +2,112 @@ package rest
 
 import (
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"net/url"
+	"os"
 	"testing"
 
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+type recordingVMHandler struct {
+	storageCalls []string
+}
+
+func (h *recordingVMHandler) Inspect(c *gin.Context) {
+	c.Status(http.StatusOK)
+}
+
+func (h *recordingVMHandler) GetVMState(c *gin.Context) {
+	c.Status(http.StatusOK)
+}
+
+func (h *recordingVMHandler) SetVMState(c *gin.Context) {
+	c.Status(http.StatusAccepted)
+}
+
+func (h *recordingVMHandler) ListStorageDevices(c *gin.Context) {
+	h.storageCalls = append(h.storageCalls, "list")
+	c.Status(http.StatusOK)
+}
+
+func (h *recordingVMHandler) AttachStorageDevice(c *gin.Context) {
+	h.storageCalls = append(h.storageCalls, "attach:"+c.Param("id"))
+	c.Status(http.StatusCreated)
+}
+
+func (h *recordingVMHandler) DetachStorageDevice(c *gin.Context) {
+	h.storageCalls = append(h.storageCalls, "detach:"+c.Param("id"))
+	c.Status(http.StatusNoContent)
+}
+
+func TestNewServerRegistersStorageRoutes(t *testing.T) {
+	handler := &recordingVMHandler{}
+	server, err := NewServer(handler, handler, "unix:///tmp/vfkit-test.sock", handler)
+	require.NoError(t, err)
+
+	tests := []struct {
+		method string
+		path   string
+		status int
+	}{
+		{method: http.MethodGet, path: "/vm/storage", status: http.StatusOK},
+		{method: http.MethodPut, path: "/vm/storage/cache", status: http.StatusCreated},
+		{method: http.MethodDelete, path: "/vm/storage/cache", status: http.StatusNoContent},
+	}
+
+	for _, tt := range tests {
+		recorder := httptest.NewRecorder()
+		request := httptest.NewRequest(tt.method, tt.path, nil)
+		server.router.ServeHTTP(recorder, request)
+		assert.Equal(t, tt.status, recorder.Code)
+	}
+	assert.Equal(t, []string{"list", "attach:cache", "detach:cache"}, handler.storageCalls)
+}
+
+func TestNewServerSkipsStorageRoutesOnTCP(t *testing.T) {
+	handler := &recordingVMHandler{}
+	server, err := NewServer(handler, handler, "tcp://127.0.0.1:8080", handler)
+	require.NoError(t, err)
+
+	recorder := httptest.NewRecorder()
+	server.router.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/vm/storage", nil))
+	assert.Equal(t, http.StatusNotFound, recorder.Code)
+	assert.Empty(t, handler.storageCalls)
+}
+
+func TestNewServerWithoutStorageHandler(t *testing.T) {
+	handler := &recordingVMHandler{}
+	server, err := NewServer(handler, handler, "unix:///tmp/vfkit-test.sock", nil)
+	require.NoError(t, err)
+
+	recorder := httptest.NewRecorder()
+	server.router.ServeHTTP(recorder, httptest.NewRequest(http.MethodPut, "/vm/storage/cache", nil))
+	assert.Equal(t, http.StatusNotFound, recorder.Code)
+	assert.Empty(t, handler.storageCalls)
+}
+
+func TestNewUnixListenerIsOwnerOnly(t *testing.T) {
+	socketFile, err := os.CreateTemp("/tmp", "vfkit-rest-")
+	require.NoError(t, err)
+	socketPath := socketFile.Name()
+	require.NoError(t, socketFile.Close())
+	require.NoError(t, os.Remove(socketPath))
+	t.Cleanup(func() { _ = os.Remove(socketPath) })
+
+	listener, err := newUnixListener(socketPath)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, listener.Close())
+	})
+
+	info, err := os.Stat(socketPath)
+	require.NoError(t, err)
+	assert.Equal(t, os.FileMode(0600), info.Mode().Perm())
+}
 
 func TestParseRestfulURI(t *testing.T) {
 	type args struct {

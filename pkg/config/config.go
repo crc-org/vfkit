@@ -188,6 +188,10 @@ func (vm *VirtualMachine) VirtioNetDevices() []*VirtioNet {
 	return FilterDevices[*VirtioNet](vm)
 }
 
+func (vm *VirtualMachine) USBXHCIControllerDevices() []*USBXHCIController {
+	return FilterDevices[*USBXHCIController](vm)
+}
+
 func (vm *VirtualMachine) NetworkBlockDevice(deviceID string) *NetworkBlockDevice {
 	for _, dev := range vm.Devices {
 		if nbdDev, isNbdDev := dev.(*NetworkBlockDevice); isNbdDev && nbdDev.DeviceIdentifier == deviceID {
