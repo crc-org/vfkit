@@ -217,3 +217,12 @@ func getTestVMOptions(t *testing.T) *cmdline.Options {
 	require.NoError(t, err)
 	return opts
 }
+
+func TestLegacyBootloaderRequiresKernelWithInitrd(t *testing.T) {
+	_, err := newBootloaderConfiguration(&cmdline.Options{InitrdPath: "initrd.img"})
+	require.ErrorContains(t, err, "--initrd requires --kernel")
+
+	bootloader, err := newBootloaderConfiguration(&cmdline.Options{VmlinuzPath: "vmlinuz", KernelCmdline: "console=hvc0"})
+	require.NoError(t, err)
+	require.IsType(t, &config.LinuxBootloader{}, bootloader)
+}
