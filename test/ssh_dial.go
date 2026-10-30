@@ -65,17 +65,32 @@ func retrySSHDial(processDoneCh chan error, scheme string, address string, sshCo
 }
 
 func sshDialContext(ctx context.Context, processDoneCh chan error, scheme string, address string, sshConfig *ssh.ClientConfig) (*ssh.Client, error) {
+	var lastErr error
+	// Log the last dial error once when giving up on the overall timeout
+	// This will help debug why the ssh dial failed instead of a bare
+	// context-deadline error
+	timeoutErr := func() error {
+		if lastErr != nil {
+			log.WithError(lastErr).Error("ssh dial failed; giving up")
+		}
+		return fmt.Errorf("timeout waiting for SSH: %v", ctx.Err())
+	}
 	for {
 		select {
 		case err := <-processDoneCh:
 			return nil, vfkitExitedErr(err)
 		case <-ctx.Done():
-			return nil, fmt.Errorf("timeout waiting for SSH: %v", ctx.Err())
+			return nil, timeoutErr()
 		default:
 			client, err := sshDial(ctx, scheme, address, sshConfig)
 			if err == nil {
 				log.WithFields(log.Fields{"scheme": scheme, "address": address}).Info("ssh dial succeeded")
 				return client, nil
+			}
+			// Only record failures that happened while the budget was still
+			// live
+			if ctx.Err() == nil {
+				lastErr = err
 			}
 			log.WithError(err).Debug("ssh dial failed; will retry")
 		}
@@ -86,7 +101,7 @@ func sshDialContext(ctx context.Context, processDoneCh chan error, scheme string
 		case err := <-processDoneCh:
 			return nil, vfkitExitedErr(err)
 		case <-ctx.Done():
-			return nil, fmt.Errorf("timeout waiting for SSH: %v", ctx.Err())
+			return nil, timeoutErr()
 		case <-time.After(1 * time.Second):
 		}
 	}
