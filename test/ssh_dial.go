@@ -9,6 +9,7 @@ import (
 	"time"
 
 	vfkithelpers "github.com/crc-org/crc/v2/pkg/drivers/vfkit"
+	"github.com/crc-org/vfkit/pkg/sshnc"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ssh"
 )
@@ -16,18 +17,35 @@ import (
 const handshakeTimeout = 10 * time.Second
 
 func sshDial(ctx context.Context, scheme string, address string, sshConfig *ssh.ClientConfig) (*ssh.Client, error) {
-	var d net.Dialer
-
-	// Bound a connection timeout to 10 seconds for each attempt
-	// spread over the ctx timeout of 3 minutes.
-	d.Timeout = handshakeTimeout
-	conn, err := d.DialContext(ctx, scheme, address)
-	if err != nil {
-		return nil, err
+	var conn net.Conn
+	var deadline = handshakeTimeout
+	switch scheme {
+	case "unix":
+		var err error
+		// Bound a connection timeout to 10 seconds for each attempt
+		// spread over the ctx timeout of 3 minutes.
+		d := net.Dialer{
+			Timeout: handshakeTimeout,
+		}
+		conn, err = d.DialContext(ctx, scheme, address)
+		if err != nil {
+			return nil, err
+		}
+	case "tcp":
+		var err error
+		d := sshnc.Dialer{}
+		conn, err = d.DialContext(ctx, "tcp", address)
+		if err != nil {
+			return nil, err
+		}
+		// give tcp connect + handshake two windows
+		deadline += handshakeTimeout
+	default:
+		return nil, fmt.Errorf("unsupported scheme: %s", scheme)
 	}
 
-	// Bound the handshake timeout to 10 seconds for each attempt
-	if err := conn.SetDeadline(time.Now().Add(handshakeTimeout)); err != nil {
+	// Bound the handshake timeout for each attempt
+	if err := conn.SetDeadline(time.Now().Add(deadline)); err != nil {
 		_ = conn.Close()
 		return nil, fmt.Errorf("failed to set handshake deadline: %w", err)
 	}
@@ -47,10 +65,15 @@ func sshDial(ctx context.Context, scheme string, address string, sshConfig *ssh.
 
 	if sshErr != nil {
 		if errors.Is(sshErr, os.ErrDeadlineExceeded) {
-			sshErr = fmt.Errorf("ssh handshake with %s timed out after %s: %w", address, handshakeTimeout, sshErr)
+			sshErr = fmt.Errorf("ssh handshake with %s timed out after %s: %w", address, deadline, sshErr)
 		}
 		_ = conn.Close()
-		return nil, err
+		if c, ok := conn.(sshnc.NcError); ok {
+			if msg := c.NcError(); msg != "" {
+				sshErr = fmt.Errorf("%w (nc: %s)", sshErr, msg)
+			}
+		}
+		return nil, sshErr
 	}
 
 	if !cancelStopped {
@@ -93,6 +116,13 @@ func sshDialContext(ctx context.Context, processDoneCh chan error, scheme string
 		case <-ctx.Done():
 			return nil, timeoutErr()
 		default:
+			select {
+			case err := <-processDoneCh:
+				return nil, vfkitExitedErr(err)
+			case <-ctx.Done():
+				return nil, timeoutErr()
+			default:
+			}
 			client, err := sshDial(ctx, scheme, address, sshConfig)
 			if err == nil {
 				log.WithFields(log.Fields{"scheme": scheme, "address": address}).Info("ssh dial succeeded")
