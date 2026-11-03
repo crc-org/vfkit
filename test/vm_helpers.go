@@ -9,66 +9,14 @@ import (
 	"strconv"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/crc-org/vfkit/pkg/config"
 	"github.com/crc-org/vfkit/pkg/rest"
 
-	vfkithelpers "github.com/crc-org/crc/v2/pkg/drivers/vfkit"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/ssh"
 )
-
-func retryIPFromMAC(errCh chan error, macAddress string) (string, error) {
-	var (
-		err error
-		ip  string
-	)
-
-	timeout := time.After(10 * time.Second)
-
-	for {
-		select {
-		case err := <-errCh:
-			return "", err
-		case <-time.After(1 * time.Second):
-			ip, err = vfkithelpers.GetIPAddressByMACAddress(macAddress)
-			if err == nil {
-				log.Infof("found IP address %s for MAC %s", ip, macAddress)
-				return ip, nil
-			}
-		case <-timeout:
-			return "", fmt.Errorf("timeout getting IP from MAC: %w", err)
-		}
-	}
-}
-
-func retrySSHDial(errCh chan error, scheme string, address string, sshConfig *ssh.ClientConfig) (*ssh.Client, error) {
-	var (
-		sshClient *ssh.Client
-		err       error
-	)
-
-	timeout := time.After(10 * time.Second)
-
-	for {
-		select {
-		case err := <-errCh:
-			return nil, err
-		case <-time.After(1 * time.Second):
-			log.Debugf("trying ssh dial")
-			sshClient, err = ssh.Dial(scheme, address, sshConfig)
-			if err == nil {
-				log.Infof("established SSH connection to %s over %s", address, scheme)
-				return sshClient, nil
-			}
-			log.Debugf("ssh failed: %v", err)
-		case <-timeout:
-			return nil, fmt.Errorf("timeout waiting for SSH: %w", err)
-		}
-	}
-}
 
 type vfkitRunner struct {
 	*exec.Cmd
