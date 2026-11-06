@@ -46,7 +46,7 @@ func AddFlags(cmd *cobra.Command, opts *Options) {
 	cmd.MarkFlagsMutuallyExclusive("kernel", "bootloader")
 	cmd.MarkFlagsMutuallyExclusive("initrd", "bootloader")
 	cmd.MarkFlagsMutuallyExclusive("kernel-cmdline", "bootloader")
-	cmd.MarkFlagsRequiredTogether("kernel", "initrd", "kernel-cmdline")
+	cmd.MarkFlagsRequiredTogether("kernel", "kernel-cmdline")
 
 	cmd.Flags().UintVarP(&opts.Vcpus, "cpus", "c", 1, "number of virtual CPUs")
 	// FIXME: use go-units for parsing

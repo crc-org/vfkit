@@ -1,9 +1,12 @@
 package vf
 
 import (
+	"fmt"
+	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/crc-org/vfkit/pkg/config"
 	"github.com/stretchr/testify/require"
 )
 
@@ -48,6 +51,33 @@ func TestUncompressedKernel(t *testing.T) {
 			uncompressed, err := isKernelUncompressed(test.filename)
 			require.NoError(t, err)
 			test.isUncompressedCheck(t, uncompressed)
+		})
+	}
+}
+
+func TestLinuxBootloaderInitrd(t *testing.T) {
+	kernelPath := filepath.Join("testdata", "vmlinux-truncated-0.1.0.puipui.aarch64")
+	initrdPath := filepath.Join(t.TempDir(), "initrd")
+	require.NoError(t, os.WriteFile(initrdPath, []byte("initrd test data"), 0600))
+
+	for _, test := range []struct {
+		name       string
+		initrdPath string
+		wantError  bool
+	}{
+		{name: "omitted"},
+		{name: "supplied", initrdPath: initrdPath},
+		{name: "missing", initrdPath: filepath.Join(t.TempDir(), "missing-initrd"), wantError: true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			bootloader, err := toVzLinuxBootloader(config.NewLinuxBootloader(kernelPath, "console=hvc0", test.initrdPath))
+			if test.wantError {
+				require.ErrorContains(t, err, "invalid initial RAM disk path")
+				require.ErrorIs(t, err, os.ErrNotExist)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, fmt.Sprintf("vmlinuz: %q, initrd: %q, command-line: %q", kernelPath, test.initrdPath, "console=hvc0"), fmt.Sprint(bootloader))
 		})
 	}
 }
