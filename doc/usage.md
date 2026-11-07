@@ -210,6 +210,19 @@ See https://cloudinit.readthedocs.io/en/latest/reference/datasources/nocloud.htm
 - `path`: the absolute path to the disk image file or block device.
 - `type`: the backing type. Use `image` (default) for a disk image file, or `dev` to attach a host block device (for example, /dev/disk1 or /dev/disk1s1). Attaching a block device may require root privileges; use with care.
 - `deviceId`: `/dev/disk/by-id/` identifier to use for this device.
+- `cache`: disk image caching mode (only for `type=image`, not supported for block devices). Valid values:
+  - `automatic` (default): allows the virtualization framework to automatically determine whether to enable data caching
+  - `cached`: enables data caching
+  - `uncached`: disables data caching
+- `sync`: synchronization mode. Valid values differ by backing type:
+  - For disk images (`type=image`):
+    - `full`: synchronizes data to the permanent storage
+    - `fsync` (default): synchronizes data using the system's best-effort synchronization mode
+    - `none`: disables data synchronization
+  - For block devices (`type=dev`):
+    - `full` (default): synchronizes data to the permanent storage
+    - `none`: disables data synchronization
+    - Note: `fsync` is not supported for block devices
 
 #### Example
 
@@ -223,12 +236,27 @@ Attach a host block device instead (may require root privileges):
 --device virtio-blk,path=/dev/disk2,type=dev
 ```
 
+Block device with sync mode disabled for maximum performance:
+```
+--device virtio-blk,path=/dev/disk2,type=dev,sync=none
+```
+
+For ephemeral VMs where data persistence is not critical (maximize performance):
+```
+--device virtio-blk,path=/Users/virtuser/vfkit.img,cache=cached,sync=none
+```
+
+For database or critical workloads (maximize data safety):
+```
+--device virtio-blk,path=/Users/virtuser/vfkit.img,cache=uncached,sync=full
+```
+
 To also provide the cloud-init configuration you can add an additional virtio-blk device backed by an image containing the cloud-init configuration files
 ```
 --device virtio-blk,path=/Users/virtuser/cloudinit.img
 ```
 
-If you prefer to use the automatic ISO creation 
+If you prefer to use the automatic ISO creation
 ```
 --cloud-init /Users/virtuser/user-data,/Users/virtuser/meta-data
 ```
@@ -241,13 +269,37 @@ If you prefer to use the automatic ISO creation
 The `--device nvme` option adds a NVMe device to the virtual machine. The disk is backed by an image file on the host machine. This file is a raw image file.
 
 #### Arguments
-- `path`: the absolute path to the disk image file.
+- `path`: the absolute path to the disk image file or block device.
+- `type`: the backing type. Use `image` (default) for a disk image file, or `dev` to attach a host block device. Attaching a block device may require root privileges; use with care.
+- `cache`: disk image caching mode (only for `type=image`, not supported for block devices). Valid values:
+  - `automatic` (default): allows the virtualization framework to automatically determine whether to enable data caching
+  - `cached`: enables data caching
+  - `uncached`: disables data caching
+- `sync`: synchronization mode. Valid values differ by backing type:
+  - For disk images (`type=image`):
+    - `full`: synchronizes data to the permanent storage
+    - `fsync` (default): synchronizes data using the system's best-effort synchronization mode
+    - `none`: disables data synchronization
+  - For block devices (`type=dev`):
+    - `full` (default): synchronizes data to the permanent storage
+    - `none`: disables data synchronization
+    - Note: `fsync` is not supported for block devices
 
 #### Example
 
 This adds a NVMe device to the VM which will be backed by the disk image at `/Users/virtuser/image.img`:
 ```
 --device nvme,path=/Users/virtuser/image.img
+```
+
+For high-performance ephemeral storage:
+```
+--device nvme,path=/Users/virtuser/image.img,cache=cached,sync=none
+```
+
+For database or critical workloads:
+```
+--device nvme,path=/Users/virtuser/image.img,cache=uncached,sync=full
 ```
 
 
@@ -258,14 +310,43 @@ This adds a NVMe device to the VM which will be backed by the disk image at `/Us
 The `--device usb-mass-storage` option adds a USB mass storage device to the virtual machine. The disk is backed by an image file on the host machine. This file is a raw image file or an ISO image.
 
 #### Arguments
-- `path`: the absolute path to the disk image file.
+- `path`: the absolute path to the disk image file or block device.
+- `type`: the backing type. Use `image` (default) for a disk image file, or `dev` to attach a host block device. Attaching a block device may require root privileges; use with care.
 - `readonly`: if specified the device will be read only.
+- `cache`: disk image caching mode (only for `type=image`, not supported for block devices). Valid values:
+  - `automatic` (default): allows the virtualization framework to automatically determine whether to enable data caching
+  - `cached`: enables data caching
+  - `uncached`: disables data caching
+- `sync`: synchronization mode. Valid values differ by backing type:
+  - For disk images (`type=image`):
+    - `full`: synchronizes data to the permanent storage
+    - `fsync` (default): synchronizes data using the system's best-effort synchronization mode
+    - `none`: disables data synchronization
+  - For block devices (`type=dev`):
+    - `full` (default): synchronizes data to the permanent storage
+    - `none`: disables data synchronization
+    - Note: `fsync` is not supported for block devices
 
 #### Example
 
 This adds a read only USB mass storage device to the VM which will be backed by the ISO image at `/Users/virtuser/distro.iso`:
 ```
 --device usb-mass-storage,path=/Users/virtuser/distro.iso,readonly
+```
+
+For a read-only device with caching enabled:
+```
+--device usb-mass-storage,path=/Users/virtuser/distro.iso,readonly,cache=cached
+```
+
+For a writable device with full data safety:
+```
+--device usb-mass-storage,path=/Users/virtuser/data.img,cache=uncached,sync=full
+```
+
+When using a block device, you can specify the sync mode (cache is not supported):
+```
+--device usb-mass-storage,path=/dev/disk2,type=dev,sync=none
 ```
 
 ### Network Block Device
