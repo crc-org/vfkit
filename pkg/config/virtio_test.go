@@ -208,6 +208,75 @@ func TestVirtioDevices(t *testing.T) {
 			},
 			expectedCmdLine: []string{"--device", "rosetta,mountTag=myTag"},
 		},
+		"RosettaShareCacheDefault": {
+			newDev: func() (VirtioDevice, error) {
+				return deviceFromCmdLine("rosetta,mountTag=myTag,install,cache")
+			},
+			expectedDev: &RosettaShare{
+				DirectorySharingConfig: DirectorySharingConfig{
+					MountTag: "myTag",
+				},
+				InstallRosetta:  true,
+				CacheSocketType: RosettaCacheAbstractSocket,
+				CacheSocket:     "rosetta",
+			},
+			expectedCmdLine: []string{"--device", "rosetta,mountTag=myTag,install,cache=abstract:rosetta"},
+		},
+		"RosettaShareCacheUnix": {
+			newDev: func() (VirtioDevice, error) {
+				return deviceFromCmdLine("rosetta,cache=unix:/tmp/rosetta.sock,mountTag=myTag")
+			},
+			expectedDev: &RosettaShare{
+				DirectorySharingConfig: DirectorySharingConfig{
+					MountTag: "myTag",
+				},
+				CacheSocketType: RosettaCacheUnixSocket,
+				CacheSocket:     "/tmp/rosetta.sock",
+			},
+			expectedCmdLine:  []string{"--device", "rosetta,mountTag=myTag,cache=unix:/tmp/rosetta.sock"},
+			alternateCmdLine: []string{"--device", "rosetta,cache=unix:/tmp/rosetta.sock,mountTag=myTag"},
+		},
+		"RosettaShareCacheAbstract": {
+			newDev: func() (VirtioDevice, error) {
+				return deviceFromCmdLine("rosetta,mountTag=myTag,cache=abstract:rosetta-cache")
+			},
+			expectedDev: &RosettaShare{
+				DirectorySharingConfig: DirectorySharingConfig{
+					MountTag: "myTag",
+				},
+				CacheSocketType: RosettaCacheAbstractSocket,
+				CacheSocket:     "rosetta-cache",
+			},
+			expectedCmdLine: []string{"--device", "rosetta,mountTag=myTag,cache=abstract:rosetta-cache"},
+		},
+		"RosettaShareCacheInvalidType": {
+			newDev: func() (VirtioDevice, error) {
+				return deviceFromCmdLine("rosetta,mountTag=myTag,cache=tcp:1234")
+			},
+			errorMsg: `invalid rosetta cache socket type "tcp", must be "unix" or "abstract"`,
+		},
+		"RosettaShareCacheMissingType": {
+			newDev: func() (VirtioDevice, error) {
+				return deviceFromCmdLine("rosetta,mountTag=myTag,cache=/run/rosettad/rosetta.sock")
+			},
+			errorMsg: `invalid rosetta cache option "/run/rosettad/rosetta.sock", expected 'unix:<path>' or 'abstract:<name>'`,
+		},
+		"RosettaShareCacheEmptySocket": {
+			newDev: func() (VirtioDevice, error) {
+				return deviceFromCmdLine("rosetta,mountTag=myTag,cache=abstract:")
+			},
+			errorMsg: "rosetta abstract cache socket must not be empty",
+		},
+		"RosettaShareCacheInvalidTypeToCmdLine": {
+			newDev: func() (VirtioDevice, error) {
+				return &RosettaShare{
+					DirectorySharingConfig: DirectorySharingConfig{MountTag: "myTag"},
+					CacheSocketType:        "tcp",
+					CacheSocket:            "1234",
+				}, nil
+			},
+			errorMsg: `invalid rosetta cache socket type "tcp", must be "unix" or "abstract"`,
+		},
 		"NewVirtioVsock": {
 			newDev: func() (VirtioDevice, error) { return VirtioVsockNew(1234, "/foo/bar.unix", false) },
 			expectedDev: &VirtioVsock{

@@ -228,7 +228,7 @@ var jsonStabilityTests = map[string]jsonStabilityTest{
 	},
 	"RosettaShare": {
 		obj:          &RosettaShare{},
-		expectedJSON: `{"kind":"rosetta","mountTag":"MountTag","installRosetta":true,"ignoreIfMissing":true}`,
+		expectedJSON: `{"kind":"rosetta","mountTag":"MountTag","installRosetta":true,"ignoreIfMissing":true,"cacheSocketType":"CacheSocketType","cacheSocket":"CacheSocket"}`,
 	},
 	"VirtioFs": {
 		obj:          &VirtioFs{},
