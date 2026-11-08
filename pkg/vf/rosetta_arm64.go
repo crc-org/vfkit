@@ -1,10 +1,12 @@
 package vf
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
 	"github.com/Code-Hex/vz/v3"
+	"github.com/crc-org/vfkit/pkg/config"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -59,9 +61,39 @@ func (dev *RosettaShare) toVz() (vz.DirectorySharingDeviceConfiguration, error) 
 		return nil, fmt.Errorf("failed to create a new virtio file system configuration for rosetta: %w", err)
 	}
 
+	if dev.CacheSocketType != "" {
+		cachingOptions, err := dev.cachingOptions()
+		if err != nil {
+			return nil, err
+		}
+		rosettaShare.SetOptions(cachingOptions)
+	}
+
 	config.SetDirectoryShare(rosettaShare)
 
 	return config, nil
+}
+
+func (dev *RosettaShare) cachingOptions() (vz.LinuxRosettaCachingOptions, error) {
+	var (
+		options vz.LinuxRosettaCachingOptions
+		err     error
+	)
+	switch dev.CacheSocketType {
+	case config.RosettaCacheUnixSocket:
+		options, err = vz.NewLinuxRosettaUnixSocketCachingOptions(dev.CacheSocket)
+	case config.RosettaCacheAbstractSocket:
+		options, err = vz.NewLinuxRosettaAbstractSocketCachingOptions(dev.CacheSocket)
+	default:
+		return nil, fmt.Errorf("invalid rosetta cache socket type %q", dev.CacheSocketType)
+	}
+	if errors.Is(err, vz.ErrUnsupportedOSVersion) {
+		return nil, fmt.Errorf("rosetta AOT caching requires macOS 14 or newer: %w", err)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to create rosetta %s socket caching options: %w", dev.CacheSocketType, err)
+	}
+	return options, nil
 }
 
 func (dev *RosettaShare) AddToVirtualMachineConfig(vmConfig *VirtualMachineConfiguration) error {

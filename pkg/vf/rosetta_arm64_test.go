@@ -2,6 +2,7 @@ package vf
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/Code-Hex/vz/v3"
@@ -106,5 +107,48 @@ func testCheckRosettaAvailability(t *testing.T, test *checkRosettaAvailabilityTe
 		require.ErrorContains(t, err, test.errorValue)
 	} else {
 		require.NoError(t, err)
+	}
+}
+
+func TestRosettaCachingOptions(t *testing.T) {
+	tests := map[string]struct {
+		socketType config.RosettaCacheSocketType
+		socket     string
+		errorValue string
+	}{
+		"UnixSocket": {
+			socketType: config.RosettaCacheUnixSocket,
+			socket:     "/run/rosettad/rosetta.sock",
+		},
+		"AbstractSocket": {
+			socketType: config.RosettaCacheAbstractSocket,
+			socket:     config.DefaultRosettaCacheSocketName,
+		},
+		"UnixSocketPathTooLong": {
+			socketType: config.RosettaCacheUnixSocket,
+			socket:     "/" + strings.Repeat("a", 200),
+			errorValue: "failed to create rosetta unix socket caching options",
+		},
+		"InvalidType": {
+			socketType: "tcp",
+			socket:     "1234",
+			errorValue: `invalid rosetta cache socket type "tcp"`,
+		},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			rosetta := RosettaShare{
+				DirectorySharingConfig: config.DirectorySharingConfig{MountTag: "mount"},
+				CacheSocketType:        test.socketType,
+				CacheSocket:            test.socket,
+			}
+			options, err := rosetta.cachingOptions()
+			if test.errorValue != "" {
+				require.ErrorContains(t, err, test.errorValue)
+				return
+			}
+			require.NoError(t, err)
+			require.NotNil(t, options)
+		})
 	}
 }

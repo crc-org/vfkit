@@ -481,6 +481,12 @@ See https://developer.apple.com/documentation/virtualization/running_intel_binar
 - `mountTag`: tag which will be used to mount the rosetta share in the guest.
 - `install`: indicates to automatically install rosetta on systems where it's missing. By default, an error will be reported if `--device rosetta` is used when rosetta is not installed.
 - `ignoreIfMissing`: indicates if vfkit has to keep executing even though rosetta is not installed. It may happen that the user cancels rosetta installation or the installation fails for other reasons. By default, if rosetta installation fails and vfkit cannot find it, vfkit exits with an error.
+- `cache`: enables Rosetta's ahead-of-time (AOT) translation cache, so that translations of x86_64 binaries are reused across runs instead of being redone on every `exec`. The value selects the socket over which Rosetta in the guest reaches the `rosettad` cache daemon:
+  - `cache=abstract:<name>`: a socket named `<name>` in the guest's abstract socket namespace.
+  - `cache=unix:<path>`: a unix socket in the guest filesystem.
+  - `cache` (no value): same as `cache=abstract:rosetta`.
+
+  This requires macOS 14 or newer; `vfkit` fails with an error on older versions. The guest must also run `rosettad`, see [Rosetta AOT caching](#rosetta-aot-caching).
 
 #### Example
 
@@ -490,6 +496,40 @@ This adds rosetta support to the guest:
 ```
 
 The share can then be mounted with `mount -t virtiofs rosetta-share /mnt`.
+
+This adds rosetta support with AOT caching:
+```
+--device rosetta,mountTag=rosetta-share,cache
+```
+
+#### Rosetta AOT caching
+
+When `cache` is set, Rosetta asks a `rosettad` daemon running in the guest for cached translations. `vfkit` only configures the host side, the guest has to start the daemon itself. `rosettad` is shipped in the Rosetta share next to the `rosetta` binary, and takes the directory where it stores the cache as argument:
+```
+/mnt/rosettad daemon /var/cache/rosettad
+```
+`rosettad` gets the socket to listen on from the Rosetta share. With `cache=abstract:<name>` it listens on the abstract socket `@<name>`; with `cache=unix:<path>` it listens on `<cache dir>/uds/<file name of path>`. Without the `cache` option, `rosettad daemon` exits with `rosetta error: Failed bind socket: 98`.
+Abstract sockets are recommended: in testing with macOS 27.2, x86_64 processes did not connect to `rosettad` in unix socket mode, and the cache stayed empty.
+
+With the Rosetta share mounted on `/mnt` as above, a systemd unit such as `/etc/systemd/system/rosettad.service` can start the daemon at boot (`CacheDirectory=rosettad` creates `/var/cache/rosettad`):
+```
+[Unit]
+Description=Rosetta AOT translation cache daemon
+RequiresMountsFor=/mnt
+
+[Service]
+CacheDirectory=rosettad
+ExecStart=/mnt/rosettad daemon /var/cache/rosettad
+
+[Install]
+WantedBy=multi-user.target
+```
+Enable it with `systemctl enable --now rosettad`. Cached translations are stored as `<sha256>.aotcache` files in the cache directory.
+
+On guests with SELinux enforcing, such as Fedora, files on the Rosetta share are `unlabeled_t` and systemd services are denied execution of `rosettad`. Mounting the share with a label fixes this:
+```
+mount -t virtiofs -o context=system_u:object_r:bin_t:s0 rosetta-share /mnt
+```
 
 
 ### GPU

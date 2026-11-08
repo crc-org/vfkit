@@ -76,11 +76,33 @@ type VirtioFs struct {
 	SharedDir string `json:"sharedDir"`
 }
 
+// RosettaCacheSocketType is the kind of guest socket Rosetta uses to reach
+// its ahead-of-time (AOT) translation cache daemon.
+type RosettaCacheSocketType string
+
+const (
+	// RosettaCacheUnixSocket makes Rosetta reach the cache daemon through a
+	// unix socket at a path in the guest filesystem.
+	RosettaCacheUnixSocket RosettaCacheSocketType = "unix"
+	// RosettaCacheAbstractSocket makes Rosetta reach the cache daemon through
+	// a socket in the guest's abstract socket namespace.
+	RosettaCacheAbstractSocket RosettaCacheSocketType = "abstract"
+
+	// DefaultRosettaCacheSocketName is the abstract socket name used when the
+	// `cache` option is given without a value.
+	DefaultRosettaCacheSocketName = "rosetta"
+)
+
 // RosettaShare configures rosetta support in the guest to run Intel binaries on Apple CPUs
 type RosettaShare struct {
 	DirectorySharingConfig
 	InstallRosetta  bool `json:"installRosetta"`
 	IgnoreIfMissing bool `json:"ignoreIfMissing"`
+	// CacheSocketType enables Rosetta's AOT translation caching (macOS 14+)
+	// when non-empty. CacheSocket is then the unix socket path or the
+	// abstract socket name on which `rosettad` listens in the guest.
+	CacheSocketType RosettaCacheSocketType `json:"cacheSocketType,omitempty"`
+	CacheSocket     string                 `json:"cacheSocket,omitempty"`
 }
 
 // NVMExpressController configures a NVMe controller in the guest
@@ -780,8 +802,43 @@ func (dev *RosettaShare) ToCmdLine() ([]string, error) {
 	if dev.IgnoreIfMissing {
 		builder.WriteString(",ignore-if-missing")
 	}
+	if dev.CacheSocketType != "" {
+		if err := validateRosettaCache(dev.CacheSocketType, dev.CacheSocket); err != nil {
+			return nil, err
+		}
+		fmt.Fprintf(&builder, ",cache=%s:%s", dev.CacheSocketType, dev.CacheSocket)
+	}
 
 	return []string{"--device", builder.String()}, nil
+}
+
+func validateRosettaCache(socketType RosettaCacheSocketType, socket string) error {
+	switch socketType {
+	case RosettaCacheUnixSocket, RosettaCacheAbstractSocket:
+	default:
+		return fmt.Errorf("invalid rosetta cache socket type %q, must be %q or %q", socketType, RosettaCacheUnixSocket, RosettaCacheAbstractSocket)
+	}
+	if socket == "" {
+		return fmt.Errorf("rosetta %s cache socket must not be empty", socketType)
+	}
+	return nil
+}
+
+// parseRosettaCache parses the value of the rosetta `cache` option, which is
+// either empty (abstract socket named DefaultRosettaCacheSocketName),
+// `unix:<path>` or `abstract:<name>`.
+func parseRosettaCache(value string) (RosettaCacheSocketType, string, error) {
+	if value == "" {
+		return RosettaCacheAbstractSocket, DefaultRosettaCacheSocketName, nil
+	}
+	socketType, socket, found := strings.Cut(value, ":")
+	if !found {
+		return "", "", fmt.Errorf("invalid rosetta cache option %q, expected 'unix:<path>' or 'abstract:<name>'", value)
+	}
+	if err := validateRosettaCache(RosettaCacheSocketType(socketType), socket); err != nil {
+		return "", "", err
+	}
+	return RosettaCacheSocketType(socketType), socket, nil
 }
 
 func (dev *RosettaShare) FromOptions(options []option) error {
@@ -793,6 +850,13 @@ func (dev *RosettaShare) FromOptions(options []option) error {
 			dev.InstallRosetta = true
 		case "ignore-if-missing":
 			dev.IgnoreIfMissing = true
+		case "cache":
+			socketType, socket, err := parseRosettaCache(option.value)
+			if err != nil {
+				return err
+			}
+			dev.CacheSocketType = socketType
+			dev.CacheSocket = socket
 		default:
 			return fmt.Errorf("unknown option for rosetta share: %s", option.key)
 		}
