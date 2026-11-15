@@ -3,7 +3,7 @@ module github.com/crc-org/vfkit
 go 1.26.0
 
 require (
-	github.com/Code-Hex/vz/v3 v3.8.0
+	github.com/Code-Hex/vz/v4 v4.0.0-20261107060947-64cc34bcd7d0
 	github.com/cavaliergopher/grab/v3 v3.0.1
 	github.com/crc-org/crc/v2 v2.64.0
 	github.com/gin-gonic/gin v1.12.0
@@ -24,7 +24,6 @@ require (
 )
 
 require (
-	github.com/Code-Hex/go-infinity-channel v1.0.0 // indirect
 	github.com/Masterminds/semver/v3 v3.5.0 // indirect
 	github.com/VividCortex/ewma v1.2.0 // indirect
 	github.com/bytedance/gopkg v0.1.3 // indirect
@@ -34,7 +33,7 @@ require (
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect
 	github.com/crc-org/machine v0.0.0-20260805175039-d3388f63e9f9 // indirect
-	github.com/ebitengine/purego v0.11.2 // indirect
+	github.com/ebitengine/purego v0.11.3 // indirect
 	github.com/fatih/color v1.19.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.12 // indirect
 	github.com/gin-contrib/sse v1.1.0 // indirect

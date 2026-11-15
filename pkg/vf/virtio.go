@@ -11,7 +11,7 @@ import (
 	"github.com/crc-org/vfkit/pkg/util"
 	"golang.org/x/sys/unix"
 
-	"github.com/Code-Hex/vz/v3"
+	"github.com/Code-Hex/vz/v4"
 	"github.com/pkg/term/termios"
 	log "github.com/sirupsen/logrus"
 )
@@ -446,12 +446,20 @@ func ListenNetworkBlockDevices(vm *VirtualMachine) error {
 				return fmt.Errorf("NetworkBlockDevice must use a NBD attachment")
 			}
 			nbdConfig := nbdDev.config
+			connected := make(chan struct{}, 1)
+			failures := make(chan error, 16)
+			if _, err := nbdAttachment.WasConnectedNotify(connected); err != nil {
+				return err
+			}
+			if _, err := nbdAttachment.DidEncounterErrorNotify(failures); err != nil {
+				return err
+			}
 			go func() {
 				for {
 					select {
-					case err := <-nbdAttachment.DidEncounterError():
+					case err := <-failures:
 						log.Infof("Disconnected from NBD server %s. Error %v", nbdConfig.URI, err.Error())
-					case <-nbdAttachment.Connected():
+					case <-connected:
 						log.Infof("Successfully connected to NBD server %s.", nbdConfig.URI)
 					}
 				}

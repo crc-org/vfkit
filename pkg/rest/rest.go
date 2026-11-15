@@ -81,7 +81,7 @@ func (v *VFKitService) Start() {
 }
 
 // NewServer creates a new restful service
-func NewServer(inspector VirtualMachineInspector, stateHandler VirtualMachineStateHandler, endpoint string) (*VFKitService, error) {
+func NewServer(inspector VirtualMachineInspector, stateHandler VirtualMachineStateHandler, deviceHandler VirtualMachineDeviceHandler, endpoint string) (*VFKitService, error) {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 	ep, err := NewEndpoint(endpoint)
@@ -101,11 +101,16 @@ func NewServer(inspector VirtualMachineInspector, stateHandler VirtualMachineSta
 	r.GET("/vm/state", stateHandler.GetVMState)
 	r.POST("/vm/state", stateHandler.SetVMState)
 	r.GET("/vm/inspect", inspector.Inspect)
+	r.PUT("/vm/virtio-fs/:mountTag", deviceHandler.SetVirtioFsShare)
 	return &s, nil
 }
 
 type VirtualMachineInspector interface {
 	Inspect(c *gin.Context)
+}
+
+type VirtualMachineDeviceHandler interface {
+	SetVirtioFsShare(c *gin.Context)
 }
 
 type VirtualMachineStateHandler interface {

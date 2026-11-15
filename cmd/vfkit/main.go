@@ -31,7 +31,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Code-Hex/vz/v3"
+	"github.com/Code-Hex/vz/v4"
 	"github.com/crc-org/vfkit/pkg/cmdline"
 	"github.com/crc-org/vfkit/pkg/config"
 	"github.com/crc-org/vfkit/pkg/process"
@@ -156,11 +156,22 @@ func waitForVMState(vm *vf.VirtualMachine, state vz.VirtualMachineState, timeout
 	signalCh := make(chan os.Signal, 1)
 	signal.Notify(signalCh, syscall.SIGPIPE)
 
+	stateCh := make(chan vz.VirtualMachineState, 1)
+	stopNotify, err := vm.StateChangedNotify(stateCh)
+	if err != nil {
+		return err
+	}
+	defer stopNotify()
+	// The subscription only reports later changes; the VM may already be in the wanted state.
+	if vm.State() == state {
+		return nil
+	}
+
 	for {
 		select {
 		case s := <-signalCh:
 			log.Debugf("ignoring signal %v", s)
-		case newState := <-vm.StateChangedNotify():
+		case newState := <-stateCh:
 			if newState == state {
 				return nil
 			}
@@ -190,7 +201,7 @@ func runVFKit(vmConfig *config.VirtualMachine, opts *cmdline.Options) error {
 	// Do not enable the rests server if user sets scheme to None
 	if opts.RestfulURI != cmdline.DefaultRestfulURI {
 		restVM := restvf.NewVzVirtualMachine(vfVM)
-		srv, err := rest.NewServer(restVM, restVM, opts.RestfulURI)
+		srv, err := rest.NewServer(restVM, restVM, restVM, opts.RestfulURI)
 		if err != nil {
 			return err
 		}
