@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/Code-Hex/vz/v3"
+	"github.com/Code-Hex/vz/v4"
 	"github.com/crc-org/vfkit/pkg/config"
 	"github.com/stretchr/testify/require"
 )

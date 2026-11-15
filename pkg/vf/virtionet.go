@@ -11,7 +11,7 @@ import (
 	"github.com/crc-org/vfkit/pkg/config"
 	"github.com/crc-org/vfkit/pkg/util"
 
-	"github.com/Code-Hex/vz/v3"
+	"github.com/Code-Hex/vz/v4"
 	log "github.com/sirupsen/logrus"
 )
 
