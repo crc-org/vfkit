@@ -564,6 +564,26 @@ GET /vm/inspect
 
 Response: `{ "cpus": uint, "memory": uint64, "devices": []config.VirtIODevice }`
 
+### Replace the directories of a virtio-fs device
+
+Replace the host directories exposed by a running `virtio-fs` device, identified by its mount tag.
+The guest keeps its mount and sees the new directories; no restart is needed. Requires macOS 12 or
+newer.
+
+Expose a single directory at the root of the mount:
+```HTTP
+PUT /vm/virtio-fs/{mountTag} { "sharedDir": "/Users/me/project", "readOnly": false }
+```
+
+Expose several named directories, each one a subdirectory of the mount (an empty `shares` object
+exposes nothing):
+```HTTP
+PUT /vm/virtio-fs/{mountTag} { "shares": { "project": { "sharedDir": "/Users/me/project" }, "docs": { "sharedDir": "/Users/me/docs", "readOnly": true } } }
+```
+
+Response: `HTTP 202`; `HTTP 400` for an invalid request (relative or missing paths, share names
+containing `/`, `.` or `..`); `HTTP 404` when no `virtio-fs` device has that mount tag.
+
 ## Enabling a Graphical User Interface
 
 ### Add a virtio-gpu device
