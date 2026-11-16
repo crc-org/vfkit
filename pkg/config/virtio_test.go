@@ -199,6 +199,25 @@ func TestVirtioDevices(t *testing.T) {
 			expectedCmdLine:  []string{"--device", "virtio-fs,sharedDir=/foo/bar,mountTag=myTag"},
 			alternateCmdLine: []string{"--device", "virtio-fs,mountTag=myTag,sharedDir=/foo/bar"},
 		},
+		"NewVirtioFsReadOnly": {
+			newDev: func() (VirtioDevice, error) {
+				dev, err := VirtioFsNew("/foo/bar", "myTag")
+				if err != nil {
+					return nil, err
+				}
+				dev.(*VirtioFs).SetReadOnly(true)
+				return dev, nil
+			},
+			expectedDev: &VirtioFs{
+				SharedDir: "/foo/bar",
+				DirectorySharingConfig: DirectorySharingConfig{
+					MountTag: "myTag",
+				},
+				ReadOnly: true,
+			},
+			expectedCmdLine:  []string{"--device", "virtio-fs,sharedDir=/foo/bar,mountTag=myTag,readOnly"},
+			alternateCmdLine: []string{"--device", "virtio-fs,readOnly,mountTag=myTag,sharedDir=/foo/bar"},
+		},
 		"NewRosettaShare": {
 			newDev: func() (VirtioDevice, error) { return RosettaShareNew("myTag") },
 			expectedDev: &RosettaShare{
@@ -457,6 +476,12 @@ func TestVirtioDevices(t *testing.T) {
 				return deviceFromCmdLine("virtio-net,type=unixgram,path=/tmp/test.sock,offloading=on")
 			},
 			errorMsg: "invalid value for offloading: on (only 'off' is supported)",
+		},
+		"VirtioFsReadOnlyWithValue": {
+			newDev: func() (VirtioDevice, error) {
+				return deviceFromCmdLine("virtio-fs,sharedDir=/foo/bar,readOnly=yes")
+			},
+			errorMsg: "unexpected value for virtio-fs 'readOnly' option: yes",
 		},
 		"VirtioNetOffloadingOff": {
 			newDev: func() (VirtioDevice, error) {
