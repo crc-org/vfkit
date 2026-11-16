@@ -74,6 +74,10 @@ type DirectorySharingConfig struct {
 type VirtioFs struct {
 	DirectorySharingConfig
 	SharedDir string `json:"sharedDir"`
+	// ReadOnly makes the hypervisor refuse writes to the shared
+	// directory, whatever the guest does (remounting it read-write
+	// included).
+	ReadOnly bool `json:"readOnly,omitempty"`
 }
 
 // RosettaShare configures rosetta support in the guest to run Intel binaries on Apple CPUs
@@ -730,15 +734,24 @@ func VirtioFsNew(sharedDir string, mountTag string) (VirtioDevice, error) {
 	}, nil
 }
 
+// SetReadOnly shares the directory read-only: the guest can read it, and
+// the hypervisor refuses its writes.
+func (dev *VirtioFs) SetReadOnly(readOnly bool) {
+	dev.ReadOnly = readOnly
+}
+
 func (dev *VirtioFs) ToCmdLine() ([]string, error) {
 	if dev.SharedDir == "" {
 		return nil, fmt.Errorf("virtio-fs needs the path to the directory to share")
 	}
+	value := fmt.Sprintf("virtio-fs,sharedDir=%s", dev.SharedDir)
 	if dev.MountTag != "" {
-		return []string{"--device", fmt.Sprintf("virtio-fs,sharedDir=%s,mountTag=%s", dev.SharedDir, dev.MountTag)}, nil
+		value += fmt.Sprintf(",mountTag=%s", dev.MountTag)
 	}
-
-	return []string{"--device", fmt.Sprintf("virtio-fs,sharedDir=%s", dev.SharedDir)}, nil
+	if dev.ReadOnly {
+		value += ",readOnly"
+	}
+	return []string{"--device", value}, nil
 }
 
 func (dev *VirtioFs) FromOptions(options []option) error {
@@ -748,6 +761,11 @@ func (dev *VirtioFs) FromOptions(options []option) error {
 			dev.SharedDir = option.value
 		case "mountTag":
 			dev.MountTag = option.value
+		case "readOnly":
+			if option.value != "" {
+				return fmt.Errorf("unexpected value for virtio-fs 'readOnly' option: %s", option.value)
+			}
+			dev.ReadOnly = true
 		default:
 			return fmt.Errorf("unknown option for virtio-fs devices: %s", option.key)
 		}

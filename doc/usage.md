@@ -441,6 +441,7 @@ The share can be mounted in the guest with `mount -t virtiofs vfkitTag /mnt`, wi
 #### Arguments
 - `sharedDir`: absolute path to the host directory to share with the guest.
 - `mountTag`: tag which will be used to mount the shared directory in the guest.
+- `readOnly`: if specified, the directory is shared read-only. The guest can read it, and the hypervisor refuses its writes, even if the guest remounts the share read-write.
 
 #### Example
 

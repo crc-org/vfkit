@@ -191,7 +191,7 @@ func (dev *VirtioFs) toVz() (vz.DirectorySharingDeviceConfiguration, error) {
 		mountTag = filepath.Base(dev.SharedDir)
 	}
 
-	sharedDir, err := vz.NewSharedDirectory(dev.SharedDir, false)
+	sharedDir, err := vz.NewSharedDirectory(dev.SharedDir, dev.ReadOnly)
 	if err != nil {
 		return nil, err
 	}
