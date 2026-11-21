@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 619 200" width="619" height="200" role="img" aria-label="vfkit">
+  <title>vfkit</title>
+  <polygon points="100,8 180,54 180,146 100,192 20,146 20,54" fill="none" stroke="#14171A" stroke-width="8" stroke-linejoin="round"/>
+  <g transform="translate(50,47.5) scale(0.5)">
+    <polygon points="30,30 80,70 120,70 170,30 178,110 100,180 22,110" fill="#F26B1D" stroke="#F26B1D" stroke-width="6" stroke-linejoin="round"/>
+    <polygon points="40,118 100,140 160,118 100,178" fill="#F6F4EF"/>
+    <polygon points="68,92 92,104 84,116 62,106" fill="#14171A"/>
+    <polygon points="132,92 108,104 116,116 138,106" fill="#14171A"/>
+    <polygon points="90,166 110,166 100,180" fill="#14171A"/>
+  </g>
+  <g fill="#14171A"><path transform="translate(236.00,148) scale(0.13000,-0.13000)" d="M207 0 27 550H182L274 241Q282 213 290.0 180.0Q298 147 302 127Q307 147 314.5 180.0Q322 213 329 240L420 550H573L395 0Z"/><path transform="translate(308.80,148) scale(0.13000,-0.13000)" d="M195 0V350H49V485H195V560Q195 637 247.5 683.5Q300 730 385 730H546V600H390Q370 600 357.5 587.5Q345 575 345 555V485H546V350H345V0Z"/><path transform="translate(381.60,148) scale(0.13000,-0.13000)" d="M69 0V730H219V342H293L408 550H575L422 281L578 0H408L292 216H219V0Z"/><path transform="translate(454.40,148) scale(0.13000,-0.13000)" d="M70 0V136H260V415H95V550H400V136H560V0ZM320 637Q279 637 254.5 658.0Q230 679 230 715Q230 751 254.5 772.0Q279 793 320 793Q361 793 385.5 772.0Q410 751 410 715Q410 679 385.5 658.0Q361 637 320 637Z"/><path transform="translate(527.20,148) scale(0.13000,-0.13000)" d="M360 0Q276 0 228.0 48.0Q180 96 180 180V415H35V550H180V705H330V550H535V415H330V180Q330 135 375 135H525V0Z"/></g>
+</svg>
