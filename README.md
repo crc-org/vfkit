@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="images/vfkit-logo-title-light.svg">
+    <img alt="vfkit" src="images/vfkit-logo-title.svg" height="100">
+  </picture>
+</p>
+
 vfkit - Command-line tool to start VMs on macOS
 ====
 
